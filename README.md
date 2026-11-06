@@ -42,12 +42,14 @@ O workflow `.github/workflows/ci.yml` roda em todo PR: dependências travadas, r
 
 Para o merge ficar bloqueado quando algo falha (spec 001, R7.2), a `main` é protegida por dois rulesets do repositório (Settings → Rules → Rulesets), conforme o [ADR-0008](docs/adr/0008-merge-admin-com-ci-obrigatorio.md).
 
-O ruleset "main protegida (spec 001, R7.2)" vale também para administradores, porque não tem lista de exceções:
+O ruleset "main protegida (spec 001, R7.2)":
 - só aceita mudanças por pull request;
 - exige os checks `quality` e `compose-smoke` verdes, com a branch atualizada;
 - bloqueia force-push e exclusão da branch.
 
-O ruleset "revisão humana (ADR-0008)" exige 1 aprovação, descartada quando chegam commits novos. O administrador do repositório pode dispensá-la ao fazer merge de um PR (`gh pr merge <n> --admin`), mas continua preso ao primeiro ruleset.
+O ruleset "revisão humana (ADR-0008)" exige 1 aprovação, descartada quando chegam commits novos. O administrador do repositório pode dispensá-la ao fazer merge de um PR (`gh pr merge <n> --admin`).
+
+**Exceção provisória (desde 06/11/2026):** o GitHub Actions está bloqueado, então o administrador também pode fazer merge sem os checks, desde que o `make check` tenha passado localmente e o resultado esteja registrado no PR. A exceção sai quando o CI voltar ou a nova esteira entrar (ADR-0008).
 
 A regra foi testada em 03/10/2026 numa branch descartável: um PR com lint quebrado falhou no CI e o merge foi recusado ("the base branch policy prohibits the merge"). Na máquina de cada um, o hook `no-commit-to-branch` do pre-commit também recusa commits feitos direto na `main`.
 
