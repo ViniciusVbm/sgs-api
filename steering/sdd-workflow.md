@@ -25,7 +25,7 @@ flowchart LR
 | Design | agente | `design.md` com rotas, modelo, fluxos, riscos, testes | Dono da spec + 1 integrante aprovam |
 | Tarefas | agente | `tasks.md`, tarefas de até ~300 linhas de diff, cada uma com teste | Dono aprova |
 | Implementação | agente, uma tarefa por vez, TDD | código + testes + `[x]` na tarefa | `make check` verde |
-| PR | agente abre, humano revisa | PR citando `NNN/Tn` | CI verde + 1 aprovação humana |
+| PR | agente abre, humano revisa | PR citando `NNN/Tn` | CI verde + 1 aprovação humana (PR do administrador: revisão por agente, ADR-0008) |
 
 ## Regras
 - A spec é a fonte da verdade. Código que diverge da spec é bug em um dos dois: corrija o que estiver errado no mesmo PR.
