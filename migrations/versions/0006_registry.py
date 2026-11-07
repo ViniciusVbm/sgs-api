@@ -16,7 +16,7 @@ arquivo, com o cabeçalho que explica cada objeto (ADR-0009, 011/R11.1):
 - seed das referências, por último.
 
 Revision ID: 0006
-Revises: 0003
+Revises: 0003_1
 Create Date: 2026-11-07
 """
 
@@ -27,7 +27,7 @@ from alembic import op
 from migrations.sql_loader import executar_sql
 
 revision: str = "0006"
-down_revision: str | Sequence[str] | None = "0003"
+down_revision: str | Sequence[str] | None = "0003_1"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
