@@ -4,6 +4,7 @@
 - Depende de: 001, 003
 
 - [ ] T1. Migração `0006_registry` com referências, índices (`pg_trgm`, `unaccent`, únicos parciais) e seed das referências
+  - Inclui `fn_normalize_name`, `version`, `pending_issues` e as FKs da Etapa 02, no mesmo PR da 011/T2.
   - Requisitos: R1.3, R1.4, R7.1
   - Pronto quando: `tests/integration/registry/test_schema_registry.py` passa
 - [ ] T2. Domínio: normalização de nome, `diff`, campos estruturais
@@ -16,9 +17,11 @@
   - Requisitos: R2.1–R2.6
   - Pronto quando: `tests/integration/registry/test_buscar_unidades.py` passa
 - [ ] T5. Atualizar com `If-Match`, escopo, campos estruturais e auditoria por campo
+  - Sem incrementar `version` (trigger da 011); no mesmo PR da 011/T17.
   - Requisitos: R3.1–R3.6
   - Pronto quando: `tests/integration/registry/test_atualizar_unidade.py` passa
 - [ ] T6. Desativar unidade
+  - Pelo `sp_deactivate_unit` da 011; no mesmo PR da 011/T16.
   - Requisitos: R4.1, R4.2
   - Pronto quando: `tests/integration/registry/test_desativar_unidade.py` passa
 - [ ] T7. Equipamentos (vinculados e sem unidade)
@@ -28,7 +31,8 @@
   - Requisitos: R6.1–R6.4
   - Pronto quando: `tests/integration/registry/test_servicos.py` passa
 - [ ] T9. Rotas de referência
-  - Requisitos: R7.1, R7.2
+  - Código editável com cascata e auditoria; no mesmo PR da 011/T18.
+  - Requisitos: R7.1, R7.2, R7.3
   - Pronto quando: `tests/integration/registry/test_referencias.py` passa
 - [ ] T10. Teste de desempenho da busca
   - Requisitos: R2.7
