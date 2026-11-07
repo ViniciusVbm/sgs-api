@@ -4,8 +4,11 @@ Colunas de docs/architecture/modelo-dados.md § 1, mais `users.mfa_last_step` e 
 falha (design da 002). As restrições garantem, até para quem grava sem passar pelo domínio, que a
 senha só entra como hash Argon2id e o refresh token só como SHA-256.
 
+Os nomes das CHECKs vão em `op.f()`: sem isso, o Alembic aplica a convenção do `metadata` por
+cima do nome completo e grava `ck_users_ck_users_...` (ver 0001_1).
+
 Revision ID: 0002
-Revises: 0001
+Revises: 0001_1
 Create Date: 2026-11-06
 """
 
@@ -16,7 +19,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "0002"
-down_revision: str | Sequence[str] | None = "0001"
+down_revision: str | Sequence[str] | None = "0001_1"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
@@ -58,19 +61,23 @@ def upgrade() -> None:
         sa.UniqueConstraint("username", name="uq_users_username"),
         sa.UniqueConstraint("email", name="uq_users_email"),
         sa.UniqueConstraint("source", "external_id", name="uq_users_source_external_id"),
-        sa.CheckConstraint("source IN ('local', 'ldap', 'oidc')", name="ck_users_origem_valida"),
-        sa.CheckConstraint("username = lower(username)", name="ck_users_username_minusculo"),
-        sa.CheckConstraint(f"password_hash ~ '{ARGON2ID_PHC}'", name="ck_users_senha_argon2id"),
+        sa.CheckConstraint(
+            "source IN ('local', 'ldap', 'oidc')", name=op.f("ck_users_origem_valida")
+        ),
+        sa.CheckConstraint("username = lower(username)", name=op.f("ck_users_username_minusculo")),
+        sa.CheckConstraint(
+            f"password_hash ~ '{ARGON2ID_PHC}'", name=op.f("ck_users_senha_argon2id")
+        ),
         # Conta local tem senha; conta de diretório (LDAP, OIDC) tem só o DN ou o `sub`.
         sa.CheckConstraint(
             "(source = 'local' AND password_hash IS NOT NULL AND external_id IS NULL)"
             " OR (source <> 'local' AND password_hash IS NULL AND external_id IS NOT NULL)",
-            name="ck_users_credencial_conforme_origem",
+            name=op.f("ck_users_credencial_conforme_origem"),
         ),
         sa.CheckConstraint(
-            "NOT mfa_enabled OR mfa_secret_enc IS NOT NULL", name="ck_users_mfa_com_segredo"
+            "NOT mfa_enabled OR mfa_secret_enc IS NOT NULL", name=op.f("ck_users_mfa_com_segredo")
         ),
-        sa.CheckConstraint("failed_logins >= 0", name="ck_users_falhas_nao_negativas"),
+        sa.CheckConstraint("failed_logins >= 0", name=op.f("ck_users_falhas_nao_negativas")),
     )
     # Usuário nunca é apagado, só desativado (modelo-dados.md § 1).
     op.execute("REVOKE DELETE ON users FROM sgs_app")
@@ -106,7 +113,7 @@ def upgrade() -> None:
         sa.UniqueConstraint("token_hash", name="uq_refresh_tokens_token_hash"),
         # Só o SHA-256 em hexadecimal (R3.3): um token em claro não cabe neste formato.
         sa.CheckConstraint(
-            "token_hash ~ '^[0-9a-f]{64}$'", name="ck_refresh_tokens_token_hash_sha256"
+            "token_hash ~ '^[0-9a-f]{64}$'", name=op.f("ck_refresh_tokens_token_hash_sha256")
         ),
     )
     op.create_index("ix_refresh_tokens_session_id", "refresh_tokens", ["session_id"])

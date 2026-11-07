@@ -89,7 +89,7 @@ async def test_banco_recusa_senha_que_nao_e_hash_argon2id(
     sessoes: async_sessionmaker[AsyncSession], senha: str
 ) -> None:
     """002/R1.7: a restrição vale até para quem grava sem passar pelo domínio."""
-    with pytest.raises(IntegrityError, match="ck_users_senha_argon2id"):
+    with pytest.raises(IntegrityError, match='"ck_users_senha_argon2id"'):
         async with sessoes() as sessao, sessao.begin():
             await sessao.execute(INSERIR_USUARIO_LOCAL, {"id": uuid7(), "senha": senha})
 
@@ -151,6 +151,6 @@ async def test_banco_recusa_refresh_token_que_nao_e_hash_sha256(
         "token": secrets.token_urlsafe(32),
     }
 
-    with pytest.raises(IntegrityError, match="ck_refresh_tokens_token_hash_sha256"):
+    with pytest.raises(IntegrityError, match='"ck_refresh_tokens_token_hash_sha256"'):
         async with sessoes() as sessao, sessao.begin():
             await sessao.execute(INSERIR_REFRESH, valores)
