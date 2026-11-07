@@ -181,4 +181,6 @@ services = Table(
     Column("in_cnes", Boolean, nullable=False, server_default=text("false")),
     Column("status", String(20), nullable=False),
     *_timestamps(),
+    # Serviços de uma unidade (migração 0011_03, spec 011 R1.2).
+    Index("ix_services_unit_id", "unit_id"),
 )
