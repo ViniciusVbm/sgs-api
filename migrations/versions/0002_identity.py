@@ -1,8 +1,9 @@
 """identity: users, sessions e refresh_tokens (spec 002, T2; R1.7 e R3.3).
 
-Colunas de docs/architecture/modelo-dados.md § 1, mais `users.mfa_last_step` e os contadores de
-falha (design da 002). As restrições garantem, até para quem grava sem passar pelo domínio, que a
-senha só entra como hash Argon2id e o refresh token só como SHA-256.
+Colunas de docs/architecture/modelo-dados.md § 1, mais `users.mfa_last_step` e o desafio de MFA
+da R2.6 (`mfa_challenge_jti`, `mfa_failed_attempts`), conforme o design da 002. As restrições
+garantem, até para quem grava sem passar pelo domínio, que a senha só entra como hash Argon2id e o
+refresh token só como SHA-256.
 
 Os nomes das CHECKs vão em `op.f()`: sem isso, o Alembic aplica a convenção do `metadata` por
 cima do nome completo e grava `ck_users_ck_users_...` (ver 0001_1).
@@ -52,6 +53,9 @@ def upgrade() -> None:
         sa.Column("mfa_enabled", sa.Boolean, nullable=False, server_default=sa.text("false")),
         sa.Column("mfa_secret_enc", sa.String(255), nullable=True),
         sa.Column("mfa_last_step", sa.BigInteger, nullable=True),
+        # R2.6: `jti` do mfa_token mais recente e os códigos errados contra ele.
+        sa.Column("mfa_challenge_jti", sa.Uuid, nullable=True),
+        sa.Column("mfa_failed_attempts", sa.Integer, nullable=False, server_default=sa.text("0")),
         sa.Column("failed_logins", sa.Integer, nullable=False, server_default=sa.text("0")),
         sa.Column("locked_until", sa.DateTime(timezone=True), nullable=True),
         sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),
@@ -78,6 +82,9 @@ def upgrade() -> None:
             "NOT mfa_enabled OR mfa_secret_enc IS NOT NULL", name=op.f("ck_users_mfa_com_segredo")
         ),
         sa.CheckConstraint("failed_logins >= 0", name=op.f("ck_users_falhas_nao_negativas")),
+        sa.CheckConstraint(
+            "mfa_failed_attempts >= 0", name=op.f("ck_users_tentativas_mfa_nao_negativas")
+        ),
     )
     # Usuário nunca é apagado, só desativado (modelo-dados.md § 1).
     op.execute("REVOKE DELETE ON users FROM sgs_app")

@@ -26,7 +26,7 @@
 - `mfa_token` é um JWT curto, `aud = sgs-mfa`, com `purpose` e `jti` (para contar tentativas).
 
 ## Modelo de dados
-Migração `0002_identity`: `users`, `sessions`, `refresh_tokens` (ver `docs/architecture/modelo-dados.md`), mais `users.mfa_last_step` e contadores de falha.
+Migração `0002_identity`: `users`, `sessions`, `refresh_tokens` (ver `docs/architecture/modelo-dados.md`), mais `users.mfa_last_step` e os contadores de falha: `failed_logins` e `locked_until` para o bloqueio (R1.4), `mfa_challenge_jti` e `mfa_failed_attempts` para a R2.6.
 
 ## Segurança
 - Hash fictício para usuário inexistente (R1.3).
@@ -45,6 +45,9 @@ Decididas pelo Rafael em 06/11/2026, antes da T1:
 - O comando `sgs-admin` usa `argparse`, porque o Typer não está na `steering/tech.md`.
 - O 422 aparece no `contracts/openapi.yaml` como `application/problem+json`, no lugar do `HTTPValidationError` padrão da FastAPI.
 - As rotas públicas ficam numa lista explícita (`/api/v1/auth/*`, `/health/*`, `/.well-known/jwks.json`), usada pelo teste de arquitetura da 003 (T5).
+
+Decidida pelo Rafael em 06/11/2026, na revisão do PR #16 (T2):
+- As tentativas da R2.6 ficam em `users`: `mfa_challenge_jti` guarda o `jti` do `mfa_token` mais recente e `mfa_failed_attempts` conta os códigos errados contra ele. Emitir um `mfa_token` troca o `jti` e zera o contador, então só o mais recente vale. No sucesso, o `jti` é limpo e o mesmo `mfa_token` não serve de novo.
 
 ## Riscos
 - Relógio do servidor fora de sincronia quebra TOTP: container usa NTP do host; janela ±1 passo.

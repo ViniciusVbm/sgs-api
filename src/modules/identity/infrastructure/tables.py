@@ -57,6 +57,9 @@ users = Table(
     Column("mfa_enabled", Boolean, nullable=False, server_default=text("false")),
     Column("mfa_secret_enc", String(255), nullable=True),
     Column("mfa_last_step", BigInteger, nullable=True),
+    # R2.6: `jti` do mfa_token mais recente e os códigos errados contra ele.
+    Column("mfa_challenge_jti", Uuid, nullable=True),
+    Column("mfa_failed_attempts", Integer, nullable=False, server_default=text("0")),
     Column("failed_logins", Integer, nullable=False, server_default=text("0")),
     Column("locked_until", DateTime(timezone=True), nullable=True),
     Column("last_login_at", DateTime(timezone=True), nullable=True),
@@ -73,6 +76,7 @@ users = Table(
     ),
     CheckConstraint("NOT mfa_enabled OR mfa_secret_enc IS NOT NULL", name="mfa_com_segredo"),
     CheckConstraint("failed_logins >= 0", name="falhas_nao_negativas"),
+    CheckConstraint("mfa_failed_attempts >= 0", name="tentativas_mfa_nao_negativas"),
 )
 
 sessions = Table(
