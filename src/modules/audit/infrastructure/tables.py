@@ -1,4 +1,4 @@
-"""Tabelas da auditoria, iguais às da migração 0001_base."""
+"""Tabelas da auditoria, iguais às da migração 0001_base (e o índice da 0011_03)."""
 
 from sqlalchemy import (
     CHAR,
@@ -7,6 +7,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Identity,
+    Index,
     SmallInteger,
     String,
     Table,
@@ -37,6 +38,14 @@ audit_log = Table(
     Column("hash", CHAR(64), nullable=False),
     UniqueConstraint("hash"),
     UniqueConstraint("prev_hash"),
+)
+
+# Histórico de uma entidade, mais recente primeiro (migração 0011_03, spec 011 R1.1).
+Index(
+    "ix_audit_log_entity",
+    audit_log.c.entity_type,
+    audit_log.c.entity_id,
+    audit_log.c.occurred_at.desc(),
 )
 
 audit_chain_head = Table(

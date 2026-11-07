@@ -24,7 +24,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
 
 ## Migração 0011: banco
 
-- [ ] T3. Papel dono, privilégios, índices e situação cadastral
+- [x] T3. Papel dono, privilégios, índices e situação cadastral
   - `sgs_owner NOLOGIN NOSUPERUSER` com `USAGE, CREATE` no schema e o SELECT que as funções precisam; default privileges sem EXECUTE para PUBLIC (`FOR ROLE sgs` e `sgs_owner`); `ix_audit_log_entity`, `ix_services_unit_id`; `fn_registration_status` com GRANT ao `sgs_app`.
   - Bloqueada por: T2
   - Requisitos: R1.1, R1.2, R5.3, R10.1, R10.2

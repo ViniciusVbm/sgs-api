@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from src.modules.access.domain.authorization import Concessao
+from src.modules.access.domain.authorization import Alvo, Concessao
 
 
 class RepositorioDePermissoes(Protocol):
@@ -24,4 +24,18 @@ class RepositorioDePermissoes(Protocol):
     async def invalidar(self, usuario_id: UUID) -> None:
         """Incrementa `users.authz_version`. Quem altera as atribuições de um usuário chama na
         mesma transação, e a mudança vale na próxima requisição (003/R4.5)."""
+        ...
+
+
+class ResolvedorDeAlvo(Protocol):
+    """Acha os atributos de escopo de um tipo de recurso (design § Verificação, `ResourceRef`).
+
+    Uma implementação por tipo, registrada pela raiz de composição em
+    `app.state.resolvedores_de_alvo`; a unidade, por exemplo, dá o próprio id, o distrito e a
+    área técnica do seu tipo.
+    """
+
+    async def alvo(self, id_do_recurso: str) -> Alvo | None:
+        """`None` se o recurso não existe. O id chega em texto, como veio no caminho; um id fora
+        do formato do recurso também é `None`."""
         ...
