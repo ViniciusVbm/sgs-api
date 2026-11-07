@@ -19,6 +19,7 @@ Escopo = Global | Area(id) | Distrito(id) | Unidade(id)
 - `ResourceRef` resolve o recurso para seus atributos de escopo: unidade → (`unit_id`, `district_id`, `area_id`).
 - Regra: autorizado se existir algum escopo `Global`, ou `Area` igual à área da unidade, ou `Distrito` igual ao distrito, ou `Unidade` igual ao id.
 - Listagens: `scope_filter(perm, model)` devolve uma expressão SQLAlchemy (`or_(...)`) aplicada na query.
+- Listagens com SQL escrito à mão (ADR-0009): `escopo_de_leitura(usuario, perm) -> EscopoLeitura` (domínio: `global_`, `areas`, `distritos`, `unidades`), passado como parâmetros a um fragmento fixo (`:scope_global OR technical_area_id = ANY(:scope_areas) OR ...`). Emenda pedida pela spec 011.
 - Função pura `pode(perms, perm, alvo) -> bool` no `domain`, testável sem banco.
 
 ## Deny by default

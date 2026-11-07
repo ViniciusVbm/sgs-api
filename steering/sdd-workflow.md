@@ -27,6 +27,9 @@ flowchart LR
 | Implementação | agente, uma tarefa por vez, TDD | código + testes + `[x]` na tarefa | `make check` verde |
 | PR | agente abre, humano revisa | PR citando `NNN/Tn` | CI verde + 1 aprovação humana (PR do administrador: revisão por agente; sem Actions, `make check` local; ADR-0008) |
 
+## Exceção provisória: prazo de Banco de Dados (Rafael, 07/11/2026)
+Para as specs **003, 006 e 011**, por causa da entrega da disciplina de Banco de Dados em 13/11/2026, o Rafael (dono das specs e administrador do repositório) aprova sozinho os portões de design e de tarefas, sem o segundo integrante. Vale só para essas três specs; as demais seguem a tabela acima. A exceção sai quando a 011 for entregue.
+
 ## Regras
 - A spec é a fonte da verdade. Código que diverge da spec é bug em um dos dois: corrija o que estiver errado no mesmo PR.
 - Mudanças de requisito no meio do caminho: edite `requirements.md`, volte o status para `Em revisão`, ajuste design e tarefas.
