@@ -23,6 +23,10 @@ _SENSITIVE_EXACT_KEYS = frozenset({"code", "codigo"})  # código TOTP enviado no
 _SECRETS_IN_TEXT = (
     (re.compile(r"(?i)\b(bearer|basic)\s+[^\s,;\"']+"), rf"\1 {REDACTED}"),
     (re.compile(r"\beyJ[\w-]+\.[\w-]+\.[\w-]*"), REDACTED),  # JWT
+    # Erros do banco: o DETAIL do Postgres repete a linha ou a chave recusada, e o asyncpg repete
+    # o argumento de tipo errado. O `hide_parameters` do engine não alcança nenhum dos dois.
+    (re.compile(r"DETAIL:[^\n]*"), f"DETAIL: {REDACTED}"),
+    (re.compile(r"(invalid input for query argument \$\d+:)[^\n]*"), rf"\1 {REDACTED}"),
 )
 
 
