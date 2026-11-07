@@ -16,7 +16,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R11.1, R11.2
   - Pronto quando: `tests/unit/migrations/test_sql_loader.py` passa (`'HH24:MI'` e `:=` intactos; duas instruções → erro; `alembic upgrade head --sql` roda sem banco)
 
-- [ ] T2. Normalização, colunas e FKs na 0006 (com 006/T1)
+- [x] T2. Normalização, colunas e FKs na 0006 (com 006/T1)
   - `fn_normalize_name` (IMMUTABLE, `search_path` fixo, EXECUTE só para `sgs_app`) criada antes de `health_units`; coluna gerada `name_normalized` e índice GIN usando a função; `version` e `pending_issues`; FKs `ON DELETE SET NULL`, `ON UPDATE CASCADE` e `RESTRICT`.
   - Bloqueada por: T1, 003/T1
   - Requisitos: R5.1, R5.2, R9.1, R9.3
