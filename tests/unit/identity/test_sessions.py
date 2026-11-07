@@ -50,6 +50,11 @@ def test_sessao_normaliza_o_ip_e_recusa_ip_invalido() -> None:
         make_auth_session(ip="999.1.1.1")
 
 
+def test_sessao_descarta_a_zona_do_ipv6() -> None:
+    """002/T2: a zona (`fe80::1%eth0`) não tem limite de tamanho e estouraria a coluna `ip`."""
+    assert make_auth_session(ip="fe80::1%" + "x" * 100).ip == "fe80::1"
+
+
 def test_user_agent_longo_e_cortado_no_limite_da_coluna() -> None:
     """002/T2: o cabeçalho vem do cliente e não pode derrubar o login."""
     assert make_auth_session(user_agent="x" * 5000).user_agent == "x" * USER_AGENT_MAX

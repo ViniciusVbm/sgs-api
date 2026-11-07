@@ -43,9 +43,13 @@ class AuthSession:
             object.__setattr__(self, "revoked_at", _utc(self.revoked_at, "revoked_at"))
         if self.ip is not None:
             try:
-                object.__setattr__(self, "ip", str(ipaddress.ip_address(self.ip)))
+                endereco = ipaddress.ip_address(self.ip)
             except ValueError:
                 raise _invalid("Sessão inválida.", "ip", "IP inválido.") from None
+            # A zona do IPv6 (`fe80::1%eth0`) só vale na máquina local e não tem limite de tamanho.
+            if isinstance(endereco, ipaddress.IPv6Address) and endereco.scope_id:
+                endereco = ipaddress.IPv6Address(int(endereco))
+            object.__setattr__(self, "ip", str(endereco))
         if self.user_agent is not None:
             # O cabeçalho vem do cliente: corta no tamanho da coluna em vez de recusar o login.
             object.__setattr__(self, "user_agent", self.user_agent[:USER_AGENT_MAX])
