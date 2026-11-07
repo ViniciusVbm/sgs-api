@@ -1,6 +1,6 @@
 """banco: papel dono, privilégios, índices e situação cadastral (spec 011, T3).
 
-Primeira revisão da 0011 (design da 011 § Na 0011, itens 1 a 5, e o item 13 para a função desta
+Papel e privilégios da 0011 (design da 011 § Na 0011, itens 1 a 5, e o item 13 para a função desta
 revisão). Todo o DDL do upgrade está em `migrations/sql/0011_03/`, uma instrução por arquivo, com
 o cabeçalho que explica cada objeto (ADR-0009, 011/R11.1):
 
@@ -14,7 +14,7 @@ o cabeçalho que explica cada objeto (ADR-0009, 011/R11.1):
   R10.1).
 
 Revision ID: 0011_03
-Revises: 0006
+Revises: 0011_05
 Create Date: 2026-11-07
 """
 
@@ -25,7 +25,7 @@ from alembic import op
 from migrations.sql_loader import executar_sql
 
 revision: str = "0011_03"
-down_revision: str | Sequence[str] | None = "0006"
+down_revision: str | Sequence[str] | None = "0011_05"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
