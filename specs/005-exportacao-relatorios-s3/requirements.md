@@ -1,7 +1,7 @@
 # 005 · Exportação de relatórios para S3 · Requisitos
 
 - Status: Rascunho
-- Rastreia: RF-07 (parcial), RNF-05, RS-03, RS-04, RS-05, requisito obrigatório "exportação de relatórios para armazenamento em nuvem com mecanismos de autenticação avançados"
+- Rastreia: RF-07 (parcial), RNF-05, RS-03, RS-04, RS-05, requisito obrigatório "exportação de relatórios para armazenamento em nuvem com mecanismos de autenticação avançados", objetivo "assinaturas digitais e certificados" da disciplina de Criptografia (R5)
 
 ## Contexto
 Relatórios avançados estão fora do MVP (Requisitos Esperados §2.2). Esta spec entrega o mínimo que cumpre o requisito obrigatório: dois relatórios simples exportados para S3 com credenciais temporárias, criptografia e download controlado. Ver ADR-0005.
@@ -41,6 +41,18 @@ Como Gestor de Dados, quero exportar o inventário de unidades para compartilhar
 - R4.2 O sistema DEVE neutralizar valores iniciados por `=`, `+`, `-` ou `@` (prevenção de injeção de fórmula em CSV/XLSX).
 - R4.3 A trilha de auditoria exportada NÃO DEVE conter valores marcados como sensíveis.
 
+### R5. Assinatura digital
+Como quem recebe um relatório exportado, quero conferir que ele saiu da plataforma e não foi alterado depois.
+
+Proposto em 06/11/2026, a pedido do Rafael, para cobrir o objetivo "assinaturas digitais e certificados" da disciplina de Criptografia.
+
+- R5.1 QUANDO a geração de um relatório termina, o sistema DEVE assinar digitalmente o hash SHA-256 do arquivo com uma chave privada da API e guardar a assinatura, o algoritmo e o identificador da chave (`kid`) junto com o pedido.
+- R5.2 A chave que assina relatórios DEVE ser diferente da chave que assina os tokens de acesso (spec 002).
+- R5.3 QUANDO um usuário com acesso ao relatório consulta `GET /relatorios/{id}` de um relatório concluído, o sistema DEVE devolver também a assinatura, o algoritmo, o `kid` e o hash.
+- R5.4 O sistema DEVE publicar as chaves públicas de verificação de relatórios, identificadas por `kid`, para que a assinatura possa ser conferida fora da API.
+- R5.5 O sistema DEVE manter verificáveis as assinaturas feitas com chaves anteriores depois de uma troca de chave.
+
 ## Perguntas em aberto
+- A chave pública de relatórios é distribuída como certificado X.509 autoassinado da plataforma ou só como chave pública (JWK)? Certificado ICP-Brasil fica fora do alcance do projeto.
 - O grupo terá uma conta AWS para a demonstração (AWS Educate/Academy)? Se não, a demo usa SeaweedFS.
 - Por quanto tempo os relatórios ficam no bucket? (padrão: regra de ciclo de vida de 90 dias)
