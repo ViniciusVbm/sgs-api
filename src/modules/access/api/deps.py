@@ -16,13 +16,34 @@ parâmetro de caminho com o id:
 
 A dependência autentica pelo `CurrentUser` da 002 (401) e confere a permissão nas permissões
 efetivas do usuário, lidas a cada requisição (403). O 403 é auditado como `acesso.negado`.
+
+Rotas que leem ou gravam dados de negócio recebem a sessão da requisição por `SessaoDeNegocio`,
+declarada depois do `require` (padrão da 006/T3, para as rotas da 006 e da 011):
+
+    async def handler(
+        request: Request,
+        usuario: Annotated[UsuarioAtual, Depends(require("unidade:create"))],
+        sessao: SessaoDeNegocio,
+    ):
+        estado = request.app.state
+        await caso_de_uso(..., repositorio=estado.repositorio_de_x(sessao),
+                          auditoria=estado.auditoria(sessao),
+                          ator=ator_da_requisicao(request, usuario))
+
+Uma sessão e uma transação por requisição: o caso de uso e o `audit.registrar` gravam juntos, e
+a transação é confirmada quando o handler termina, antes de a resposta sair (`scope="function"`).
+Qualquer exceção desfaz tudo. Um `AcessoNegado` levantado pelo caso de uso (uma regra de escopo
+que só se confere depois de ler o corpo ou o banco) é auditado depois do rollback, numa
+transação própria, como o do `require`.
 """
 
 import ipaddress
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any
+from typing import Annotated, Any, Protocol
+from uuid import UUID
 
-from fastapi import Request
+from fastapi import Depends, Request
 
 from src.modules.access.application.autorizacao import (
     AcessoNegado,
@@ -38,7 +59,7 @@ from src.modules.access.application.autorizacao import (
 )
 from src.modules.identity.api.deps import CurrentUser
 
-__all__ = ["ResourceRef", "UsuarioAtual", "require"]
+__all__ = ["ResourceRef", "SessaoDeNegocio", "UsuarioAtual", "ator_da_requisicao", "require"]
 
 
 @dataclass(frozen=True)
@@ -84,15 +105,7 @@ class _Exigencia:
                     alvos=alvos,
                 )
         except AcessoNegado as negacao:
-            ator = Ator(
-                user_id=usuario.id,
-                session_id=usuario.sessao_id,
-                ip=_ip(request),
-                request_id=getattr(request.state, "request_id", None),
-            )
-            async with estado.sessoes() as sessao, sessao.begin():
-                store: AuditStore = estado.auditoria(sessao)
-                await auditar_negacao(store, negacao, ator=ator, rota=_rota(request))
+            await _auditar_em_transacao_propria(request, usuario, negacao)
             raise
 
     def _recurso_pedido(self, request: Request) -> Recurso | None:
@@ -105,6 +118,56 @@ def require(permissao: str, recurso: ResourceRef | None = None) -> Any:
     """Dependência que exige `permissao` do usuário autenticado, no escopo do `recurso` se houver,
     e devolve o `UsuarioAtual`."""
     return _Exigencia(permissao, recurso)
+
+
+async def _sessao_de_negocio(request: Request, usuario: CurrentUser) -> AsyncIterator[Any]:
+    estado = request.app.state
+    try:
+        async with estado.sessoes() as sessao, sessao.begin():
+            yield sessao
+    except AcessoNegado as negacao:
+        # Depois do rollback: a transação desfeita não segura trava que o registro precise.
+        await _auditar_em_transacao_propria(request, usuario, negacao)
+        raise
+
+
+SessaoDeNegocio = Annotated[Any, Depends(_sessao_de_negocio, scope="function")]
+"""A sessão SQLAlchemy da requisição, já dentro da transação de negócio (ver o docstring do
+módulo). Os repositórios de `app.state` a recebem; o tipo fica opaco para a camada api."""
+
+
+class _Identificado(Protocol):
+    @property
+    def id(self) -> UUID: ...
+
+    @property
+    def sessao_id(self) -> UUID: ...
+
+
+def ator_da_requisicao(request: Request, usuario: _Identificado) -> Ator:
+    """Quem faz a requisição e de onde, para a auditoria (001/R5.1)."""
+    return Ator(
+        user_id=usuario.id,
+        session_id=usuario.sessao_id,
+        ip=_ip(request),
+        request_id=getattr(request.state, "request_id", None),
+    )
+
+
+async def _auditar_em_transacao_propria(
+    request: Request, usuario: _Identificado, negacao: AcessoNegado
+) -> None:
+    """Grava `acesso.negado` (003/R4.6) numa transação só dele, que o 403 não desfaz. Uma
+    negação já registrada (do `require`, que pode passar pela `SessaoDeNegocio`) não repete."""
+    if negacao.auditada:
+        return
+    estado = request.app.state
+    async with estado.sessoes() as sessao, sessao.begin():
+        store: AuditStore = estado.auditoria(sessao)
+        await auditar_negacao(
+            store, negacao, ator=ator_da_requisicao(request, usuario), rota=_rota(request)
+        )
+    negacao.auditada = True
 
 
 def _rota(request: Request) -> str:
