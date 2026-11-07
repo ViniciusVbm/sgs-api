@@ -34,7 +34,7 @@ Migração `0002_identity`: `users`, `sessions`, `refresh_tokens` (ver `docs/arc
 ## Segurança
 - Hash fictício para usuário inexistente (R1.3).
 - Rate limit via slowapi com chave IP; bloqueio por usuário no banco (R1.4).
-- Comparações de token com `hmac.compare_digest`.
+- Comparações de token em memória com `hmac.compare_digest`; o refresh é buscado no banco pelo hash (ver Decisões).
 - Nenhum token em log; cookies com `Secure` mesmo em dev (proxy TLS local).
 
 ## Decisões
@@ -49,8 +49,10 @@ Decididas pelo Rafael em 06/11/2026, antes da T1:
 - O 422 aparece no `contracts/openapi.yaml` como `application/problem+json`, no lugar do `HTTPValidationError` padrão da FastAPI.
 - As rotas públicas ficam numa lista explícita (`/api/v1/auth/*`, `/health/*`, `/.well-known/jwks.json`), usada pelo teste de arquitetura da 003 (T5).
 
-Decidida pelo Rafael em 06/11/2026, na revisão do PR #16 (T2):
+Decididas pelo Rafael em 06/11/2026, na revisão do PR #16 (T2):
 - As tentativas da R2.6 ficam em `users`: `mfa_challenge_jti` guarda o `jti` do `mfa_token` mais recente e `mfa_failed_attempts` conta os códigos errados contra ele. Emitir um `mfa_token` troca o `jti` e zera o contador, então só o mais recente vale. No sucesso, o `jti` é limpo e o mesmo `mfa_token` não serve de novo.
+- O refresh token é gerado com `secrets.token_urlsafe(32)` (43 caracteres base64url). Fora do formato hexadecimal de 64 caracteres, um token em claro nunca passa pela CHECK de SHA-256 da 0002 (`ck_refresh_tokens_token_hash_sha256`).
+- O refresh é buscado pelo SHA-256 (`RefreshTokenRepository.get_by_hash`, índice único em `refresh_tokens.token_hash`), sem `hmac.compare_digest`: quem apresenta o token não escolhe o hash, então o tempo da busca não revela nada útil.
 
 ## Riscos
 - Relógio do servidor fora de sincronia quebra TOTP: container usa NTP do host; janela ±1 passo.
