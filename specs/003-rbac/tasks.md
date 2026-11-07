@@ -12,7 +12,7 @@
   - Bloqueada por: nenhuma
   - Requisitos: R4.2, R4.3
   - Pronto quando: `tests/unit/access/test_pode_matriz.py` (parametrizado pela matriz) passa
-- [ ] T3. Resolução de permissões efetivas com cache e `authz_version`
+- [x] T3. Resolução de permissões efetivas com cache e `authz_version`
   - Bloqueada por: T1, T2
   - Requisitos: R4.5
   - Pronto quando: `tests/integration/access/test_permissoes_efetivas.py` passa

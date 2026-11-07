@@ -1,11 +1,13 @@
 """Escopos e verificação de permissão (spec 003, design § Resolução de permissões e § Verificação).
 
-Função pura, sem banco: quem chama já resolveu as permissões efetivas do usuário e os atributos
-de escopo do recurso.
+Funções puras, sem banco: `permissoes_efetivas` monta as permissões a partir das concessões já
+lidas, e `pode` verifica uma permissão contra os atributos de escopo do recurso.
 """
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import datetime
+from types import MappingProxyType
 from uuid import UUID
 
 
@@ -39,6 +41,71 @@ type Escopo = Global | Area | Distrito | Unidade
 
 type PermissoesEfetivas = Mapping[str, Sequence[Escopo]]
 """Código da permissão (`recurso:acao`) → escopos em que o usuário a tem."""
+
+
+def escopo_de(nivel: str, id_do_escopo: str | None) -> Escopo:
+    """Escopo de uma atribuição a partir de `scope_type` e `scope_id` (texto; nulo se global).
+
+    Dado mal formado levanta `ValueError`: falha em vez de conceder.
+    """
+    try:
+        match nivel, id_do_escopo:
+            case "global", None:
+                return Global()
+            case "area", str(texto):
+                return Area(int(texto))
+            case "distrito", str(texto):
+                return Distrito(int(texto))
+            case "unidade", str(texto):
+                return Unidade(UUID(texto))
+    except ValueError as erro:
+        raise ValueError(f"escopo de atribuição inválido: {nivel!r}") from erro
+    raise ValueError(f"escopo de atribuição inválido: {nivel!r}")
+
+
+@dataclass(frozen=True, slots=True)
+class Concessao:
+    """Uma permissão que uma atribuição ativa dá ao usuário.
+
+    `escopo_maximo` é o `max_scope` da permissão no papel (`global`, `area`, `distrito` ou
+    `unidade`); `escopo` é o da atribuição; `valido_ate`, a expiração dela, se houver.
+    """
+
+    permissao: str
+    escopo_maximo: str
+    escopo: Escopo
+    valido_ate: datetime | None = None
+
+
+def permissoes_efetivas(concessoes: Iterable[Concessao]) -> PermissoesEfetivas:
+    """União das concessões, com cada escopo limitado pelo escopo máximo da permissão no papel."""
+    escopos: dict[str, dict[Escopo, None]] = {}
+    for concessao in concessoes:
+        escopo = _limitado(concessao.escopo, concessao.escopo_maximo)
+        if escopo is not None:
+            escopos.setdefault(concessao.permissao, {})[escopo] = None
+    return MappingProxyType({codigo: tuple(vistos) for codigo, vistos in escopos.items()})
+
+
+def _limitado(escopo: Escopo, maximo: str) -> Escopo | None:
+    """O escopo efetivo, ou `None` se a atribuição não dá a permissão.
+
+    Máximo `global` é a letra `G` da matriz (arquitetura-conceitual.md § 4): vale em todo lugar,
+    seja qual for o escopo da atribuição. Nos demais, vale o escopo da atribuição se estiver
+    contido no máximo (o mesmo nível, ou uma unidade, que está na sua área e no seu distrito);
+    mais amplo ou do outro eixo (área e distrito não se contêm), nega. Padrão registrado em
+    "Perguntas em aberto" da 003.
+    """
+    match maximo, escopo:
+        case "global", _:
+            return Global()
+        case "area", Area() | Unidade():
+            return escopo
+        case "distrito", Distrito() | Unidade():
+            return escopo
+        case "unidade", Unidade():
+            return escopo
+    return None
 
 
 @dataclass(frozen=True, slots=True)
