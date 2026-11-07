@@ -45,14 +45,19 @@ def ssl_context(mode: DatabaseSslMode, root_cert: Path | None) -> ssl.SSLContext
 
 def create_engine(url: str, settings: Settings, *, pooled: bool = True) -> AsyncEngine:
     connect_args = {"ssl": ssl_context(settings.database_ssl_mode, settings.database_ssl_root_cert)}
+    # Sem hide_parameters, o texto de um erro do banco traz os valores da consulta (um hash de
+    # senha, por exemplo), e o traceback vai para o log (R4.3).
     if not pooled:
-        return create_async_engine(url, poolclass=NullPool, connect_args=connect_args)
+        return create_async_engine(
+            url, poolclass=NullPool, connect_args=connect_args, hide_parameters=True
+        )
     return create_async_engine(
         url,
         pool_pre_ping=True,
         pool_size=settings.database_pool_size,
         max_overflow=settings.database_max_overflow,
         connect_args=connect_args,
+        hide_parameters=True,
     )
 
 
