@@ -1,6 +1,6 @@
 # 011 · Recursos de banco de dados · Tarefas
 
-- Status: Rascunho
+- Status: Aprovado (Rafael, 07/11/2026; aprovação só do dono pela exceção provisória de `steering/sdd-workflow.md`)
 - Depende de: 002 (`users`, na `main`); 003 (T1 para as tabelas de referência; T2/T4 para o `require` e a emenda `escopo_de_leitura`); 006 (T1, T5, T6, T9); 008 (T2)
 - Issue: #17 · Prazo da disciplina: 13/11/2026
 

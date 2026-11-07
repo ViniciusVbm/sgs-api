@@ -1,6 +1,6 @@
 # 003 · RBAC com escopo · Tarefas
 
-- Status: Rascunho
+- Status: Aprovado (Rafael, 07/11/2026; aprovação só do dono pela exceção provisória de `steering/sdd-workflow.md`)
 - Depende de: 002
 
 - [ ] T1. Migração `0003_access` com seed da matriz de papéis e permissões
