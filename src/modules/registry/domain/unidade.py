@@ -3,7 +3,10 @@
 import re
 import unicodedata
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
+from datetime import datetime
+from decimal import Decimal
+from uuid import UUID
 
 # O que o `\s` do Postgres casa num banco UTF-8 com locale `en_US.utf8` (imagem `postgres:17`).
 # Fica de fora o que o Python chama de espaço e o Postgres não: U+00A0, U+2007, U+202F (espaços
@@ -74,3 +77,53 @@ def campos_estruturais_alterados(mudancas: Iterable[Mudanca]) -> list[str]:
     alterá-lo. A verificação do escopo fica no caso de uso.
     """
     return [m.campo for m in mudancas if m.campo in CAMPOS_ESTRUTURAIS]
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class DadosDaUnidade:
+    """Campos de negócio da unidade, com os nomes das colunas de `health_units` (006/R1.2).
+
+    Os mesmos nomes de `CAMPOS_ESTRUTURAIS` e do `diff`, e os que a auditoria grava em `campo`.
+    O formato (CNES com 7 dígitos, CEP com 8, status) já vem conferido pelo schema da API.
+    """
+
+    name: str
+    unit_type_id: int
+    district_id: int
+    cep: str
+    address: str
+    status: str
+    cnes: str | None = None
+    neighborhood: str | None = None
+    phone: str | None = None
+    manager_name: str | None = None  # dado pessoal (LGPD)
+    opening_hours: Mapping[str, object] | None = None
+    latitude: Decimal | None = None
+    longitude: Decimal | None = None
+
+    @property
+    def cnes_pendente(self) -> bool:
+        """Unidade sem CNES, como os serviços municipais fora do cadastro federal (006/R1.5)."""
+        return self.cnes is None
+
+
+CAMPOS_DE_NEGOCIO = tuple(campo.name for campo in fields(DadosDaUnidade))
+"""Os campos de `DadosDaUnidade`, na ordem da declaração."""
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Unidade(DadosDaUnidade):
+    """A unidade gravada: os campos de negócio e os que o banco mantém.
+
+    `version` é incrementada pelo trigger da 011 (R8), `pending_issues` pela validação (007).
+    """
+
+    id: UUID
+    pending_issues: int
+    version: int
+    created_at: datetime
+    updated_at: datetime
+
+    def campos_de_negocio(self) -> dict[str, object]:
+        """Campo → valor, só os de `DadosDaUnidade` (o que a auditoria e o `diff` comparam)."""
+        return {campo: getattr(self, campo) for campo in CAMPOS_DE_NEGOCIO}
