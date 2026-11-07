@@ -8,7 +8,7 @@
   - Bloqueada por: nenhuma (002/T2 já na `main`)
   - Requisitos: R1.1, R1.2, R1.3
   - Pronto quando: `tests/integration/access/test_seed_matriz.py` passa
-- [ ] T2. Função de domínio `pode()` e tipos de escopo
+- [x] T2. Função de domínio `pode()` e tipos de escopo
   - Bloqueada por: nenhuma
   - Requisitos: R4.2, R4.3
   - Pronto quando: `tests/unit/access/test_pode_matriz.py` (parametrizado pela matriz) passa
