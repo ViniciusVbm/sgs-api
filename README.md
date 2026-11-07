@@ -40,10 +40,16 @@ Para rodar os testes num PostgreSQL já em execução, em vez do testcontainers,
 ## CI e proteção da `main`
 O workflow `.github/workflows/ci.yml` roda em todo PR: dependências travadas, ruff, mypy, import-linter, testes com cobertura (PostgreSQL de serviço), contrato OpenAPI, bandit e pip-audit (job `quality`); depois sobe o compose e chama `/health/ready` pelo proxy TLS (job `compose-smoke`).
 
-Para o merge ficar bloqueado quando algo falha (spec 001, R7.2), a `main` é protegida pelo ruleset "main protegida (spec 001, R7.2)" do repositório (Settings → Rules → Rulesets). Ele vale também para administradores, porque não tem lista de exceções:
-- só aceita mudanças por pull request, com 1 aprovação, descartando aprovações antigas quando chegam commits novos;
+Para o merge ficar bloqueado quando algo falha (spec 001, R7.2), a `main` é protegida por dois rulesets do repositório (Settings → Rules → Rulesets), conforme o [ADR-0008](docs/adr/0008-merge-admin-com-ci-obrigatorio.md).
+
+O ruleset "main protegida (spec 001, R7.2)":
+- só aceita mudanças por pull request;
 - exige os checks `quality` e `compose-smoke` verdes, com a branch atualizada;
 - bloqueia force-push e exclusão da branch.
+
+O ruleset "revisão humana (ADR-0008)" exige 1 aprovação, descartada quando chegam commits novos. O administrador do repositório pode dispensá-la ao fazer merge de um PR (`gh pr merge <n> --admin`).
+
+**Exceção provisória (desde 06/11/2026):** o GitHub Actions está bloqueado, então o administrador também pode fazer merge sem os checks, desde que o `make check` tenha passado localmente e o resultado esteja registrado no PR. A exceção sai quando o CI voltar ou a nova esteira entrar (ADR-0008).
 
 A regra foi testada em 03/10/2026 numa branch descartável: um PR com lint quebrado falhou no CI e o merge foi recusado ("the base branch policy prohibits the merge"). Na máquina de cada um, o hook `no-commit-to-branch` do pre-commit também recusa commits feitos direto na `main`.
 
@@ -53,7 +59,7 @@ A regra foi testada em 03/10/2026 numa branch descartável: um PR com lint quebr
 | [docs/research/01-pesquisa-stack-backend.md](docs/research/01-pesquisa-stack-backend.md) | Pesquisa da stack: FastAPI, auth, RBAC, LDAP, OIDC, S3, ferramentas |
 | [docs/architecture/arquitetura-conceitual.md](docs/architecture/arquitetura-conceitual.md) | Papéis, recursos, matriz de permissões, componentes, fluxos, rotas |
 | [docs/architecture/modelo-dados.md](docs/architecture/modelo-dados.md) | Tabelas e relacionamentos |
-| [docs/adr/](docs/adr/) | Decisões arquiteturais (ADR-0001 a 0007) |
+| [docs/adr/](docs/adr/) | Decisões arquiteturais (ADR-0001 a 0008) |
 | [specs/](specs/) | Specs SDD 001 a 010 (requisitos EARS, design, tarefas), rastreabilidade e calendário |
 | [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md), [steering/](steering/) | Contexto e regras para agentes de código |
 | [.claude/commands/](.claude/commands/) | Comandos do fluxo SDD no Claude Code |

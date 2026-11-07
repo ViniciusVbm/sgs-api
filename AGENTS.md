@@ -45,4 +45,4 @@ Código, nomes de variáveis e commits em inglês técnico quando for termo de p
 ## Commits e PRs
 - Conventional Commits: `feat(identity): login LDAP (004/T5)`. Sempre cite spec e tarefa.
 - Commits com ajuda de agente levam o trailer `Co-Authored-By:` do agente (alimenta o registro de uso de IA exigido na entrega final).
-- PR usa `.github/pull_request_template.md` e precisa de revisão de um integrante humano.
+- PR usa `.github/pull_request_template.md` e precisa de 1 aprovação humana. Exceção: o administrador do repositório pode fazer merge dos próprios PRs sem aprovação, depois de uma revisão por agente e com CI verde. Enquanto o GitHub Actions estiver bloqueado, o `make check` local verde, registrado no PR, substitui o CI (ADR-0008).
