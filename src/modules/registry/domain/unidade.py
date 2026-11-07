@@ -19,29 +19,27 @@ def normalizar_nome(nome: str) -> str:
     Espelha, passo a passo e na mesma ordem, a `fn_normalize_name` do banco (design da 011,
     § Na 0006), que gera `health_units.name_normalized`:
 
-        regexp_replace(lower(public.unaccent('public.unaccent'::regdictionary, btrim(p_name))),
-                       '\\s+', ' ', 'g')
+        btrim(regexp_replace(lower(public.unaccent('public.unaccent'::regdictionary, p_name)),
+                             '\\s+', ' ', 'g'))
 
-    1. `btrim` sem segundo argumento tira só o espaço comum (U+0020) das pontas;
-    2. `unaccent` vira decomposição NFD sem as marcas combinantes;
-    3. `lower`;
-    4. cada sequência do `\\s` do Postgres vira um espaço.
+    1. `unaccent` vira decomposição NFD sem as marcas combinantes;
+    2. `lower`;
+    3. cada sequência do `\\s` do Postgres vira um espaço;
+    4. `btrim` sem segundo argumento tira o espaço comum (U+0020) das pontas. Como vem por último,
+       tab e quebra de linha nas pontas já viraram espaço e também saem (decisão do Rafael,
+       07/11/2026; 011/R5.1).
 
     Conferida contra o banco (`postgres:17`, locale `en_US.utf8`) para letras latinas acentuadas
     e espaços. Fica de fora o que o `unaccent.rules` translitera além dos acentos (travessão
     U+2013, aspas curvas, ligaduras e letras cortadas como "æ", "ß", "ø", "ł") e as poucas marcas
     combinantes que ele mantém (U+034F, U+0363 a U+036F): aí os dois lados divergem. A unicidade
     (índice único sobre `name_normalized`) e a busca usam a função do banco, que é a fonte da
-    verdade; para consultar o banco, chame `fn_normalize_name` no SQL.
-
-    Como o `btrim` vem antes do `regexp_replace`, um tab ou uma quebra de linha na ponta vira um
-    espaço que fica no resultado; isso está em Perguntas em aberto da 011 (R5.1). Se a regra mudar
-    na 011, mude aqui também.
+    verdade; para consultar o banco, chame `fn_normalize_name` no SQL. Se a regra mudar na 011,
+    mude aqui também.
     """
-    sem_pontas = nome.strip(" ")
-    decomposto = unicodedata.normalize("NFD", sem_pontas)
+    decomposto = unicodedata.normalize("NFD", nome)
     sem_acento = "".join(c for c in decomposto if not unicodedata.combining(c))
-    return _ESPACOS_DO_POSTGRES.sub(" ", sem_acento.lower())
+    return _ESPACOS_DO_POSTGRES.sub(" ", sem_acento.lower()).strip(" ")
 
 
 @dataclass(frozen=True, slots=True)
