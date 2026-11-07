@@ -54,7 +54,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R7.1, R7.2, R7.3, R7.4, R7.5, R7.6
   - Pronto quando: `tests/integration/audit/test_log_banco.py` (INSERT/UPDATE/DELETE com de/para; superusuário → `via_api = false`; login da API → `true`; `manager_name` mascarado; só `pending_issues` → nenhuma linha; SET NULL e CASCADE geram linhas das filhas) e `tests/integration/audit/test_log_banco_privilegios.py` (login da API sem INSERT, UPDATE, DELETE e TRUNCATE) passam
 
-- [ ] T8. Procedimento com cursor das partições e comando administrativo
+- [x] T8. Procedimento com cursor das partições e comando administrativo
   - `sp_ensure_monthly_partitions` (cursor explícito, `LOCK` da DEFAULT, `format('%I'/'%L')`, sem DROP), `CALL` na migração com 12 meses e `sgs-admin banco particoes [--meses N]` (cria o ponto de entrada `sgs-admin` com `argparse` se a 002 ainda não o tiver criado).
   - Bloqueada por: T7
   - Requisitos: R6.5, R6.6, R6.7, R6.8, R10.1

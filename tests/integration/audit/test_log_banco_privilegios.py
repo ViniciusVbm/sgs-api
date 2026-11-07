@@ -22,7 +22,8 @@ ESCRITAS = {
     "delete": "DELETE FROM {tabela}",
     "truncate": "TRUNCATE {tabela}",
 }
-# A tabela-mãe e a partição que hoje guarda os registros: escrever direto nela também não pode.
+# A tabela-mãe e a partição DEFAULT: escrever direto nela também não pode. As mensais, onde os
+# registros caem desde a 011/T8, ficam sem privilégio nenhum (test_particoes.py).
 TABELAS = ("db_change_log", "db_change_log_default")
 
 

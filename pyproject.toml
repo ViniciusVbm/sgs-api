@@ -17,6 +17,10 @@ dependencies = [
   "pyjwt[crypto]>=2.15.0,<2.16",
 ]
 
+# Comandos de administração (spec 002 § Decisões: argparse). Subcomandos em src/tools/sgs_admin.py.
+[project.scripts]
+sgs-admin = "src.tools.sgs_admin:main"
+
 [dependency-groups]
 dev = [
   "ruff>=0.16.10,<0.17",
