@@ -14,9 +14,9 @@ Sem dados, a demonstração fica vazia e o dashboard não mostra nada. O cliente
 
 ### R1. Carga de demonstração
 - R1.1 QUANDO alguém executa `sgs-admin seed demo`, o sistema DEVE carregar referências, unidades, equipamentos e serviços de demonstração de forma idempotente (rodar duas vezes não duplica).
-- R1.2 A massa DEVE cobrir todos os distritos, os tipos de Saúde Mental (CAPS II, CAPS AD, CAPS i, CECON, SIM) e os casos especiais citados pelo cliente: unidade com dois equipamentos, equipamento sem unidade, serviço solto, CAPS com Farmácia, unidade sem CNES.
+- R1.2 A massa DEVE cobrir todos os distritos, os tipos de Saúde Mental (CAPS II, CAPS AD, CAPS i, CECON, SIM) e os casos especiais citados pelo cliente: unidade com dois equipamentos, equipamento sem unidade, serviço solto, CAPS com Farmácia, unidade sem CNES. Para as consultas da spec 011, também: unidade ativa sem serviço, unidade sem equipamento, serviço fora do CNES e unidades sem CNES distribuídas de forma desigual entre os distritos. As tabelas de negócio (unidades, equipamentos, serviços) DEVEM ter pelo menos 30 linhas.
 - R1.3 A massa DEVE incluir unidades com pendências de validação, para o dashboard mostrar qualidade.
-- R1.4 O sistema DEVE criar um usuário de demonstração por papel, com 2FA desativado apenas quando `APP_ENV=dev`.
+- R1.4 O sistema DEVE criar pelo menos 30 usuários de demonstração fictícios, cobrindo todos os papéis e escopos, com 2FA desativado apenas quando `APP_ENV=dev` (disciplina de Banco de Dados: 30 tuplas por tabela).
 - R1.5 Os nomes de pessoas DEVEM ser fictícios; nomes e CNES de unidades podem ser públicos.
 - R1.6 SE `APP_ENV=prod`, ENTÃO o comando DEVE recusar executar.
 

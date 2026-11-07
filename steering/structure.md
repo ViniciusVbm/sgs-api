@@ -44,3 +44,5 @@
 - Tabelas em inglês, plural: `health_units`, `report_jobs`.
 - Permissões `recurso:acao` em português: `unidade:update`.
 - Ações de auditoria `recurso.verbo_no_passado`: `unidade.atualizada`, `auth.login`.
+- Objetos de banco em inglês, com prefixo: `ix_` índice, `vw_` view, `fn_` função, `sp_` procedimento, `trg_` trigger (spec 011).
+- SQL escrito à mão (ADR-0009): DDL em `migrations/sql/<revisão>/NN_<nome>.sql`, uma instrução por arquivo; consultas em `src/modules/<módulo>/infrastructure/sql/<nome>.sql`.

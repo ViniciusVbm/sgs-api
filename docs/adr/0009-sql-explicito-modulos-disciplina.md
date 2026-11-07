@@ -22,6 +22,12 @@ Nos módulos `registry` e `dashboard` e nos módulos da spec de banco de dados, 
 - O DDL de views, funções, procedimentos e triggers fica nas migrações (`op.execute`), para continuar havendo uma fonte só de DDL.
 - O repositório passa a ter duas formas de acesso ao banco. A `steering/tech.md` registra qual vale em cada módulo.
 
+### Complemento da spec 011 (proposto em 07/11/2026)
+- O escopo inclui também as consultas de dados dos relatórios (`reports`), porque a disciplina pede "SQL das consultas necessárias para gerar os relatórios".
+- DDL em `migrations/sql/<revisão>/NN_<nome>.sql`, uma instrução por arquivo (o asyncpg prepara toda instrução), executado por um carregador que escapa `:`. Arquivo de revisão aplicada não é editado. Consultas em `src/modules/<módulo>/infrastructure/sql/*.sql`, carregadas em `text()`. Todo arquivo abre com cabeçalho de objetivo, justificativa e uso.
+- Views da spec 011 podem juntar tabelas de módulos diferentes (por exemplo, `audit_log` com `health_units` e `users`). Vale só para leitura, e a view é dona da junção: nenhum módulo importa `infrastructure` de outro.
+- O escopo de leitura entra no SQL explícito como parâmetros (`EscopoLeitura` da spec 003) num fragmento fixo, nunca montado com valores do usuário.
+
 ## Alternativas consideradas
 - SQL explícito em todo o projeto: obriga a reescrever o que a 001 já entregou (auditoria) sem ganho para a disciplina.
 - Manter só o SQLAlchemy Core: arrisca a nota da disciplina, e views, funções e procedimentos exigiriam SQL escrito à mão de qualquer jeito.
