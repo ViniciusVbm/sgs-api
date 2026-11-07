@@ -12,7 +12,7 @@ explica cada objeto (ADR-0009, 011/R11.1):
 - um trigger AFTER por linha em `health_units`, `equipments` e `services`.
 
 Revision ID: 0011_07
-Revises: 0011_03
+Revises: 0011_04
 Create Date: 2026-11-07
 """
 
@@ -23,7 +23,7 @@ from alembic import op
 from migrations.sql_loader import executar_sql
 
 revision: str = "0011_07"
-down_revision: str | Sequence[str] | None = "0011_03"
+down_revision: str | Sequence[str] | None = "0011_04"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
