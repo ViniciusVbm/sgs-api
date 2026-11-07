@@ -9,10 +9,11 @@ interpolado no texto.
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import TextClause, text
+from sqlalchemy import TextClause
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.escopo import parametros_de_escopo
+from src.core.sql import consulta
 from src.modules.dashboard.domain.consultas import (
     Filtros,
     ItemConciliacao,
@@ -23,20 +24,13 @@ from src.modules.dashboard.domain.consultas import (
 )
 from src.modules.dashboard.domain.ports import EscopoDeLeitura
 
-_PASTA_SQL = Path(__file__).resolve().parent / "sql"
+_SQL = Path(__file__).parent / "sql"
 
-
-def _consulta(nome: str) -> TextClause:
-    return text((_PASTA_SQL / f"{nome}.sql").read_text(encoding="utf-8"))
-
-
-_UNIDADES_SEM_SERVICO = _consulta("units_without_services")
-_CONCILIACAO_UNIDADE_EQUIPAMENTO = _consulta("unit_equipment_reconciliation")
-
-# Conferência dos filtros contra as referências da 006 (011/R2.9). Não são consultas da
-# disciplina: só dizem se o id existe, antes de a consulta de verdade rodar.
-_DISTRITO_EXISTE = text("SELECT EXISTS (SELECT 1 FROM districts WHERE id = :id)")
-_TIPO_DE_UNIDADE_EXISTE = text("SELECT EXISTS (SELECT 1 FROM unit_types WHERE id = :id)")
+_UNIDADES_SEM_SERVICO = consulta(_SQL / "units_without_services.sql")
+_CONCILIACAO_UNIDADE_EQUIPAMENTO = consulta(_SQL / "unit_equipment_reconciliation.sql")
+# Conferência dos filtros contra as referências da 006, antes da consulta (011/R2.9).
+_DISTRITO_EXISTE = consulta(_SQL / "district_exists.sql")
+_TIPO_DE_UNIDADE_EXISTE = consulta(_SQL / "unit_type_exists.sql")
 
 
 class SqlConsultasDashboard:
@@ -46,10 +40,10 @@ class SqlConsultasDashboard:
         self._session = session
 
     async def distrito_existe(self, distrito: int) -> bool:
-        return bool(await self._session.scalar(_DISTRITO_EXISTE, {"id": distrito}))
+        return bool(await self._session.scalar(_DISTRITO_EXISTE, {"district_id": distrito}))
 
     async def tipo_de_unidade_existe(self, tipo: int) -> bool:
-        return bool(await self._session.scalar(_TIPO_DE_UNIDADE_EXISTE, {"id": tipo}))
+        return bool(await self._session.scalar(_TIPO_DE_UNIDADE_EXISTE, {"unit_type_id": tipo}))
 
     async def unidades_sem_servico(
         self, escopo: EscopoDeLeitura, filtros: Filtros, pagina: Pagina

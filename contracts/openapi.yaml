@@ -134,10 +134,327 @@
           }
         ]
       }
+    },
+    "/api/v1/dashboard/consultas/unidades-sem-servico": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Unidades sem nenhum serviço cadastrado (anti join)",
+        "description": "011/R2.1: unidades não inativas sem serviço, no escopo de leitura do usuário.",
+        "operationId": "unidades_sem_servico_api_v1_dashboard_consultas_unidades_sem_servico_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "distrito",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do distrito sanitário.",
+              "title": "Distrito"
+            },
+            "description": "Id do distrito sanitário."
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do tipo de unidade.",
+              "title": "Tipo"
+            },
+            "description": "Id do tipo de unidade."
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 1,
+              "description": "Página, a partir de 1.",
+              "default": 1,
+              "title": "Pagina"
+            },
+            "description": "Página, a partir de 1."
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Itens por página (padrão 20, máximo 100).",
+              "default": 20,
+              "title": "Tamanho"
+            },
+            "description": "Itens por página (padrão 20, máximo 100)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOut_UnidadeResumoOut_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `dashboard:read`",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Filtro mal formado, ou distrito ou tipo inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/consultas/conciliacao-unidade-equipamento": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Conciliação unidade x equipamento (full outer join)",
+        "description": "011/R2.2, R2.6: pares, unidades sem equipamento e, só com escopo global e sem filtro,\nequipamentos sem unidade.",
+        "operationId": "conciliacao_unidade_equipamento_api_v1_dashboard_consultas_conciliacao_unidade_equipamento_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "distrito",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do distrito sanitário.",
+              "title": "Distrito"
+            },
+            "description": "Id do distrito sanitário."
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do tipo de unidade.",
+              "title": "Tipo"
+            },
+            "description": "Id do tipo de unidade."
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 1,
+              "description": "Página, a partir de 1.",
+              "default": 1,
+              "title": "Pagina"
+            },
+            "description": "Página, a partir de 1."
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Itens por página (padrão 20, máximo 100).",
+              "default": 20,
+              "title": "Tamanho"
+            },
+            "description": "Itens por página (padrão 20, máximo 100)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOut_ConciliacaoOut_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `dashboard:read`",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Filtro mal formado, ou distrito ou tipo inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ConciliacaoOut": {
+        "properties": {
+          "unidade_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unidade Id"
+          },
+          "unidade_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unidade Nome"
+          },
+          "distrito": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distrito"
+          },
+          "equipamento_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equipamento Id"
+          },
+          "equipamento_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equipamento Nome"
+          },
+          "equipamento_tipo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equipamento Tipo"
+          },
+          "situacao": {
+            "$ref": "#/components/schemas/SituacaoConciliacao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unidade_id",
+          "unidade_nome",
+          "distrito",
+          "equipamento_id",
+          "equipamento_nome",
+          "equipamento_tipo",
+          "situacao"
+        ],
+        "title": "ConciliacaoOut",
+        "description": "Linha da conciliação unidade x equipamento; o lado que faltar vem nulo. `distrito` é o\nnome do distrito da unidade e `equipamento_tipo`, o nome do tipo do equipamento."
+      },
       "HealthStatus": {
         "properties": {
           "status": {
@@ -211,6 +528,78 @@
           "keys"
         ],
         "title": "Jwks"
+      },
+      "PaginaOut_ConciliacaoOut_": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ConciliacaoOut"
+            },
+            "type": "array",
+            "title": "Itens"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "pagina": {
+            "type": "integer",
+            "title": "Pagina"
+          },
+          "tamanho": {
+            "type": "integer",
+            "title": "Tamanho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itens",
+          "total",
+          "pagina",
+          "tamanho"
+        ],
+        "title": "PaginaOut[ConciliacaoOut]"
+      },
+      "PaginaOut_UnidadeResumoOut_": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/UnidadeResumoOut"
+            },
+            "type": "array",
+            "title": "Itens"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "pagina": {
+            "type": "integer",
+            "title": "Pagina"
+          },
+          "tamanho": {
+            "type": "integer",
+            "title": "Tamanho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itens",
+          "total",
+          "pagina",
+          "tamanho"
+        ],
+        "title": "PaginaOut[UnidadeResumoOut]"
+      },
+      "SituacaoConciliacao": {
+        "type": "string",
+        "enum": [
+          "par",
+          "unidade_sem_equipamento",
+          "equipamento_sem_unidade"
+        ],
+        "title": "SituacaoConciliacao",
+        "description": "Lado da conciliação unidade x equipamento em que a linha caiu (011/R2.2)."
       },
       "UnidadeCreate": {
         "properties": {
@@ -516,6 +905,48 @@
         ],
         "title": "UnidadeOut",
         "description": "A unidade completa. `versao` é a mesma do cabeçalho `ETag` (006/R3.2)."
+      },
+      "UnidadeResumoOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "cnes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnes"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "distrito": {
+            "type": "string",
+            "title": "Distrito"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "cnes",
+          "tipo",
+          "distrito"
+        ],
+        "title": "UnidadeResumoOut",
+        "description": "Unidade numa consulta de qualidade; `tipo` e `distrito` são os nomes, para leitura."
       }
     },
     "securitySchemes": {

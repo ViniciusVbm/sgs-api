@@ -5,7 +5,6 @@ exatamente os casos semeados. O escopo de leitura vem das atribuições do usuá
 """
 
 from collections.abc import AsyncIterator
-from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -14,14 +13,12 @@ import pytest
 from fastapi import FastAPI
 from pydantic import SecretStr
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncConnection, async_sessionmaker
 
 from src.core.ids import uuid7
 from src.main import create_app
-from src.modules.identity.domain.sessions import AuthSession
-from src.modules.identity.domain.tokens import TokenService
-from src.modules.identity.infrastructure.repository import SqlSessionRepository, SqlUserRepository
-from tests.factories import make_auth_session, make_settings, make_user
+from tests.factories import make_settings
+from tests.integration.acesso import GLOBAL, Sessoes, bearer, id_pelo_codigo, logado
 from tests.integration.postgres import BancoDeTeste, motor
 from tests.integration.registry.cadastro import (
     inserir_equipamento,
@@ -31,8 +28,6 @@ from tests.integration.registry.cadastro import (
 
 UNIDADES_SEM_SERVICO = "/api/v1/dashboard/consultas/unidades-sem-servico"
 CONCILIACAO = "/api/v1/dashboard/consultas/conciliacao-unidade-equipamento"
-
-GLOBAL: tuple[str, str | None] = ("global", None)
 
 # Id de referência no formato certo que não existe (a 0006 semeia 8 distritos e 7 tipos).
 INEXISTENTE = 999
@@ -53,7 +48,7 @@ async def cliente(app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
 
 
 @pytest.fixture
-async def sessoes(banco: BancoDeTeste) -> AsyncIterator[async_sessionmaker[AsyncSession]]:
+async def sessoes(banco: BancoDeTeste) -> AsyncIterator[Sessoes]:
     """Sessões com o login da API (papel sgs_app), para criar usuários e atribuições."""
     engine = motor(banco.url_api)
     yield async_sessionmaker(engine, expire_on_commit=False)
@@ -95,51 +90,6 @@ async def _criar_painel_distrital(dono: AsyncConnection) -> None:
     )
 
 
-_ID_PELO_CODIGO = {
-    "distrito": text("SELECT id FROM districts WHERE code = :codigo"),
-    "tipo": text("SELECT id FROM unit_types WHERE code = :codigo"),
-}
-
-
-async def _id(dono: AsyncConnection, referencia: str, codigo: str) -> int:
-    """Id do distrito ou do tipo de unidade semeado (0006) com `codigo`."""
-    id_ = await dono.scalar(_ID_PELO_CODIGO[referencia], {"codigo": codigo})
-    assert isinstance(id_, int)
-    return id_
-
-
-async def _logado(
-    sessoes: async_sessionmaker[AsyncSession], papel: str, escopo: tuple[str, str | None]
-) -> AuthSession:
-    """Usuário ativo com um papel atribuído no escopo dado e uma sessão de login aberta."""
-    id_ = uuid7()
-    usuario = make_user(id=id_, username=f"u{id_.hex}", email=None)
-    sessao_de_login = make_auth_session(user_id=id_, created_at=datetime.now(UTC))
-    async with sessoes() as sessao, sessao.begin():
-        await SqlUserRepository(sessao).add(usuario)
-        await sessao.execute(
-            text(
-                "INSERT INTO role_assignments (id, user_id, role_id, scope_type, scope_id, origin)"
-                " SELECT :id, :usuario, id, :tipo, :id_do_escopo, 'direct'"
-                " FROM roles WHERE code = :papel"
-            ),
-            {
-                "id": uuid7(),
-                "usuario": id_,
-                "tipo": escopo[0],
-                "id_do_escopo": escopo[1],
-                "papel": papel,
-            },
-        )
-        await SqlSessionRepository(sessao).add(sessao_de_login)
-    return sessao_de_login
-
-
-def _bearer(app: FastAPI, sessao_de_login: AuthSession) -> dict[str, str]:
-    tokens: TokenService = app.state.token_service
-    return {"Authorization": f"Bearer {tokens.issue_access_token(sessao_de_login).token}"}
-
-
 def _resumo(
     id_: UUID, nome: str, tipo: str, distrito: str, cnes: str | None = None
 ) -> dict[str, Any]:
@@ -161,7 +111,7 @@ async def _em_implantacao(dono: AsyncConnection, unidade: UUID) -> None:
 async def test_unidades_sem_servico_lista_as_unidades_nao_inativas_sem_nenhum_servico(
     app: FastAPI,
     cliente: httpx.AsyncClient,
-    sessoes: async_sessionmaker[AsyncSession],
+    sessoes: Sessoes,
     dono: AsyncConnection,
 ) -> None:
     """011/R2.1: anti join; unidade inativa fica de fora e serviço solto não conta para ninguém.
@@ -179,9 +129,9 @@ async def test_unidades_sem_servico_lista_as_unidades_nao_inativas_sem_nenhum_se
     await _inativar(dono, inativa)
     await inserir_servico(dono, None, nome="Sala de Vacinação do Shopping", tipo="SALA_VACINA")
     await dono.commit()
-    gestor = await _logado(sessoes, "GESTOR_DADOS", GLOBAL)
+    gestor = await logado(sessoes, ("GESTOR_DADOS", GLOBAL))
 
-    resposta = await cliente.get(UNIDADES_SEM_SERVICO, headers=_bearer(app, gestor))
+    resposta = await cliente.get(UNIDADES_SEM_SERVICO, headers=bearer(app, gestor))
 
     assert resposta.status_code == 200
     assert resposta.json() == {
@@ -205,18 +155,18 @@ async def test_unidades_sem_servico_lista_as_unidades_nao_inativas_sem_nenhum_se
 async def test_unidades_sem_servico_com_escopo_distrital_lista_so_as_do_distrito(
     app: FastAPI,
     cliente: httpx.AsyncClient,
-    sessoes: async_sessionmaker[AsyncSession],
+    sessoes: Sessoes,
     dono: AsyncConnection,
 ) -> None:
     """011/R2.5: o escopo de leitura do usuário (spec 003) limita a consulta."""
     await inserir_unidade(dono, "CAPS David Capistrano", distrito="DS-I")
     usf = await inserir_unidade(dono, "USF Ibura", distrito="DS-III", tipo="USF")
     await _criar_painel_distrital(dono)
-    ds3 = await _id(dono, "distrito", "DS-III")
+    ds3 = await id_pelo_codigo(sessoes, "distrito", "DS-III")
     await dono.commit()
-    tecnico = await _logado(sessoes, PAINEL_DISTRITAL, ("distrito", str(ds3)))
+    tecnico = await logado(sessoes, (PAINEL_DISTRITAL, ("distrito", str(ds3))))
 
-    resposta = await cliente.get(UNIDADES_SEM_SERVICO, headers=_bearer(app, tecnico))
+    resposta = await cliente.get(UNIDADES_SEM_SERVICO, headers=bearer(app, tecnico))
 
     assert resposta.status_code == 200
     assert resposta.json()["itens"] == [
@@ -228,7 +178,7 @@ async def test_unidades_sem_servico_com_escopo_distrital_lista_so_as_do_distrito
 async def test_unidades_sem_servico_filtra_por_distrito_e_por_tipo(
     app: FastAPI,
     cliente: httpx.AsyncClient,
-    sessoes: async_sessionmaker[AsyncSession],
+    sessoes: Sessoes,
     dono: AsyncConnection,
 ) -> None:
     """011/R2.7: filtro por distrito e por tipo de unidade, combináveis."""
@@ -236,14 +186,14 @@ async def test_unidades_sem_servico_filtra_por_distrito_e_por_tipo(
     usf_ds1 = await inserir_unidade(dono, "USF Coque", distrito="DS-I", tipo="USF")
     caps_ds3 = await inserir_unidade(dono, "CAPS Galdino Loreto", distrito="DS-III")
     usf_ds3 = await inserir_unidade(dono, "USF Ibura", distrito="DS-III", tipo="USF")
-    ds3 = await _id(dono, "distrito", "DS-III")
-    usf = await _id(dono, "tipo", "USF")
+    ds3 = await id_pelo_codigo(sessoes, "distrito", "DS-III")
+    usf = await id_pelo_codigo(sessoes, "tipo_unidade", "USF")
     await dono.commit()
-    gestor = await _logado(sessoes, "GESTOR_DADOS", GLOBAL)
+    gestor = await logado(sessoes, ("GESTOR_DADOS", GLOBAL))
 
     async def ids(**filtros: int) -> list[str]:
         resposta = await cliente.get(
-            UNIDADES_SEM_SERVICO, params=filtros, headers=_bearer(app, gestor)
+            UNIDADES_SEM_SERVICO, params=filtros, headers=bearer(app, gestor)
         )
         assert resposta.status_code == 200
         return [item["id"] for item in resposta.json()["itens"]]
@@ -265,24 +215,24 @@ async def _sem_token_responde_401(cliente: httpx.AsyncClient, rota: str) -> None
 
 
 async def _sem_dashboard_read_responde_403(
-    app: FastAPI, cliente: httpx.AsyncClient, sessoes: async_sessionmaker[AsyncSession], rota: str
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes, rota: str
 ) -> None:
     # AUDITOR tem escopo global, mas não tem `dashboard:read` (matriz da 0003).
-    auditor = await _logado(sessoes, "AUDITOR", GLOBAL)
+    auditor = await logado(sessoes, ("AUDITOR", GLOBAL))
 
-    resposta = await cliente.get(rota, headers=_bearer(app, auditor))
+    resposta = await cliente.get(rota, headers=bearer(app, auditor))
 
     assert resposta.status_code == 403
     assert resposta.headers["content-type"] == "application/problem+json"
 
 
 async def _referencia_inexistente_responde_422(
-    app: FastAPI, cliente: httpx.AsyncClient, sessoes: async_sessionmaker[AsyncSession], rota: str
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes, rota: str
 ) -> None:
-    gestor = await _logado(sessoes, "GESTOR_DADOS", GLOBAL)
+    gestor = await logado(sessoes, ("GESTOR_DADOS", GLOBAL))
 
     resposta = await cliente.get(
-        rota, params={"distrito": INEXISTENTE, "tipo": INEXISTENTE}, headers=_bearer(app, gestor)
+        rota, params={"distrito": INEXISTENTE, "tipo": INEXISTENTE}, headers=bearer(app, gestor)
     )
 
     assert resposta.status_code == 422
@@ -306,14 +256,14 @@ MAL_FORMADOS = [
 async def _filtro_mal_formado_responde_422(
     app: FastAPI,
     cliente: httpx.AsyncClient,
-    sessoes: async_sessionmaker[AsyncSession],
+    sessoes: Sessoes,
     rota: str,
     params: dict[str, str],
     campo: str,
 ) -> None:
-    gestor = await _logado(sessoes, "GESTOR_DADOS", GLOBAL)
+    gestor = await logado(sessoes, ("GESTOR_DADOS", GLOBAL))
 
-    resposta = await cliente.get(rota, params=params, headers=_bearer(app, gestor))
+    resposta = await cliente.get(rota, params=params, headers=bearer(app, gestor))
 
     assert resposta.status_code == 422
     assert [erro["campo"] for erro in resposta.json()["errors"]] == [campo]
@@ -325,14 +275,14 @@ async def test_unidades_sem_servico_sem_token_responde_401(cliente: httpx.AsyncC
 
 
 async def test_unidades_sem_servico_sem_dashboard_read_responde_403(
-    app: FastAPI, cliente: httpx.AsyncClient, sessoes: async_sessionmaker[AsyncSession]
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes
 ) -> None:
     """011/R2.8"""
     await _sem_dashboard_read_responde_403(app, cliente, sessoes, UNIDADES_SEM_SERVICO)
 
 
 async def test_unidades_sem_servico_com_distrito_ou_tipo_inexistente_responde_422(
-    app: FastAPI, cliente: httpx.AsyncClient, sessoes: async_sessionmaker[AsyncSession]
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes
 ) -> None:
     """011/R2.9: distrito ou tipo que não existe nas referências (design: conferido pela
     application antes da consulta)."""
@@ -343,7 +293,7 @@ async def test_unidades_sem_servico_com_distrito_ou_tipo_inexistente_responde_42
 async def test_unidades_sem_servico_com_filtro_mal_formado_responde_422(
     app: FastAPI,
     cliente: httpx.AsyncClient,
-    sessoes: async_sessionmaker[AsyncSession],
+    sessoes: Sessoes,
     params: dict[str, str],
     campo: str,
 ) -> None:
@@ -356,7 +306,7 @@ async def test_unidades_sem_servico_com_filtro_mal_formado_responde_422(
 async def test_unidades_sem_servico_pagina_o_resultado(
     app: FastAPI,
     cliente: httpx.AsyncClient,
-    sessoes: async_sessionmaker[AsyncSession],
+    sessoes: Sessoes,
     dono: AsyncConnection,
 ) -> None:
     """011/R2.1; design § Rotas: `PaginaOut` com o total da consulta inteira, também numa página
@@ -365,13 +315,13 @@ async def test_unidades_sem_servico_pagina_o_resultado(
     segunda = await inserir_unidade(dono, "CAPS B", distrito="DS-I")
     await inserir_unidade(dono, "CAPS C", distrito="DS-I")
     await dono.commit()
-    gestor = await _logado(sessoes, "GESTOR_DADOS", GLOBAL)
+    gestor = await logado(sessoes, ("GESTOR_DADOS", GLOBAL))
 
     async def pagina(numero: int) -> dict[str, Any]:
         resposta = await cliente.get(
             UNIDADES_SEM_SERVICO,
             params={"pagina": numero, "tamanho": 1},
-            headers=_bearer(app, gestor),
+            headers=bearer(app, gestor),
         )
         assert resposta.status_code == 200
         corpo: dict[str, Any] = resposta.json()
@@ -409,7 +359,7 @@ def _conciliacao(
 async def test_conciliacao_lista_pares_unidades_sem_equipamento_e_equipamentos_sem_unidade(
     app: FastAPI,
     cliente: httpx.AsyncClient,
-    sessoes: async_sessionmaker[AsyncSession],
+    sessoes: Sessoes,
     dono: AsyncConnection,
 ) -> None:
     """011/R2.2, R2.6: full outer join; com escopo global, o equipamento sem unidade aparece."""
@@ -424,9 +374,9 @@ async def test_conciliacao_lista_pares_unidades_sem_equipamento_e_equipamentos_s
     usf = await inserir_unidade(dono, "USF Ibura", distrito="DS-III", tipo="USF")
     samu = await inserir_equipamento(dono, None, nome="UTI móvel SAMU 01", tipo="UTI_MOVEL")
     await dono.commit()
-    gestor = await _logado(sessoes, "GESTOR_DADOS", GLOBAL)
+    gestor = await logado(sessoes, ("GESTOR_DADOS", GLOBAL))
 
-    resposta = await cliente.get(CONCILIACAO, headers=_bearer(app, gestor))
+    resposta = await cliente.get(CONCILIACAO, headers=bearer(app, gestor))
 
     assert resposta.status_code == 200
     ds1, ds3 = "Distrito Sanitário I", "Distrito Sanitário III"
@@ -453,7 +403,7 @@ async def test_conciliacao_lista_pares_unidades_sem_equipamento_e_equipamentos_s
 async def test_conciliacao_com_escopo_distrital_nao_mostra_equipamento_de_fora_nem_sem_unidade(
     app: FastAPI,
     cliente: httpx.AsyncClient,
-    sessoes: async_sessionmaker[AsyncSession],
+    sessoes: Sessoes,
     dono: AsyncConnection,
 ) -> None:
     """011/R2.5, R2.6: os dois lados são filtrados antes da junção; o equipamento de uma unidade
@@ -471,11 +421,11 @@ async def test_conciliacao_com_escopo_distrital_nao_mostra_equipamento_de_fora_n
     )
     await inserir_equipamento(dono, None, nome="UTI móvel SAMU 01", tipo="UTI_MOVEL")
     await _criar_painel_distrital(dono)
-    ds3 = await _id(dono, "distrito", "DS-III")
+    ds3 = await id_pelo_codigo(sessoes, "distrito", "DS-III")
     await dono.commit()
-    tecnico = await _logado(sessoes, PAINEL_DISTRITAL, ("distrito", str(ds3)))
+    tecnico = await logado(sessoes, (PAINEL_DISTRITAL, ("distrito", str(ds3))))
 
-    resposta = await cliente.get(CONCILIACAO, headers=_bearer(app, tecnico))
+    resposta = await cliente.get(CONCILIACAO, headers=bearer(app, tecnico))
 
     assert resposta.status_code == 200
     ds3_ = "Distrito Sanitário III"
@@ -493,7 +443,7 @@ async def test_conciliacao_com_escopo_distrital_nao_mostra_equipamento_de_fora_n
 async def test_conciliacao_com_filtro_nao_mostra_equipamento_sem_unidade(
     app: FastAPI,
     cliente: httpx.AsyncClient,
-    sessoes: async_sessionmaker[AsyncSession],
+    sessoes: Sessoes,
     dono: AsyncConnection,
 ) -> None:
     """011/R2.6, R2.7: mesmo com escopo global, o equipamento sem unidade não tem distrito nem
@@ -501,13 +451,13 @@ async def test_conciliacao_com_filtro_nao_mostra_equipamento_sem_unidade(
     caps = await inserir_unidade(dono, "CAPS David Capistrano", distrito="DS-I")
     usf = await inserir_unidade(dono, "USF Ibura", distrito="DS-III", tipo="USF")
     await inserir_equipamento(dono, None, nome="UTI móvel SAMU 01", tipo="UTI_MOVEL")
-    ds1 = await _id(dono, "distrito", "DS-I")
-    tipo_usf = await _id(dono, "tipo", "USF")
+    ds1 = await id_pelo_codigo(sessoes, "distrito", "DS-I")
+    tipo_usf = await id_pelo_codigo(sessoes, "tipo_unidade", "USF")
     await dono.commit()
-    gestor = await _logado(sessoes, "GESTOR_DADOS", GLOBAL)
+    gestor = await logado(sessoes, ("GESTOR_DADOS", GLOBAL))
 
     async def itens(**filtros: int) -> list[dict[str, Any]]:
-        resposta = await cliente.get(CONCILIACAO, params=filtros, headers=_bearer(app, gestor))
+        resposta = await cliente.get(CONCILIACAO, params=filtros, headers=bearer(app, gestor))
         assert resposta.status_code == 200
         itens: list[dict[str, Any]] = resposta.json()["itens"]
         return itens
@@ -527,14 +477,14 @@ async def test_conciliacao_sem_token_responde_401(cliente: httpx.AsyncClient) ->
 
 
 async def test_conciliacao_sem_dashboard_read_responde_403(
-    app: FastAPI, cliente: httpx.AsyncClient, sessoes: async_sessionmaker[AsyncSession]
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes
 ) -> None:
     """011/R2.8"""
     await _sem_dashboard_read_responde_403(app, cliente, sessoes, CONCILIACAO)
 
 
 async def test_conciliacao_com_distrito_ou_tipo_inexistente_responde_422(
-    app: FastAPI, cliente: httpx.AsyncClient, sessoes: async_sessionmaker[AsyncSession]
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes
 ) -> None:
     """011/R2.9: distrito ou tipo que não existe nas referências."""
     await _referencia_inexistente_responde_422(app, cliente, sessoes, CONCILIACAO)
@@ -544,7 +494,7 @@ async def test_conciliacao_com_distrito_ou_tipo_inexistente_responde_422(
 async def test_conciliacao_com_filtro_mal_formado_responde_422(
     app: FastAPI,
     cliente: httpx.AsyncClient,
-    sessoes: async_sessionmaker[AsyncSession],
+    sessoes: Sessoes,
     params: dict[str, str],
     campo: str,
 ) -> None:
