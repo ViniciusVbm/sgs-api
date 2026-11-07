@@ -16,7 +16,7 @@
   - Bloqueada por: T1, T2
   - Requisitos: R4.5
   - Pronto quando: `tests/integration/access/test_permissoes_efetivas.py` passa
-- [ ] T4. Dependência `require()` e `scope_filter()`
+- [x] T4. Dependência `require()` e `scope_filter()`
   - Inclui `escopo_de_leitura(usuario, perm) -> EscopoLeitura` para o SQL escrito à mão (emenda da 011).
   - Inclui o `CurrentUser` da 002 (`identity/api/deps.py`); `test_require.py` cobre 401 sem Bearer, com token inválido e com sessão revogada.
   - Bloqueada por: T3, 002/T4

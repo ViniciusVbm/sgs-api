@@ -140,3 +140,29 @@ def _cobre(escopo: Escopo, alvo: Alvo) -> bool:
             return distrito_id == alvo.distrito_id
         case Unidade(id=unidade_id):
             return unidade_id == alvo.unidade_id
+
+
+@dataclass(frozen=True, slots=True)
+class EscopoLeitura:
+    """Escopos de uma permissão separados por nível, para filtrar uma listagem (R4.4).
+
+    Vale o item que estiver em algum deles: tudo, se `global_`; senão, os da área técnica, do
+    distrito ou da unidade listados. Sem nenhum, a listagem sai vazia. Vai para o SQL como
+    parâmetros (`src/core/escopo.py`), nunca como texto.
+    """
+
+    global_: bool = False
+    areas: tuple[int, ...] = ()
+    distritos: tuple[int, ...] = ()
+    unidades: tuple[UUID, ...] = ()
+
+
+def escopo_de_leitura(perms: PermissoesEfetivas, perm: str) -> EscopoLeitura:
+    """O `EscopoLeitura` de `perm`; vazio se o usuário não a tem (deny by default)."""
+    escopos = perms.get(perm, ())
+    return EscopoLeitura(
+        global_=any(isinstance(escopo, Global) for escopo in escopos),
+        areas=tuple(sorted(e.id for e in escopos if isinstance(e, Area))),
+        distritos=tuple(sorted(e.id for e in escopos if isinstance(e, Distrito))),
+        unidades=tuple(sorted(e.id for e in escopos if isinstance(e, Unidade))),
+    )
