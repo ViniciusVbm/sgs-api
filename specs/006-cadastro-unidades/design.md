@@ -1,6 +1,6 @@
 # 006 · Cadastro de unidades, equipamentos e serviços · Design
 
-- Status: Rascunho
+- Status: Aprovado (Rafael, 07/11/2026; aprovação só do dono pela exceção provisória de `steering/sdd-workflow.md`)
 
 ## Módulo
 `modules/registry`. Usa `access` (require/scope_filter) e `audit` (registrar).
