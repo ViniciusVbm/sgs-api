@@ -15,7 +15,7 @@
 - [ ] T3. `PasswordHasher` Argon2id e caso de uso de login com hash fictício e bloqueio
   - Requisitos: R1.1, R1.2, R1.3, R1.4, R1.6
   - Pronto quando: `tests/integration/identity/test_login.py` passa
-- [ ] T4. `TokenService` ES256 + JWKS, com as chaves de assinatura (`JWT_PRIVATE_KEYS`) no `Settings`
+- [x] T4. `TokenService` ES256 + JWKS, com as chaves de assinatura (`JWT_PRIVATE_KEYS`) no `Settings`
   - Bloqueada por: nenhuma
   - Bloqueia: 003/T4 e 003/T6
   - Requisitos: R3.1, R3.2, R3.8; 001/R2.2 e R2.3 para as chaves

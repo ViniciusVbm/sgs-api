@@ -8,10 +8,13 @@ Documentação, specs e steering vêm primeiro; o código segue as specs aprovad
 Pré-requisito: Docker com Compose v2. O compose sobe a API, o PostgreSQL 17 e um proxy TLS (Caddy). LDAP, Keycloak e S3 local entram nas specs 004 e 005.
 
 ```bash
+mkdir -p secrets
+uv run python -m src.tools.jwt_keys --output secrets/jwt-keys.json   # uma vez: chave JWT de dev
 docker compose -f docker/compose.yml up -d --build --wait
 curl -k https://localhost/health/ready      # {"status":"ok"}
 ```
 
+- A API assina os access tokens (ES256) com a chave de `secrets/jwt-keys.json`, montada no container e lida por `JWT_PRIVATE_KEYS_FILE`; sem ela, não sobe. O arquivo é segredo e fica fora do Git. Formato e rotação: `src/tools/jwt_keys.py` e `.env.example`.
 - Em `dev`, a API aplica as migrações na subida. Ela conecta como `sgs_api`, membro do papel `sgs_app`, que só insere e lê a trilha de auditoria; as migrações usam o dono do banco, `sgs`.
 - As senhas do compose são de desenvolvimento; a API recusa iniciar com elas em `prod`.
 - O certificado vem da CA interna do Caddy, por isso o `-k`. Para confiar na CA em vez disso (`secrets/` fica fora do Git):
