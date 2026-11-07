@@ -12,5 +12,6 @@ Cada decisão arquitetural relevante vira um arquivo curto e imutável. Para mud
 | [0006](0006-sdd-e-esteira-agentica.md) | Spec-driven development e esteira agêntica | Proposto; revisão de PR alterada pelo [0008](0008-merge-admin-com-ci-obrigatorio.md) |
 | [0007](0007-dependencias-complementares.md) | Dependências complementares da stack (Uvicorn, slowapi, pytest-cov) | Aceito |
 | [0008](0008-merge-admin-com-ci-obrigatorio.md) | Merge pelo administrador sem aprovação, com CI obrigatório | Aceito |
+| [0009](0009-sql-explicito-modulos-disciplina.md) | SQL explícito nos módulos cobrados pela disciplina de Banco de Dados | Proposto |
 
 Modelo: `0000-modelo.md`.

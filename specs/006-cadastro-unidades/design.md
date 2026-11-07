@@ -5,6 +5,8 @@
 ## Módulo
 `modules/registry`. Usa `access` (require/scope_filter) e `audit` (registrar).
 
+Os repositórios escrevem o SQL à mão com `text()` e parâmetros nomeados (ADR-0009). As tabelas continuam declaradas em `infrastructure/tables.py` para as migrações.
+
 ## Modelo
 Migração `0006_registry` completa as tabelas de `docs/architecture/modelo-dados.md` §2: `districts`, `technical_areas`, `unit_types`, `equipment_types`, `service_types`, `health_units`, `equipments`, `services`. Acréscimos:
 - `health_units.version` (int) para ETag/`If-Match` (R3.2).

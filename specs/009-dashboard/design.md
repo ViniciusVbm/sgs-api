@@ -4,6 +4,7 @@
 
 ## Implementação
 - Módulo `dashboard` só lê; consultas `GROUP BY` com `scope_filter` aplicado (spec 003). Sem tabela própria (Atividade 5 §4).
+- Consultas em SQL escrito à mão com `text()` e parâmetros nomeados (ADR-0009).
 - Uma consulta por bloco, executadas em paralelo com `asyncio.gather` em sessões separadas.
 - Cache em memória de 30 s por (usuário, filtros); invalidado por versão global incrementada a cada gravação no `registry`.
 

@@ -59,7 +59,7 @@ A regra foi testada em 03/10/2026 numa branch descartável: um PR com lint quebr
 | [docs/research/01-pesquisa-stack-backend.md](docs/research/01-pesquisa-stack-backend.md) | Pesquisa da stack: FastAPI, auth, RBAC, LDAP, OIDC, S3, ferramentas |
 | [docs/architecture/arquitetura-conceitual.md](docs/architecture/arquitetura-conceitual.md) | Papéis, recursos, matriz de permissões, componentes, fluxos, rotas |
 | [docs/architecture/modelo-dados.md](docs/architecture/modelo-dados.md) | Tabelas e relacionamentos |
-| [docs/adr/](docs/adr/) | Decisões arquiteturais (ADR-0001 a 0008) |
+| [docs/adr/](docs/adr/) | Decisões arquiteturais (ADR-0001 a 0009) |
 | [specs/](specs/) | Specs SDD 001 a 010 (requisitos EARS, design, tarefas), rastreabilidade e calendário |
 | [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md), [steering/](steering/) | Contexto e regras para agentes de código |
 | [.claude/commands/](.claude/commands/) | Comandos do fluxo SDD no Claude Code |

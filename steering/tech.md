@@ -29,6 +29,7 @@ Bibliotecas **proibidas** sem ADR: python-jose, passlib, fastapi-users, SQLModel
 - Tipagem completa; `mypy --strict` em `domain` e `application`.
 - `async def` nas rotas e casos de uso. Bibliotecas bloqueantes (ldap3, boto3, openpyxl) só dentro de adaptadores, via `anyio.to_thread.run_sync`.
 - Schemas Pydantic de entrada e saída separados dos modelos SQLAlchemy. Nunca devolver modelo ORM direto.
+- Nos módulos `registry` e `dashboard` e nos da spec de banco de dados, os repositórios usam SQL escrito à mão com `text()` e parâmetros nomeados; nunca interpolar valores na string (ADR-0009). Nos demais, SQLAlchemy Core.
 - Erros de negócio levantam subclasses de `AppError`; nada de `HTTPException` fora da camada `api`.
 - Datas sempre `datetime` com timezone (UTC no banco).
 - IDs: UUID v7.
