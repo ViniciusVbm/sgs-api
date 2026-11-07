@@ -3,6 +3,8 @@
 - Chamado por `src.core.db.run_migrations` (subida em dev e testes): recebe a conexão pronta.
 - Chamado pela linha de comando (`alembic upgrade head`, `make migrate`): conecta com
   DATABASE_MIGRATION_URL (dono do banco) ou, na falta dela, DATABASE_URL.
+- Modo offline (`alembic upgrade head --sql`, spec 011): imprime o DDL sem conectar nem ler a
+  configuração, inclusive o dos `.sql` de `migrations/sql/` (base do `make sql-bd`).
 """
 
 import asyncio
@@ -42,13 +44,26 @@ async def _run_from_command_line() -> None:
         await engine.dispose()
 
 
-if context.is_offline_mode():
-    raise SystemExit("Migrações offline (--sql) não são usadas neste projeto.")
+def _run_offline() -> None:
+    # Só o dialeto: não conecta nem lê a configuração. O paramstyle `named` evita que o
+    # dialeto padrão (psycopg2) dobre os `%` do DDL na saída.
+    context.configure(
+        dialect_name="postgresql",
+        target_metadata=metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
+    with context.begin_transaction():
+        context.run_migrations()
+
 
 _connection = config.attributes.get("connection")
-if _connection is not None:
+if _connection is None and config.config_file_name is not None:
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
+
+if context.is_offline_mode():
+    _run_offline()
+elif _connection is not None:
     _run(_connection)
 else:
-    if config.config_file_name is not None:
-        fileConfig(config.config_file_name, disable_existing_loggers=False)
     asyncio.run(_run_from_command_line())
