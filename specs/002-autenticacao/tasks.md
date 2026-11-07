@@ -3,7 +3,7 @@
 - Status: Aprovado (Rafael, 03/10/2026)
 - Depende de: 001
 
-- [ ] T1. `FieldCipher` AES-256-GCM com chaves versionadas
+- [x] T1. `FieldCipher` AES-256-GCM com chaves versionadas
   - Requisitos: R2.5
   - Pronto quando: `tests/unit/core/test_crypto.py` passa
 - [ ] T2. Migração `0002_identity` e repositórios de usuário, sessão e refresh
