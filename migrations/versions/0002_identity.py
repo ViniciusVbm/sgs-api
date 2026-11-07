@@ -69,6 +69,7 @@ def upgrade() -> None:
             "source IN ('local', 'ldap', 'oidc')", name=op.f("ck_users_origem_valida")
         ),
         sa.CheckConstraint("username = lower(username)", name=op.f("ck_users_username_minusculo")),
+        sa.CheckConstraint("email = lower(email)", name=op.f("ck_users_email_minusculo")),
         sa.CheckConstraint(
             f"password_hash ~ '{ARGON2ID_PHC}'", name=op.f("ck_users_senha_argon2id")
         ),

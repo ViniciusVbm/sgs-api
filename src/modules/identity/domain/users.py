@@ -51,6 +51,9 @@ class User:
         object.__setattr__(self, "username", normalize_username(self.username))
         object.__setattr__(self, "display_name", self.display_name.strip())
         object.__setattr__(self, "source", UserSource(self.source))
+        if self.email is not None:
+            # Minúsculas para a unicidade não depender de como o e-mail foi digitado.
+            object.__setattr__(self, "email", self.email.strip().lower())
 
         errors = [
             *_check_name("username", self.username, USERNAME_MAX, "Informe o nome de usuário."),

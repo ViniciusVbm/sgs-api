@@ -68,6 +68,7 @@ users = Table(
     UniqueConstraint("source", "external_id"),
     CheckConstraint("source IN ('local', 'ldap', 'oidc')", name="origem_valida"),
     CheckConstraint("username = lower(username)", name="username_minusculo"),
+    CheckConstraint("email = lower(email)", name="email_minusculo"),
     CheckConstraint(f"password_hash ~ '^{ARGON2ID_PHC.pattern}$'", name="senha_argon2id"),
     CheckConstraint(
         "(source = 'local' AND password_hash IS NOT NULL AND external_id IS NULL)"

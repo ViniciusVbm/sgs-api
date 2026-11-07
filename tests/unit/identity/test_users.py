@@ -75,6 +75,11 @@ def test_usuario_recusa_nome_vazio(campo: str) -> None:
     assert _campos_com_erro(erro) == {campo}
 
 
+def test_email_fica_em_minusculas_e_sem_espacos_nas_pontas() -> None:
+    """002/T2: a unicidade do e-mail não pode depender de maiúsculas."""
+    assert make_user(email=" Maria.Silva@Example.ORG ").email == "maria.silva@example.org"
+
+
 @pytest.mark.parametrize("email", ["invalido", "teste@", "@saude.pe", "teste@.com"])
 def test_usuario_recusa_email_invalido(email: str) -> None:
     """002/T2"""

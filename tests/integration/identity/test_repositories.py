@@ -94,6 +94,21 @@ async def test_banco_recusa_senha_que_nao_e_hash_argon2id(
             await sessao.execute(INSERIR_USUARIO_LOCAL, {"id": uuid7(), "senha": senha})
 
 
+async def test_banco_recusa_email_com_maiusculas(
+    sessoes: async_sessionmaker[AsyncSession],
+) -> None:
+    """002/T2: a unicidade do e-mail não pode depender de maiúsculas."""
+    with pytest.raises(IntegrityError, match='"ck_users_email_minusculo"'):
+        async with sessoes() as sessao, sessao.begin():
+            await sessao.execute(
+                text(
+                    "INSERT INTO users (id, username, display_name, source, password_hash, email)"
+                    " VALUES (:id, 'teste', 'Teste', 'local', :senha, 'Maria@Example.org')"
+                ),
+                {"id": uuid7(), "senha": ARGON2ID_DE_TESTE},
+            )
+
+
 async def test_api_nao_apaga_usuario(sessoes: async_sessionmaker[AsyncSession]) -> None:
     """002/T2: usuário nunca é apagado, só desativado (docs/architecture/modelo-dados.md § 1)."""
     usuario = await _gravar_usuario(sessoes)
