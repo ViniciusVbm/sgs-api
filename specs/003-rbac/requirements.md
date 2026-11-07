@@ -43,3 +43,5 @@ Requisitos obrigatórios: "analisar o contexto para elencar papéis e recursos" 
 ## Perguntas em aberto
 - `TECNICO_DISTRITAL` pode criar unidade no seu distrito ou apenas atualizar? (padrão adotado: apenas atualizar)
 - Leitura de unidades deve ser global para todos os papéis? (padrão adotado: sim, dados públicos/internos)
+- (003/T1) `group_role_mappings.group_id` aponta para `groups`, que só nasce na 004/T1. Quem põe a FK? (padrão adotado: a 0003 cria a coluna sem FK, e a migração da 004/T1 acrescenta a FK)
+- (003/T1) `role_assignments.scope_id` e `group_role_mappings.scope_id` guardam id de distrito ou de área (smallint) ou de unidade (uuid). Qual tipo e como garantir que o escopo existe? (padrão adotado: `varchar(36)` sem FK, nulo só no escopo global, por CHECK; a existência é conferida na atribuição, R2.2)
