@@ -30,7 +30,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R1.1, R1.2, R5.3, R10.1, R10.2
   - Pronto quando: `tests/integration/db/test_privilegios.py` (papel sem login nem superusuário; PUBLIC sem EXECUTE; índices existem) e `tests/integration/registry/test_situacao_cadastral.py` (as quatro situações, na precedência aprovada) passam
 
-- [ ] T4. Views de inventário e de histórico
+- [x] T4. Views de inventário e de histórico
   - `vw_unit_inventory` e `vw_unit_history` com `security_invoker = true`, colunas do design, sem dado pessoal no inventário.
   - Bloqueada por: T3
   - Requisitos: R4.1, R4.2, R4.4, R4.6
@@ -48,7 +48,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R6.1
   - Pronto quando: `tests/integration/registry/test_sp_deactivate_unit.py` passa (pelo login da API: `CALL` devolve status anterior e versão nova; inexistente → SQLSTATE `SGS01`; já inativa → nada muda e a versão é a mesma)
 
-- [ ] T7. Log do banco e trigger de log
+- [x] T7. Log do banco e trigger de log
   - `db_change_log` particionada (criada com `SET LOCAL ROLE sgs_owner`) com a partição DEFAULT; `trg_registry_change_log` (SECURITY DEFINER) nas três tabelas; `sgs_app` só com SELECT.
   - Bloqueada por: T3
   - Requisitos: R7.1, R7.2, R7.3, R7.4, R7.5, R7.6
