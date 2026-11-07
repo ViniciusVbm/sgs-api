@@ -7,7 +7,7 @@
 - [x] T1. `FieldCipher` AES-256-GCM com chaves versionadas
   - Requisitos: R2.5
   - Pronto quando: `tests/unit/core/test_crypto.py` passa
-- [ ] T2. Migração `0002_identity` e repositórios de usuário, sessão e refresh
+- [x] T2. Migração `0002_identity` e repositórios de usuário, sessão e refresh
   - Requisitos: R1.7, R3.3
   - Pronto quando: `tests/integration/identity/test_repositories.py` passa
 - [ ] T3. `PasswordHasher` Argon2id e caso de uso de login com hash fictício e bloqueio

@@ -1,14 +1,29 @@
 """Fábricas de objetos usados nos testes (steering/testing.md: funções make_*)."""
 
+import secrets
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource
 
 from src.core.config import AppEnv, DatabaseSslMode, Settings
+from src.core.ids import uuid7
+from src.modules.identity.domain.sessions import AuthSession, RefreshToken, hash_refresh_token
+from src.modules.identity.domain.users import User, UserSource
 
 # Banco fictício: os testes que precisam de banco de verdade usam tests/integration/conftest.py.
 URL_SEM_BANCO = "postgresql+asyncpg://sgs_api:sgs_api@127.0.0.1:1/sgs"
+
+# Hash Argon2id (formato PHC) de uma senha de teste; nos testes ele é só um dado.
+ARGON2ID_DE_TESTE = (
+    "$argon2id$v=19$m=65536,t=3,p=4$YxqVkrRrqLmQ9woZLsBFRA"
+    "$vJSDeU0/lJlyM62jPEdu74pquyj1q3ELup5LW3fP98w"
+)
+# Hash bcrypt usado no PR #5 (esquema da disciplina): é hash, mas não é Argon2id.
+HASH_BCRYPT = "$2b$12$GkQ1zKVQJcF9m6mB0KKxvu3fd8m2fGXQxmz9g8rM3S5uW1aQw9J3."
+
+INICIO_DA_SESSAO = datetime(2026, 11, 6, 12, 0, tzinfo=UTC)
 
 
 class _SettingsSemAmbiente(Settings):
@@ -33,3 +48,37 @@ def make_settings(**overrides: Any) -> Settings:
         "database_ssl_mode": DatabaseSslMode.DISABLE,
     }
     return _SettingsSemAmbiente(**(valores | overrides))
+
+
+def make_user(**overrides: Any) -> User:
+    """Usuário local ativo, com hash Argon2id."""
+    valores: dict[str, Any] = {
+        "id": uuid7(),
+        "username": "maria.silva",
+        "display_name": "Maria Silva",
+        "email": "maria.silva@example.org",
+        "source": UserSource.LOCAL,
+        "password_hash": ARGON2ID_DE_TESTE,
+    }
+    return User(**(valores | overrides))
+
+
+def make_auth_session(**overrides: Any) -> AuthSession:
+    valores: dict[str, Any] = {
+        "id": uuid7(),
+        "user_id": uuid7(),
+        "amr": "pwd+otp",
+        "created_at": INICIO_DA_SESSAO,
+    }
+    return AuthSession(**(valores | overrides))
+
+
+def make_refresh_token(**overrides: Any) -> RefreshToken:
+    valores: dict[str, Any] = {
+        "id": uuid7(),
+        "session_id": uuid7(),
+        "family_id": uuid7(),
+        "token_hash": hash_refresh_token(secrets.token_urlsafe(32)),
+        "expires_at": INICIO_DA_SESSAO + timedelta(hours=8),
+    }
+    return RefreshToken(**(valores | overrides))
