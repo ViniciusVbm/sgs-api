@@ -1,6 +1,6 @@
 # 011 · Recursos de banco de dados · Design
 
-- Status: Aprovado (Rafael, 07/11/2026). Falta a aprovação de mais 1 integrante (steering/sdd-workflow.md) antes da primeira tarefa.
+- Status: Aprovado (Rafael, 07/11/2026; aprovação só do dono pela exceção provisória de `steering/sdd-workflow.md`)
 - Requisitos: requirements.md (Aprovado, Rafael, 06/11/2026) · Issue #17
 
 ## Visão geral
