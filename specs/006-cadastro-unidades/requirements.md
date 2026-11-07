@@ -68,3 +68,5 @@ Como Gestor de Unidade (ou técnico do distrito), quero corrigir os dados da min
 ## Perguntas em aberto
 - Lista oficial de distritos sanitários e tipos de unidade (pedir ao Sérgio a aba de convenções da planilha).
 - Campos estruturais (R3.4) estão corretos para o fluxo da Secretaria?
+- **Tipos de equipamento e de serviço (achado na T1):** sem lista oficial, a 0006 semeia só os exemplos de `steering/product.md` e do modelo de dados: equipamento `UTI_MOVEL`, `MATERNIDADE` e `POLICLINICA`; serviço `FARMACIA`, `FARMACIA_FAMILIA`, `SALA_VACINA` e `ESPACO_MAE_CORUJA`. Os distritos (DS-I a DS-VIII) e os tipos de unidade seguem a pergunta acima. Confirmar com o cliente junto com ela; o Gestor de Dados ajusta pela API (R7.2).
+- **Status de equipamento e de serviço (achado na T1):** o modelo de dados não lista os valores, então a 0006 deixa `equipments.status` e `services.status` sem CHECK (só o da unidade tem: `ativa`, `inativa`, `em_implantacao`). Os valores aceitos ficam para os schemas da T7 e da T8; se forem fixados, uma revisão nova põe o CHECK.

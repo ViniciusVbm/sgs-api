@@ -3,7 +3,7 @@
 - Status: Aprovado (Rafael, 07/11/2026; aprovação só do dono pela exceção provisória de `steering/sdd-workflow.md`)
 - Depende de: 001, 003
 
-- [ ] T1. Migração `0006_registry` com referências, índices (`pg_trgm`, `unaccent`, únicos parciais) e seed das referências
+- [x] T1. Migração `0006_registry` com referências, índices (`pg_trgm`, `unaccent`, únicos parciais) e seed das referências
   - Bloqueada por: 003/T1, 011/T1
   - Inclui `fn_normalize_name`, `version`, `pending_issues` e as FKs da Etapa 02, no mesmo PR da 011/T2.
   - Requisitos: R1.3, R1.4, R7.1
