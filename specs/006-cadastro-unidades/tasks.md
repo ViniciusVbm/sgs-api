@@ -8,7 +8,7 @@
   - Inclui `fn_normalize_name`, `version`, `pending_issues` e as FKs da Etapa 02, no mesmo PR da 011/T2.
   - Requisitos: R1.3, R1.4, R7.1
   - Pronto quando: `tests/integration/registry/test_schema_registry.py` passa
-- [ ] T2. Domínio: normalização de nome, `diff`, campos estruturais
+- [x] T2. Domínio: normalização de nome, `diff`, campos estruturais
   - Bloqueada por: nenhuma
   - Requisitos: R1.4, R3.4, R3.6
   - Pronto quando: `tests/unit/registry/test_dominio_unidade.py` passa
