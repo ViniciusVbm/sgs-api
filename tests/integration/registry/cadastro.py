@@ -62,14 +62,16 @@ async def inserir_servico(
     equipamento: UUID | None = None,
     nome: str = "Farmácia do CAPS",
     tipo: str = "FARMACIA",
+    no_cnes: bool = False,
 ) -> UUID:
     """Serviço de uma unidade (e, se informado, de um equipamento), ou solto (006/R6.2)."""
     servico = uuid7()
     await conexao.execute(
         text(
-            "INSERT INTO services (id, service_type_id, unit_id, equipment_id, name, status)"
+            "INSERT INTO services"
+            " (id, service_type_id, unit_id, equipment_id, name, in_cnes, status)"
             " VALUES (:id, (SELECT id FROM service_types WHERE code = :tipo),"
-            " :unidade, :equipamento, :nome, 'ativo')"
+            " :unidade, :equipamento, :nome, :no_cnes, 'ativo')"
         ),
         {
             "id": servico,
@@ -77,6 +79,7 @@ async def inserir_servico(
             "unidade": unidade,
             "equipamento": equipamento,
             "nome": nome,
+            "no_cnes": no_cnes,
         },
     )
     return servico
