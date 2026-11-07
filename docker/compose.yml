@@ -33,6 +33,11 @@ services:
       DATABASE_URL: postgresql+asyncpg://sgs_api:sgs_api@db:5432/sgs
       DATABASE_MIGRATION_URL: postgresql+asyncpg://sgs:sgs@db:5432/sgs
       DATABASE_SSL_MODE: disable
+      # Chave de assinatura JWT (spec 002), gerada uma vez em secrets/, fora do Git (ver README).
+      JWT_PRIVATE_KEYS_FILE: /run/secrets/jwt-keys.json
+    secrets:
+      - source: jwt_keys
+        target: jwt-keys.json
     depends_on:
       db:
         condition: service_healthy
@@ -63,6 +68,10 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+
+secrets:
+  jwt_keys:
+    file: ../secrets/jwt-keys.json
 
 volumes:
   db-data:

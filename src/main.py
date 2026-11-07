@@ -14,6 +14,8 @@ from src.core.logging import configure_logging
 from src.core.problem import install_error_handlers
 from src.core.request_context import RequestContextMiddleware
 from src.core.security_headers import SecurityHeadersMiddleware
+from src.modules.identity.api import jwks
+from src.modules.identity.infrastructure.tokens import JwtTokenService
 
 
 @asynccontextmanager
@@ -46,8 +48,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     # A engine só abre conexões quando usada; criar o app não exige banco no ar.
     app.state.engine = create_engine(settings.database_url.get_secret_value(), settings)
+    app.state.token_service = JwtTokenService.from_settings(settings)
     install_error_handlers(app)
     app.include_router(health.router)
+    app.include_router(jwks.router)
 
     # O último middleware adicionado é o mais externo: contexto > cabeçalhos > CORS > rotas.
     app.add_middleware(
