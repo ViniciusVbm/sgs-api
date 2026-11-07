@@ -30,7 +30,7 @@ depends_on: str | Sequence[str] | None = None
 PAPEIS = {
     "ADMIN_TI": (
         "Administrador de TI",
-        "Gerencia usuários locais, mapeamento grupo→papel e a sincronização LDAP."
+        "Gerencia usuários locais, o mapeamento de grupos para papéis e a sincronização LDAP."
         " Não edita cadastro.",
     ),
     "GESTOR_DADOS": (
