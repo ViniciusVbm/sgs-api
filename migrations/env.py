@@ -14,7 +14,7 @@ from alembic import context
 from sqlalchemy import Connection, text
 
 from src.core.config import load_settings
-from src.core.db import MIGRATION_LOCK_ID, create_engine, metadata
+from src.core.db import MIGRATION_LOCK_ID, create_engine, incluir_no_autogenerate, metadata
 
 # Registram as tabelas de cada módulo no metadata, para o autogenerate (`make migrate`) vê-las.
 from src.modules.access.infrastructure import tables as _access_tables  # noqa: F401
@@ -26,7 +26,12 @@ config = context.config
 
 
 def _run(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=metadata, compare_type=True)
+    context.configure(
+        connection=connection,
+        target_metadata=metadata,
+        compare_type=True,
+        include_name=incluir_no_autogenerate,
+    )
     with context.begin_transaction():
         connection.execute(text("SELECT pg_advisory_xact_lock(:id)"), {"id": MIGRATION_LOCK_ID})
         context.run_migrations()

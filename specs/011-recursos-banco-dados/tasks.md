@@ -48,7 +48,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R6.1
   - Pronto quando: `tests/integration/registry/test_sp_deactivate_unit.py` passa (pelo login da API: `CALL` devolve status anterior e versão nova; inexistente → SQLSTATE `SGS01`; já inativa → nada muda e a versão é a mesma)
 
-- [ ] T7. Log do banco e trigger de log
+- [x] T7. Log do banco e trigger de log
   - `db_change_log` particionada (criada com `SET LOCAL ROLE sgs_owner`) com a partição DEFAULT; `trg_registry_change_log` (SECURITY DEFINER) nas três tabelas; `sgs_app` só com SELECT.
   - Bloqueada por: T3
   - Requisitos: R7.1, R7.2, R7.3, R7.4, R7.5, R7.6
