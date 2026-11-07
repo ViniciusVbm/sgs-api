@@ -20,6 +20,7 @@ O status fica no cabeçalho de cada arquivo: `Rascunho` → `Em revisão` → `A
 | [008-historico-alteracoes](008-historico-alteracoes/) | Histórico por unidade, trilha geral, integridade | MVP: histórico (auditoria) | Rascunho |
 | [009-dashboard](009-dashboard/) | Agregados da rede e da qualidade dos dados | MVP: dashboard básico | Rascunho |
 | [010-dados-demonstracao](010-dados-demonstracao/) | Seed de Saúde Mental, usuários por papel, conversor da planilha | pendência 6 (massa de dados) | Rascunho |
+| [011-recursos-banco-dados](011-recursos-banco-dados/) | Índices, consultas avançadas, views, funções, procedimentos, triggers, log do banco, segurança no SGBD | disciplina de Banco de Dados (Segunda Parte, 13/11) | Requisitos aprovados |
 
 ## Rastreabilidade requisito → spec
 
@@ -41,6 +42,7 @@ O status fica no cabeçalho de cada arquivo: `Rascunho` → `Em revisão` → `A
 | RS-05 Auditoria | 001, 002, 008 |
 | RS-08 Validação de entrada | 001, 007 |
 | RS-09 Monitoramento | 002, 008 |
+| Disciplina de Banco de Dados (Segunda Parte e Etapa 06) | 011 (CRUD de 4 tabelas pela 006) |
 | Critérios 6.1 da Entrega Final | 002, 003, 006, 007, 008, 009, 001 (compose) |
 
 ## Ordem e calendário sugeridos
