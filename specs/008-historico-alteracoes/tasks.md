@@ -15,6 +15,4 @@
 - [ ] T4. Verificação de integridade da cadeia
   - Requisitos: R3.1
   - Pronto quando: `tests/integration/audit/test_verificar_cadeia.py` passa
-- [ ] T5. Particionamento mensal e comando de manutenção
-  - Requisitos: R4.1
-  - Pronto quando: `tests/integration/audit/test_particoes.py` passa
+- ~~T5. Particionamento mensal e comando de manutenção~~: removida (Rafael, 06/11/2026; ver design § Retenção). A R4.1 já é provada por `tests/integration/audit/test_audit_immutable.py` (001).

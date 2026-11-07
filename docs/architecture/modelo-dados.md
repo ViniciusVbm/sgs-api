@@ -69,7 +69,7 @@ Como o vínculo do serviço guarda `unit_id` (e não o nome da unidade), o probl
 
 - **Imutabilidade:** trigger `BEFORE UPDATE OR DELETE` que lança exceção; o usuário de banco da aplicação só tem `INSERT` e `SELECT` nessa tabela.
 - **Encadeamento:** `hash = SHA-256(prev_hash || conteúdo canônico)`. Um endpoint de verificação recalcula a cadeia e aponta adulteração (o protótipo já mostra o hash por evento).
-- **Retenção:** 2 anos (RS-05). Partição por mês (`PARTITION BY RANGE (occurred_at)`) facilita expurgo e arquivamento no S3.
+- **Retenção:** 2 anos (RS-05). Sem particionamento: ele exigiria incluir `occurred_at` nas unicidades de `hash`/`prev_hash` e enfraqueceria a cadeia (spec 008, design § Retenção).
 - **Dados sensíveis:** `changes` nunca guarda senha, hash ou segredo; campos marcados como sensíveis aparecem como `"***"`.
 
 ## 4. Relatórios
