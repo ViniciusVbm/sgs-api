@@ -2,6 +2,7 @@
 
 - Status: Aprovado (Rafael, 03/10/2026)
 - Depende de: 001
+- Ajuste (Rafael, 06/11/2026): a T4 e a T5 passam a ligar as próprias chaves ao `Settings`. Responde à pergunta registrada na T1: nenhuma tarefa cuidava disso.
 
 - [x] T1. `FieldCipher` AES-256-GCM com chaves versionadas
   - Requisitos: R2.5
@@ -12,12 +13,12 @@
 - [ ] T3. `PasswordHasher` Argon2id e caso de uso de login com hash fictício e bloqueio
   - Requisitos: R1.1, R1.2, R1.3, R1.4, R1.6
   - Pronto quando: `tests/integration/identity/test_login.py` passa
-- [ ] T4. `TokenService` ES256 + JWKS
-  - Requisitos: R3.1, R3.2, R3.8
-  - Pronto quando: `tests/unit/identity/test_tokens.py` passa
-- [ ] T5. Cadastro e verificação de TOTP
-  - Requisitos: R2.1–R2.6
-  - Pronto quando: `tests/integration/identity/test_mfa.py` passa
+- [ ] T4. `TokenService` ES256 + JWKS, com as chaves de assinatura (`JWT_PRIVATE_KEYS`) no `Settings`
+  - Requisitos: R3.1, R3.2, R3.8; 001/R2.2 e R2.3 para as chaves
+  - Pronto quando: `tests/unit/identity/test_tokens.py` passa e `tests/unit/core/test_config.py` cobre as chaves JWT (ausentes ou inválidas recusam a subida; chave de exemplo recusada em prod)
+- [ ] T5. Cadastro e verificação de TOTP, com `CRYPTO_KEYS` e `CRYPTO_ACTIVE_KEY` no `Settings` para montar o `FieldCipher`
+  - Requisitos: R2.1–R2.6; 001/R2.2 e R2.3 para as chaves
+  - Pronto quando: `tests/integration/identity/test_mfa.py` passa e `tests/unit/core/test_config.py` cobre as chaves de criptografia (ausentes, fora de base64, sem 32 bytes ou sem a versão ativa recusam a subida; chave de exemplo recusada em prod)
 - [ ] T6. Refresh rotativo com detecção de reuso, anti-CSRF e logout
   - Requisitos: R3.3–R3.7
   - Pronto quando: `tests/integration/identity/test_refresh.py` passa
