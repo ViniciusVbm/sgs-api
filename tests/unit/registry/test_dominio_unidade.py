@@ -37,9 +37,10 @@ def test_normalizar_nome_tira_acento_caixa_e_espacos_extras(nome: str, esperado:
         ("Unidade\u2003\u2003Leste", "unidade leste"),
         # O espaço não separável não é `\s` no Postgres nem sai no `unaccent`: fica.
         ("Hospital\u00a0da  Mulher", "hospital\u00a0da mulher"),
-        # `btrim` só tira o espaço comum; o tab da ponta vira espaço e fica (ver Perguntas em
-        # aberto da 011, R5.1).
-        ("UPA  Ibura\t", "upa ibura "),
+        # O `btrim` vai por fora: tab e quebra de linha nas pontas também saem (decisão do
+        # Rafael, 07/11/2026; 011/R5.1).
+        ("UPA  Ibura\t", "upa ibura"),
+        ("\n CAPS Esperança \t", "caps esperanca"),
         ("Nº 1º Distrito", "nº 1º distrito"),
     ],
 )

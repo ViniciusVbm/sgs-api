@@ -16,7 +16,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R11.1, R11.2
   - Pronto quando: `tests/unit/migrations/test_sql_loader.py` passa (`'HH24:MI'` e `:=` intactos; duas instruções → erro; `alembic upgrade head --sql` roda sem banco)
 
-- [ ] T2. Normalização, colunas e FKs na 0006 (com 006/T1)
+- [x] T2. Normalização, colunas e FKs na 0006 (com 006/T1)
   - `fn_normalize_name` (IMMUTABLE, `search_path` fixo, EXECUTE só para `sgs_app`) criada antes de `health_units`; coluna gerada `name_normalized` e índice GIN usando a função; `version` e `pending_issues`; FKs `ON DELETE SET NULL`, `ON UPDATE CASCADE` e `RESTRICT`.
   - Bloqueada por: T1, 003/T1
   - Requisitos: R5.1, R5.2, R9.1, R9.3
@@ -36,7 +36,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R4.1, R4.2, R4.4, R4.6
   - Pronto quando: `tests/integration/db/test_views.py` passa (contagens do inventário; nenhuma coluna pessoal; eventos de equipamento e serviço no histórico com autor; um papel sem SELECT nas tabelas-base não lê a view)
 
-- [ ] T5. Trigger de versão da unidade
+- [x] T5. Trigger de versão da unidade
   - `trg_health_units_version` (BEFORE UPDATE), ignorando `pending_issues`, `version` e `updated_at`.
   - Bloqueada por: T2
   - Requisitos: R8.1, R8.2
@@ -66,7 +66,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R1.3, R1.4
   - Pronto quando: `tests/integration/db/test_indices.py -m slow` passa (o plano do histórico de uma unidade usa `ix_audit_log_entity`; o dos serviços de uma unidade usa `ix_services_unit_id`)
 
-- [ ] T10. TLS entre a API e o PostgreSQL no compose
+- [x] T10. TLS entre a API e o PostgreSQL no compose
   - Serviço `db-certs` (CA de dev e certificado com SAN `db` num volume, chave uid 999 e 0600), `ssl=on` e `pg_hba.conf` com `hostssl`/`hostnossl reject`/`local`, API em `verify-full` com a CA montada; README atualizado.
   - Bloqueada por: nenhuma
   - Requisitos: R10.3, R10.4, R10.5
