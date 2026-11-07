@@ -47,3 +47,4 @@ Como usuário local, quero entrar com usuário e senha.
 
 ## Perguntas em aberto
 - Validade de 8 h para a sessão é adequada à jornada da Secretaria?
+- Nenhuma tarefa diz quando `CRYPTO_KEYS` e `CRYPTO_ACTIVE_KEY` entram no `Settings` (validação na subida, chave de exemplo recusada em prod). A T1 entregou só o `FieldCipher`, que recebe as chaves já decodificadas. Proposta: a T5, primeiro uso do cifrador, faz essa ligação. (registrado na T1, 06/11/2026)
