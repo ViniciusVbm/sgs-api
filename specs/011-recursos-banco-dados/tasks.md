@@ -42,7 +42,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R8.1, R8.2
   - Pronto quando: `tests/integration/registry/test_versao_trigger.py` passa (UPDATE direto incrementa versão e `updated_at`; mudança só em `pending_issues` não incrementa)
 
-- [ ] T6. Procedimento de desativação
+- [x] T6. Procedimento de desativação
   - `sp_deactivate_unit` com OUT, SQLSTATE `SGS01`, sem COMMIT; GRANT EXECUTE ao `sgs_app`.
   - Bloqueada por: T5
   - Requisitos: R6.1
