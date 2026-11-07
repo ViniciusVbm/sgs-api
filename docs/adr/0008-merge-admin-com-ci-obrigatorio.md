@@ -1,6 +1,6 @@
 # ADR-0008: Merge pelo administrador sem aprovação, com CI obrigatório
 
-- Status: Proposto
+- Status: Aceito (Rafael, 06/11/2026)
 - Data: 2026-11-06
 - Requisitos relacionados: spec 001 (R7.2); altera em parte o ADR-0006 (portão de revisão de PR)
 
