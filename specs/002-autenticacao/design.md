@@ -14,6 +14,9 @@
 | `GET /.well-known/jwks.json` | pública | — | JWKS | — | R3.2 |
 
 ## Componentes (`modules/identity`)
+- `domain/users.py`: `User`, com a senha só como hash Argon2id (R1.7) e nome de usuário e e-mail em minúsculas.
+- `domain/sessions.py`: `AuthSession` (o `id` é o `sid`) e `RefreshToken`, que carrega só o SHA-256 do token (R3.3).
+- `domain/ports.py`: portas `UserRepository`, `SessionRepository` e `RefreshTokenRepository`; implementação com SQLAlchemy Core em `infrastructure/repository.py`, sobre a sessão de quem chama.
 - `domain/passwords.py`: interface `PasswordHasher`; implementação `pwdlib` Argon2id em `infrastructure/`.
 - `domain/tokens.py`: porta `TokenService` (emitir/validar JWT, emitir/validar `mfa_token` com claim `purpose`); implementação com PyJWT em `infrastructure/`.
 - `domain/totp.py`: porta do verificador TOTP com registro do último passo usado (`users.mfa_last_step`) para impedir reuso; implementação com `pyotp` em `infrastructure/`.

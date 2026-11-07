@@ -3,7 +3,7 @@
 - Status: Aprovado (Rafael, 03/10/2026)
 - Depende de: 001
 - Ajuste (Rafael, 06/11/2026): a T4 e a T5 passam a ligar as próprias chaves ao `Settings`. Responde à pergunta registrada na T1: nenhuma tarefa cuidava disso.
-- Ajuste (Rafael, 06/11/2026, revisão do PR #16): a migração da T2 já traz as colunas da R2.6 (`users.mfa_challenge_jti` e `users.mfa_failed_attempts`; ver design, Decisões), que a T5 usa.
+- Ajuste (Rafael, 06/11/2026, revisão do PR #16): a migração da T2 já traz as colunas da R2.6 (`users.mfa_challenge_jti` e `users.mfa_failed_attempts`; ver design, Decisões), que a T5 usa. A T8 grava a auditoria da criação do usuário.
 
 - [x] T1. `FieldCipher` AES-256-GCM com chaves versionadas
   - Requisitos: R2.5
@@ -28,4 +28,5 @@
   - Pronto quando: `tests/integration/identity/test_auth_audit.py` passa
 - [ ] T8. Comando `sgs-admin create-user` para criar o primeiro administrador
   - Requisitos: R1.7
+  - Auditoria: grava `usuario.criado` com `audit.registrar` na mesma transação (AGENTS.md, regra 5); a R4.1 não lista esse evento
   - Pronto quando: comando documentado no README e coberto por teste
