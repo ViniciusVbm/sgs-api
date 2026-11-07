@@ -62,7 +62,8 @@ Como Gestor de Unidade (ou técnico do distrito), quero corrigir os dados da min
 
 ### R7. Tabelas de referência
 - R7.1 O sistema DEVE expor `GET /referencias/distritos`, `/tipos-unidade`, `/areas-tecnicas`, `/tipos-servico` e `/tipos-equipamento` para preencher formulários.
-- R7.2 Apenas `GESTOR_DADOS` DEVE poder incluir ou desativar itens de referência.
+- R7.2 Apenas `GESTOR_DADOS` DEVE poder incluir, alterar (inclusive o código) ou desativar itens de referência.
+- R7.3 QUANDO o código de um tipo de equipamento é corrigido, os equipamentos desse tipo DEVEM passar a usar o código novo, e o sistema DEVE registrar `referencia.atualizada` na auditoria com a quantidade de equipamentos afetados (spec 011, R9.2).
 
 ## Perguntas em aberto
 - Lista oficial de distritos sanitários e tipos de unidade (pedir ao Sérgio a aba de convenções da planilha).

@@ -32,7 +32,7 @@ Como Auditor, quero consultar todos os eventos, inclusive de acesso.
 - R3.2 A consulta de evento individual DEVE exibir `hash` e `prev_hash`.
 
 ### R4. Retenção
-- R4.1 O sistema DEVE manter eventos por pelo menos 2 anos (partições mensais nunca apagadas antes disso).
+- R4.1 O sistema DEVE manter eventos por pelo menos 2 anos. Nenhum evento é apagado (a trilha é só de inserção, spec 001).
 
 ## Perguntas em aberto
 - O Gestor de Unidade deve ver o histórico completo da própria unidade ou apenas as próprias alterações? (padrão adotado: completo)

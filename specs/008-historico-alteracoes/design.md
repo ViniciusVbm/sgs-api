@@ -3,7 +3,8 @@
 - Status: Rascunho
 
 ## Consulta
-- `audit/application/consultar.py` monta a query sobre `audit_log` com índices `(entity_type, entity_id, occurred_at DESC)` e `(action, occurred_at DESC)`.
+- `audit/application/consultar.py` monta a query sobre `audit_log` com índices `(entity_type, entity_id, occurred_at DESC)` (criado pela spec 011, R1.1) e `(action, occurred_at DESC)` (criado aqui).
+- O histórico da unidade lê a view de histórico da spec 011 (R4.4, R4.5).
 - Rótulos legíveis: dicionário `ROTULOS_CAMPOS` no módulo `registry` (ex.: `district_id` → "Distrito sanitário"), e os ids de referência são traduzidos para nomes na resposta.
 - Escopo: o histórico de uma unidade usa o mesmo `require("auditoria:read", Unidade(id))` da spec 003.
 - Fuso: armazenado em UTC; serializado em `America/Recife`.
@@ -11,8 +12,8 @@
 ## Verificação da cadeia
 Recalcula em lotes de 1.000 eventos em ordem de `id`, comparando `hash` com `sha256(prev_hash + canon(evento))`. Retorna o primeiro `id` divergente. Operação só leitura.
 
-## Partições
-Migração `0008_auditoria_particoes` converte `audit_log` em particionada por mês e cria partições dos próximos 12 meses; tarefa de manutenção cria novas mensalmente (comando `sgs-admin audit-partitions`).
+## Retenção (R4.1)
+O `audit_log` **não** é particionado (decisão do Rafael, 06/11/2026). Particionar obrigaria `UNIQUE(hash)` e `UNIQUE(prev_hash)` da 0001 a incluir `occurred_at`, e a proteção contra bifurcação da cadeia se perderia. O volume (~250 unidades, 2 anos) não justifica. A retenção mínima vem da imutabilidade: os triggers e grants da 0001 impedem apagar eventos.
 
 ## Rotas
 | Método e rota | Permissão | Requisitos |
