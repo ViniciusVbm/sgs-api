@@ -12,7 +12,7 @@
   - Bloqueada por: nenhuma
   - Requisitos: R1.4, R3.4, R3.6
   - Pronto quando: `tests/unit/registry/test_dominio_unidade.py` passa
-- [ ] T3. Criar unidade com unicidade e auditoria
+- [x] T3. Criar unidade com unicidade e auditoria
   - Bloqueada por: T1, T2, 003/T4
   - Requisitos: R1.1–R1.6
   - Pronto quando: `tests/integration/registry/test_criar_unidade.py` passa

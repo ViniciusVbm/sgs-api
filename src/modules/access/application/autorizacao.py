@@ -13,7 +13,7 @@ from uuid import UUID
 from src.core.errors import Forbidden, NotFound
 from src.modules.access.application.permissoes import ResolvedorDePermissoes
 from src.modules.access.domain import authorization
-from src.modules.access.domain.authorization import EscopoLeitura, PermissoesEfetivas, pode
+from src.modules.access.domain.authorization import Alvo, EscopoLeitura, PermissoesEfetivas, pode
 from src.modules.access.domain.ports import RepositorioDePermissoes, ResolvedorDeAlvo
 from src.modules.audit.application.registrar import Ator, AuditStore, Entidade, registrar
 
@@ -24,6 +24,7 @@ _ID_AUDITADO_MAX = 100
 # Reexportados para a camada api, que só importa a application.
 __all__ = [
     "AcessoNegado",
+    "Alvo",
     "Ator",
     "AuditStore",
     "EscopoLeitura",
@@ -34,6 +35,7 @@ __all__ = [
     "UsuarioAtual",
     "auditar_negacao",
     "escopo_de_leitura",
+    "exigir_no_escopo",
     "verificar",
 ]
 
@@ -56,12 +58,16 @@ class Recurso:
 
 
 class AcessoNegado(Forbidden):
-    """403 (R4.2, R4.3). Leva a permissão exigida e o recurso para a auditoria (R4.6)."""
+    """403 (R4.2, R4.3). Leva a permissão exigida e o recurso para a auditoria (R4.6).
+
+    `auditada` diz se o `acesso.negado` já foi gravado, para quem o grava não repetir.
+    """
 
     def __init__(self, permissao: str, recurso: Recurso | None = None) -> None:
         super().__init__("Você não tem permissão para esta ação.")
         self.permissao = permissao
         self.recurso = recurso
+        self.auditada = False
 
 
 async def verificar(
@@ -89,6 +95,17 @@ async def verificar(
         if not pode(permissoes, permissao, alvo):
             raise AcessoNegado(permissao, recurso)
     return UsuarioAtual(id=usuario_id, sessao_id=sessao_id, permissoes=permissoes)
+
+
+def exigir_no_escopo(usuario: UsuarioAtual, permissao: str, alvo: Alvo) -> None:
+    """Levanta `AcessoNegado` se nenhum escopo de `permissao` do usuário cobre `alvo` (R4.3).
+
+    Para o caso de uso que só conhece os atributos de escopo depois de ler o corpo ou o banco,
+    como a unidade nova, que fica na área técnica do tipo informado (006/R1.1). A negação sai sem
+    recurso (`entity_type` nulo na auditoria) e é auditada pela `SessaoDeNegocio` da camada api.
+    """
+    if not pode(usuario.permissoes, permissao, alvo):
+        raise AcessoNegado(permissao)
 
 
 def escopo_de_leitura(usuario: UsuarioAtual, permissao: str) -> EscopoLeitura:
