@@ -15,8 +15,8 @@
 
 ## Componentes (`modules/identity`)
 - `domain/passwords.py`: interface `PasswordHasher`; implementação `pwdlib` Argon2id em `infrastructure/`.
-- `domain/tokens.py`: `TokenService` (emitir/validar JWT, emitir/validar `mfa_token` com claim `purpose`).
-- `domain/totp.py`: wrapper de `pyotp` com registro do último passo usado (`users.mfa_last_step`) para impedir reuso.
+- `domain/tokens.py`: porta `TokenService` (emitir/validar JWT, emitir/validar `mfa_token` com claim `purpose`); implementação com PyJWT em `infrastructure/`.
+- `domain/totp.py`: porta do verificador TOTP com registro do último passo usado (`users.mfa_last_step`) para impedir reuso; implementação com `pyotp` em `infrastructure/`.
 - `core/crypto.py`: `FieldCipher` AES-256-GCM com chaves versionadas (`CRYPTO_KEYS='{"1":"base64..."}'`, `CRYPTO_ACTIVE_KEY=1`).
 - `application/login.py`, `mfa.py`, `refresh.py`, `logout.py`: casos de uso.
 - `api/deps.py`: `CurrentUser` (valida Bearer, carrega sessão ativa, usuário ativo).
@@ -37,6 +37,14 @@ Migração `0002_identity`: `users`, `sessions`, `refresh_tokens` (ver `docs/arc
 ## Decisões
 - Permissões fora do token (ADR-0003).
 - TOTP obrigatório para contas locais; pode ser desligado por configuração apenas em `dev` para acelerar testes manuais.
+
+Decididas pelo Rafael em 06/11/2026, antes da T1:
+- `TokenService` e o verificador TOTP são portas (`Protocol`) em `domain/`; PyJWT e `pyotp` ficam em `infrastructure/`, porque o `domain` só importa stdlib, pydantic e `core.errors` (contrato do import-linter).
+- A raiz de composição é o `src/main.py`: fábricas de repositórios e serviços ficam em `app.state`, e a camada `api` só enxerga a `application` (contrato "infrastructure só é importada pela raiz de composição").
+- `src/core/ids.py` gera UUID v7 só com a biblioteca padrão, porque o Python 3.13 não tem `uuid.uuid7`.
+- O comando `sgs-admin` usa `argparse`, porque o Typer não está na `steering/tech.md`.
+- O 422 aparece no `contracts/openapi.yaml` como `application/problem+json`, no lugar do `HTTPValidationError` padrão da FastAPI.
+- As rotas públicas ficam numa lista explícita (`/api/v1/auth/*`, `/health/*`, `/.well-known/jwks.json`), usada pelo teste de arquitetura da 003 (T5).
 
 ## Riscos
 - Relógio do servidor fora de sincronia quebra TOTP: container usa NTP do host; janela ±1 passo.
