@@ -10,7 +10,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
 
 ## Base
 
-- [ ] T1. Carregador de `.sql` das migrações e modo offline do Alembic
+- [x] T1. Carregador de `.sql` das migrações e modo offline do Alembic
   - `migrations/sql_loader.py` (escapa `:`, recusa arquivo com mais de uma instrução) e ramo `context.is_offline_mode()` no `migrations/env.py`.
   - Bloqueada por: nenhuma
   - Requisitos: R11.1, R11.2
