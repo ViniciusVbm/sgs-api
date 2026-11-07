@@ -74,7 +74,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
 
 ## Rotas (exigem `require` e `EscopoLeitura` da 003)
 
-- [ ] T11. Consultas com anti join e full outer join
+- [x] T11. Consultas com anti join e full outer join
   - `units_without_services.sql`, `unit_equipment_reconciliation.sql` (lados filtrados antes da junção), porta `ConsultasDashboard`, conferência de filtros contra as referências, rotas e schemas.
   - Bloqueada por: T4, 003/T4
   - Requisitos: R2.1, R2.2, R2.5, R2.6, R2.7, R2.8, R2.9

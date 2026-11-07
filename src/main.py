@@ -21,6 +21,8 @@ from src.modules.access.infrastructure.repository import (
     SqlResolvedorDeUnidade,
 )
 from src.modules.audit.infrastructure.repository import SqlAuditStore
+from src.modules.dashboard.api import rotas as dashboard
+from src.modules.dashboard.infrastructure.consultas import SqlConsultasDashboard
 from src.modules.identity.api import jwks
 from src.modules.identity.infrastructure.repository import SqlSessionRepository, SqlUserRepository
 from src.modules.identity.infrastructure.tokens import JwtTokenService
@@ -67,6 +69,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.repositorio_de_permissoes = SqlRepositorioDePermissoes
     app.state.auditoria = SqlAuditStore
     app.state.repositorio_de_unidades = SqlRepositorioDeUnidades
+    app.state.consultas_dashboard = SqlConsultasDashboard
     # Um resolvedor por processo: o cache de permissões é dele (design da 003, passo 3).
     app.state.resolvedor_de_permissoes = ResolvedorDePermissoes()
     # `ResourceRef.tipo` → fábrica do `ResolvedorDeAlvo` daquele tipo de recurso (design da 003,
@@ -76,6 +79,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(health.router)
     app.include_router(jwks.router)
     app.include_router(unidades.router)
+    app.include_router(dashboard.router)
 
     # O último middleware adicionado é o mais externo: contexto > cabeçalhos > CORS > rotas.
     app.add_middleware(
