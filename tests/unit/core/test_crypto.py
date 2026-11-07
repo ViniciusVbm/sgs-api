@@ -158,7 +158,9 @@ def test_recusa_valor_adulterado_ou_malformado_sem_expor_o_valor(
 
     if valor:
         assert valor not in str(erro.value)
+    # A exceção original (InvalidTag, binascii.Error) não aparece no traceback do log.
     assert erro.value.__cause__ is None
+    assert erro.value.__suppress_context__ or erro.value.__context__ is None
 
 
 @pytest.mark.parametrize("tamanho", [0, 16, 24, 31, 33])
