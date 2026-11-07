@@ -58,6 +58,28 @@ def test_mascara_tokens_dentro_de_textos() -> None:
     assert jwt not in texto
 
 
+@pytest.mark.parametrize(
+    "linha",
+    [
+        "DETAIL:  Failing row contains (1, valor-secreto, t, null).",
+        "DETAIL:  Key (email)=(valor-secreto) already exists.",
+        'DETAIL:  Key (v)=(valor-secreto) is not present in table "t".',
+        "asyncpg.exceptions.DataError: invalid input for query argument $1: 'valor-secreto'"
+        " ('str' object cannot be interpreted as an integer)",
+    ],
+    ids=["check", "unique", "fk", "argumento"],
+)
+def test_mascara_valores_que_o_banco_repete_no_traceback(linha: str) -> None:
+    """001/R4.3: o Postgres e o asyncpg repetem na mensagem de erro os valores recusados."""
+    sql = "[SQL: INSERT INTO t VALUES ($1)]"
+    traceback = f"Traceback (most recent call last):\n  ...\n{linha}\n{sql}"
+
+    evento = redact_sensitive(None, "error", {"event": "erro_inesperado", "exception": traceback})
+
+    assert "valor-secreto" not in evento["exception"]
+    assert sql in evento["exception"]
+
+
 def test_preserva_campos_que_nao_sao_sensiveis() -> None:
     """001/R4.3"""
     original = {"event": "requisicao", "method": "GET", "route": "/health/live", "status": 200}
