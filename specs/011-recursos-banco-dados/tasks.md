@@ -66,7 +66,7 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R1.3, R1.4
   - Pronto quando: `tests/integration/db/test_indices.py -m slow` passa (o plano do histórico de uma unidade usa `ix_audit_log_entity`; o dos serviços de uma unidade usa `ix_services_unit_id`)
 
-- [ ] T10. TLS entre a API e o PostgreSQL no compose
+- [x] T10. TLS entre a API e o PostgreSQL no compose
   - Serviço `db-certs` (CA de dev e certificado com SAN `db` num volume, chave uid 999 e 0600), `ssl=on` e `pg_hba.conf` com `hostssl`/`hostnossl reject`/`local`, API em `verify-full` com a CA montada; README atualizado.
   - Bloqueada por: nenhuma
   - Requisitos: R10.3, R10.4, R10.5
