@@ -28,6 +28,7 @@ from src.modules.identity.infrastructure.repository import SqlSessionRepository,
 from src.modules.identity.infrastructure.tokens import JwtTokenService
 from tests.factories import make_auth_session, make_jwt_private_keys, make_settings, make_user
 from tests.integration.postgres import BancoDeTeste, motor
+from tests.integration.registry.cadastro import inserir_unidade
 
 PROTEGIDA = "/api/v1/teste/protegida"
 
@@ -58,6 +59,13 @@ LISTAR_NO_ESCOPO = text("""
            OR district_id = ANY(CAST(:scope_districts AS smallint[]))
            OR unit_id = ANY(CAST(:scope_units AS uuid[])))
 """)
+
+
+# Id de distrito e de área técnica pelo código semeado na 0006 (spec 006).
+ID_PELO_CODIGO = {
+    "distrito": text("SELECT id FROM districts WHERE code = :codigo"),
+    "area": text("SELECT id FROM technical_areas WHERE code = :codigo"),
+}
 
 
 class _AlvosDeTeste:
@@ -98,6 +106,13 @@ def _rotas_de_teste() -> APIRouter:
         dependencies=[Depends(require("unidade:update", ResourceRef(TIPO_DE_TESTE)))],
     )
     async def recurso(id: UUID) -> dict[str, Any]:
+        return {"id": str(id)}
+
+    @rotas.get(
+        "/unidades/{id}",
+        dependencies=[Depends(require("unidade:update", ResourceRef("unidade")))],
+    )
+    async def unidade(id: UUID) -> dict[str, Any]:
         return {"id": str(id)}
 
     @rotas.get("/recursos")
@@ -433,3 +448,48 @@ async def test_listagem_devolve_so_o_que_esta_no_escopo_de_leitura(
 
     assert resposta.status_code == 200
     assert resposta.json() == esperado
+
+
+@pytest.mark.parametrize(
+    ("papel", "escopo", "unidade", "status"),
+    [
+        ("TECNICO_DISTRITAL", ("distrito", "DS-III"), "caps_ds3", 200),
+        ("TECNICO_DISTRITAL", ("distrito", "DS-III"), "caps_ds4", 403),
+        ("COORD_TECNICO", ("area", "SAUDE_MENTAL"), "caps_ds4", 200),
+        ("COORD_TECNICO", ("area", "SAUDE_MENTAL"), "usf_ds3", 403),
+        ("GESTOR_UNIDADE", ("unidade", "caps_ds3"), "caps_ds3", 200),
+        ("GESTOR_UNIDADE", ("unidade", "caps_ds3"), "usf_ds3", 403),
+    ],
+)
+async def test_unidade_resolve_distrito_e_area_tecnica_pelo_tipo(
+    app: FastAPI,
+    cliente: httpx.AsyncClient,
+    sessoes: async_sessionmaker[AsyncSession],
+    banco: BancoDeTeste,
+    papel: str,
+    escopo: tuple[str, str],
+    unidade: str,
+    status: int,
+) -> None:
+    """003/R4.3: `ResourceRef("unidade")` dá o id, o distrito e a área do tipo da unidade."""
+    dono = motor(banco.url_dono)
+    async with dono.begin() as conexao:
+        unidades = {
+            "caps_ds3": await inserir_unidade(conexao, "CAPS III", distrito="DS-III"),
+            "caps_ds4": await inserir_unidade(conexao, "CAPS IV", distrito="DS-IV"),
+            "usf_ds3": await inserir_unidade(conexao, "USF III", distrito="DS-III", tipo="USF"),
+        }
+        if escopo[0] == "unidade":
+            id_do_escopo = str(unidades[escopo[1]])
+        else:
+            id_do_escopo = str(
+                await conexao.scalar(ID_PELO_CODIGO[escopo[0]], {"codigo": escopo[1]})
+            )
+    await dono.dispose()
+    sessao_de_login = await _logado(sessoes, (papel, (escopo[0], id_do_escopo)))
+
+    resposta = await cliente.get(
+        f"/api/v1/teste/unidades/{unidades[unidade]}", headers=_bearer(app, sessao_de_login)
+    )
+
+    assert resposta.status_code == status

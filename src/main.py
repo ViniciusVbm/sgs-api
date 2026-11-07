@@ -16,7 +16,10 @@ from src.core.problem import install_error_handlers
 from src.core.request_context import RequestContextMiddleware
 from src.core.security_headers import SecurityHeadersMiddleware
 from src.modules.access.application.permissoes import ResolvedorDePermissoes
-from src.modules.access.infrastructure.repository import SqlRepositorioDePermissoes
+from src.modules.access.infrastructure.repository import (
+    SqlRepositorioDePermissoes,
+    SqlResolvedorDeUnidade,
+)
 from src.modules.audit.infrastructure.repository import SqlAuditStore
 from src.modules.identity.api import jwks
 from src.modules.identity.infrastructure.repository import SqlSessionRepository, SqlUserRepository
@@ -64,8 +67,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Um resolvedor por processo: o cache de permissões é dele (design da 003, passo 3).
     app.state.resolvedor_de_permissoes = ResolvedorDePermissoes()
     # `ResourceRef.tipo` → fábrica do `ResolvedorDeAlvo` daquele tipo de recurso (design da 003,
-    # § Verificação). O da unidade depende de `unit_types`, que nasce na 0006 (spec 006).
-    app.state.resolvedores_de_alvo = {}
+    # § Verificação).
+    app.state.resolvedores_de_alvo = {"unidade": SqlResolvedorDeUnidade}
     install_error_handlers(app)
     app.include_router(health.router)
     app.include_router(jwks.router)
