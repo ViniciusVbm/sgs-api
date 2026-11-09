@@ -1,0 +1,30 @@
+{
+  "_comentario": "Tipos reais da rede usados pelas unidades reaproveitadas da feat/003; os da 0006 continuam. Domínios fechados (distritos, áreas, papéis, permissões) não ganham registros (D1).",
+  "tipos_unidade": [
+    {
+      "codigo": "UPA",
+      "nome": "Unidade de Pronto Atendimento",
+      "area": "MAC"
+    },
+    {
+      "codigo": "HOSPITAL",
+      "nome": "Hospital",
+      "area": "MAC"
+    },
+    {
+      "codigo": "LABORATORIO",
+      "nome": "Laboratório",
+      "area": "MAC"
+    }
+  ],
+  "tipos_equipamento": [
+    {
+      "codigo": "ACADEMIA_SAUDE",
+      "nome": "Academia da Saúde"
+    },
+    {
+      "codigo": "BASE_SAMU",
+      "nome": "Base descentralizada do SAMU"
+    }
+  ]
+}

@@ -1,0 +1,403 @@
+{
+  "equipamentos": [
+    {
+      "unidade": "UBS Vila da Paz",
+      "nome": "Academia da Saúde da Paz",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "Posto de Saúde Cordeiro",
+      "nome": "Academia da Saúde Saúde Cordeiro",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "Centro de Saúde Ibura",
+      "nome": "Academia da Saúde Saúde Ibura",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UBS Boa Viagem",
+      "nome": "Academia da Saúde Viagem",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UBS San Martin",
+      "nome": "Academia da Saúde Martin",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "Centro de Saúde Pina",
+      "nome": "Academia da Saúde Saúde Pina",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UBS Jardim São Paulo",
+      "nome": "Academia da Saúde São Paulo",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "Centro de Saúde Setúbal",
+      "nome": "Academia da Saúde Saúde Setúbal",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UBS Imbiribeira",
+      "nome": "Academia da Saúde Imbiribeira",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "Posto de Saúde Recife Antigo",
+      "nome": "Academia da Saúde Saúde Recife Antigo",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "Centro de Saúde Casa Amarela",
+      "nome": "Academia da Saúde Saúde Casa Amarela",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UBS Nova Descoberta",
+      "nome": "Academia da Saúde Descoberta",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UBS Poço da Panela",
+      "nome": "Academia da Saúde da Panela",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "Centro de Saúde Espinheiro",
+      "nome": "Academia da Saúde Saúde Espinheiro",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UBS Aflitos",
+      "nome": "Academia da Saúde Aflitos",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UBS Tejipió",
+      "nome": "Academia da Saúde Tejipió",
+      "tipo": "ACADEMIA_SAUDE",
+      "quantidade": 1
+    },
+    {
+      "unidade": null,
+      "nome": "UTI móvel SAMU 01",
+      "tipo": "UTI_MOVEL",
+      "quantidade": 1
+    },
+    {
+      "unidade": null,
+      "nome": "UTI móvel SAMU 02",
+      "tipo": "UTI_MOVEL",
+      "quantidade": 1
+    },
+    {
+      "unidade": null,
+      "nome": "UTI móvel SAMU 03",
+      "tipo": "UTI_MOVEL",
+      "quantidade": 1
+    },
+    {
+      "unidade": null,
+      "nome": "UTI móvel SAMU 04",
+      "tipo": "UTI_MOVEL",
+      "quantidade": 1
+    },
+    {
+      "unidade": null,
+      "nome": "UTI móvel SAMU 05",
+      "tipo": "UTI_MOVEL",
+      "quantidade": 1
+    },
+    {
+      "unidade": null,
+      "nome": "UTI móvel SAMU 06",
+      "tipo": "UTI_MOVEL",
+      "quantidade": 1
+    },
+    {
+      "unidade": null,
+      "nome": "UTI móvel SAMU 07",
+      "tipo": "UTI_MOVEL",
+      "quantidade": 1
+    },
+    {
+      "unidade": null,
+      "nome": "UTI móvel SAMU 08",
+      "tipo": "UTI_MOVEL",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UPA Santo Amaro",
+      "nome": "Base SAMU Santo Amaro",
+      "tipo": "BASE_SAMU",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UPA Encruzilhada",
+      "nome": "Base SAMU Encruzilhada",
+      "tipo": "BASE_SAMU",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UPA Graças",
+      "nome": "Base SAMU Graças",
+      "tipo": "BASE_SAMU",
+      "quantidade": 1
+    },
+    {
+      "unidade": "Policlínica da Várzea",
+      "nome": "Policlínica da Várzea",
+      "tipo": "POLICLINICA",
+      "quantidade": 1
+    },
+    {
+      "unidade": "Policlínica da Várzea",
+      "nome": "Maternidade da Várzea",
+      "tipo": "MATERNIDADE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "Hospital Municipal do Derby",
+      "nome": "Maternidade do Derby",
+      "tipo": "MATERNIDADE",
+      "quantidade": 1
+    },
+    {
+      "unidade": "UPA Santo Amaro",
+      "nome": "Policlínica Santo Amaro",
+      "tipo": "POLICLINICA",
+      "quantidade": 1
+    }
+  ],
+  "servicos": [
+    {
+      "unidade": "CAPS II Espaço Azul",
+      "nome": "Farmácia do CAPS II Espaço Azul",
+      "tipo": "FARMACIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "CAPS II Travessia",
+      "nome": "Farmácia do CAPS II Travessia",
+      "tipo": "FARMACIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "CAPS AD Novos Rumos",
+      "nome": "Farmácia do CAPS AD Novos Rumos",
+      "tipo": "FARMACIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "CAPS AD Vila Verde",
+      "nome": "Farmácia do CAPS AD Vila Verde",
+      "tipo": "FARMACIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "CAPS i Ciranda",
+      "nome": "Farmácia do CAPS i Ciranda",
+      "tipo": "FARMACIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "CAPS i Brincar",
+      "nome": "Farmácia do CAPS i Brincar",
+      "tipo": "FARMACIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS Vila da Paz",
+      "nome": "Farmácia da Família da Paz",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "Posto de Saúde Cordeiro",
+      "nome": "Farmácia da Família Saúde Cordeiro",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "Centro de Saúde Ibura",
+      "nome": "Farmácia da Família Saúde Ibura",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS Boa Viagem",
+      "nome": "Farmácia da Família Viagem",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS San Martin",
+      "nome": "Farmácia da Família Martin",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "Centro de Saúde Pina",
+      "nome": "Farmácia da Família Saúde Pina",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS Jardim São Paulo",
+      "nome": "Farmácia da Família São Paulo",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "Centro de Saúde Setúbal",
+      "nome": "Farmácia da Família Saúde Setúbal",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS Imbiribeira",
+      "nome": "Farmácia da Família Imbiribeira",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "Posto de Saúde Recife Antigo",
+      "nome": "Farmácia da Família Saúde Recife Antigo",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "Centro de Saúde Casa Amarela",
+      "nome": "Farmácia da Família Saúde Casa Amarela",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS Nova Descoberta",
+      "nome": "Farmácia da Família Descoberta",
+      "tipo": "FARMACIA_FAMILIA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS San Martin",
+      "nome": "Sala de Vacina Martin",
+      "tipo": "SALA_VACINA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "Centro de Saúde Pina",
+      "nome": "Sala de Vacina Saúde Pina",
+      "tipo": "SALA_VACINA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS Jardim São Paulo",
+      "nome": "Sala de Vacina São Paulo",
+      "tipo": "SALA_VACINA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "Centro de Saúde Setúbal",
+      "nome": "Sala de Vacina Saúde Setúbal",
+      "tipo": "SALA_VACINA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS Imbiribeira",
+      "nome": "Sala de Vacina Imbiribeira",
+      "tipo": "SALA_VACINA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "Posto de Saúde Recife Antigo",
+      "nome": "Sala de Vacina Saúde Recife Antigo",
+      "tipo": "SALA_VACINA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "Centro de Saúde Casa Amarela",
+      "nome": "Sala de Vacina Saúde Casa Amarela",
+      "tipo": "SALA_VACINA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS Nova Descoberta",
+      "nome": "Sala de Vacina Descoberta",
+      "tipo": "SALA_VACINA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS Poço da Panela",
+      "nome": "Sala de Vacina da Panela",
+      "tipo": "SALA_VACINA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "Centro de Saúde Espinheiro",
+      "nome": "Sala de Vacina Saúde Espinheiro",
+      "tipo": "SALA_VACINA",
+      "no_cnes": true
+    },
+    {
+      "unidade": "UBS Vila da Paz",
+      "nome": "Espaço Mãe Coruja da Paz",
+      "tipo": "ESPACO_MAE_CORUJA",
+      "no_cnes": false
+    },
+    {
+      "unidade": "Posto de Saúde Cordeiro",
+      "nome": "Espaço Mãe Coruja Saúde Cordeiro",
+      "tipo": "ESPACO_MAE_CORUJA",
+      "no_cnes": false
+    },
+    {
+      "unidade": "Centro de Saúde Ibura",
+      "nome": "Espaço Mãe Coruja Saúde Ibura",
+      "tipo": "ESPACO_MAE_CORUJA",
+      "no_cnes": false
+    },
+    {
+      "unidade": "UBS Boa Viagem",
+      "nome": "Espaço Mãe Coruja Viagem",
+      "tipo": "ESPACO_MAE_CORUJA",
+      "no_cnes": false
+    },
+    {
+      "unidade": "Policlínica da Várzea",
+      "nome": "Farmácia da Maternidade da Várzea",
+      "tipo": "FARMACIA",
+      "no_cnes": true,
+      "equipamento": "Maternidade da Várzea"
+    },
+    {
+      "unidade": null,
+      "nome": "Sala de Vacinação do Shopping Recife",
+      "tipo": "SALA_VACINA",
+      "no_cnes": false
+    },
+    {
+      "unidade": null,
+      "nome": "Atende Gestante (itinerante)",
+      "tipo": "ESPACO_MAE_CORUJA",
+      "no_cnes": false
+    }
+  ]
+}

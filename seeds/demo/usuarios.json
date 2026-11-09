@@ -1,0 +1,275 @@
+{
+  "_comentario": "Pessoas fictícias (010/R1.5). A senha não fica aqui: vem de SGS_SEED_SENHA ou é gerada.",
+  "usuarios": [
+    {
+      "username": "demo.ana.lima",
+      "nome": "Ana Lima (fictício)",
+      "papel": "ADMIN_TI",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    },
+    {
+      "username": "demo.bruno.costa",
+      "nome": "Bruno Costa (fictício)",
+      "papel": "ADMIN_TI",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    },
+    {
+      "username": "demo.carla.dias",
+      "nome": "Carla Dias (fictício)",
+      "papel": "GESTOR_DADOS",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    },
+    {
+      "username": "demo.davi.rocha",
+      "nome": "Davi Rocha (fictício)",
+      "papel": "GESTOR_DADOS",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    },
+    {
+      "username": "demo.elisa.prado",
+      "nome": "Elisa Prado (fictício)",
+      "papel": "GESTOR_DADOS",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    },
+    {
+      "username": "demo.fabio.nunes",
+      "nome": "Fábio Nunes (fictício)",
+      "papel": "GESTOR_DADOS",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    },
+    {
+      "username": "demo.gabriela.reis",
+      "nome": "Gabriela Reis (fictício)",
+      "papel": "COORD_TECNICO",
+      "escopo": {
+        "tipo": "area",
+        "valor": "SAUDE_MENTAL"
+      }
+    },
+    {
+      "username": "demo.heitor.sales",
+      "nome": "Heitor Sales (fictício)",
+      "papel": "COORD_TECNICO",
+      "escopo": {
+        "tipo": "area",
+        "valor": "APS"
+      }
+    },
+    {
+      "username": "demo.iris.moura",
+      "nome": "Íris Moura (fictício)",
+      "papel": "COORD_TECNICO",
+      "escopo": {
+        "tipo": "area",
+        "valor": "MAC"
+      }
+    },
+    {
+      "username": "demo.joao.vieira",
+      "nome": "João Vieira (fictício)",
+      "papel": "COORD_TECNICO",
+      "escopo": {
+        "tipo": "area",
+        "valor": "SAUDE_BUCAL"
+      }
+    },
+    {
+      "username": "demo.karina.lopes",
+      "nome": "Karina Lopes (fictício)",
+      "papel": "TECNICO_DISTRITAL",
+      "escopo": {
+        "tipo": "distrito",
+        "valor": "DS-I"
+      }
+    },
+    {
+      "username": "demo.lucas.pires",
+      "nome": "Lucas Pires (fictício)",
+      "papel": "TECNICO_DISTRITAL",
+      "escopo": {
+        "tipo": "distrito",
+        "valor": "DS-II"
+      }
+    },
+    {
+      "username": "demo.marina.teles",
+      "nome": "Marina Teles (fictício)",
+      "papel": "TECNICO_DISTRITAL",
+      "escopo": {
+        "tipo": "distrito",
+        "valor": "DS-III"
+      }
+    },
+    {
+      "username": "demo.nicolas.brito",
+      "nome": "Nicolas Brito (fictício)",
+      "papel": "TECNICO_DISTRITAL",
+      "escopo": {
+        "tipo": "distrito",
+        "valor": "DS-IV"
+      }
+    },
+    {
+      "username": "demo.olivia.campos",
+      "nome": "Olívia Campos (fictício)",
+      "papel": "TECNICO_DISTRITAL",
+      "escopo": {
+        "tipo": "distrito",
+        "valor": "DS-V"
+      }
+    },
+    {
+      "username": "demo.pedro.farias",
+      "nome": "Pedro Farias (fictício)",
+      "papel": "TECNICO_DISTRITAL",
+      "escopo": {
+        "tipo": "distrito",
+        "valor": "DS-VI"
+      }
+    },
+    {
+      "username": "demo.quesia.matos",
+      "nome": "Quésia Matos (fictício)",
+      "papel": "TECNICO_DISTRITAL",
+      "escopo": {
+        "tipo": "distrito",
+        "valor": "DS-VII"
+      }
+    },
+    {
+      "username": "demo.rafael.torres",
+      "nome": "Rafael Torres (fictício)",
+      "papel": "TECNICO_DISTRITAL",
+      "escopo": {
+        "tipo": "distrito",
+        "valor": "DS-VIII"
+      }
+    },
+    {
+      "username": "demo.sofia.barros",
+      "nome": "Sofia Barros (fictício)",
+      "papel": "GESTOR_UNIDADE",
+      "escopo": {
+        "tipo": "unidade",
+        "valor": "CAPS II Espaço Azul"
+      }
+    },
+    {
+      "username": "demo.tiago.melo",
+      "nome": "Tiago Melo (fictício)",
+      "papel": "GESTOR_UNIDADE",
+      "escopo": {
+        "tipo": "unidade",
+        "valor": "CAPS AD Novos Rumos"
+      }
+    },
+    {
+      "username": "demo.ursula.faria",
+      "nome": "Úrsula Faria (fictício)",
+      "papel": "GESTOR_UNIDADE",
+      "escopo": {
+        "tipo": "unidade",
+        "valor": "UBS Aflitos"
+      }
+    },
+    {
+      "username": "demo.vitor.ramos",
+      "nome": "Vitor Ramos (fictício)",
+      "papel": "GESTOR_UNIDADE",
+      "escopo": {
+        "tipo": "unidade",
+        "valor": "Policlínica da Várzea"
+      }
+    },
+    {
+      "username": "demo.wanda.alves",
+      "nome": "Wanda Alves (fictício)",
+      "papel": "GESTOR_UNIDADE",
+      "escopo": {
+        "tipo": "unidade",
+        "valor": "SIM Centro"
+      }
+    },
+    {
+      "username": "demo.xavier.leal",
+      "nome": "Xavier Leal (fictício)",
+      "papel": "GESTOR_UNIDADE",
+      "escopo": {
+        "tipo": "unidade",
+        "valor": "UPA Encruzilhada"
+      }
+    },
+    {
+      "username": "demo.yara.duarte",
+      "nome": "Yara Duarte (fictício)",
+      "papel": "DIRETORIA",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    },
+    {
+      "username": "demo.zeca.paiva",
+      "nome": "Zeca Paiva (fictício)",
+      "papel": "DIRETORIA",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    },
+    {
+      "username": "demo.alice.neves",
+      "nome": "Alice Neves (fictício)",
+      "papel": "DIRETORIA",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    },
+    {
+      "username": "demo.bento.sa",
+      "nome": "Bento Sá (fictício)",
+      "papel": "AUDITOR",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    },
+    {
+      "username": "demo.cecilia.gil",
+      "nome": "Cecília Gil (fictício)",
+      "papel": "AUDITOR",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    },
+    {
+      "username": "demo.diego.luz",
+      "nome": "Diego Luz (fictício)",
+      "papel": "AUDITOR",
+      "escopo": {
+        "tipo": "global",
+        "valor": null
+      }
+    }
+  ]
+}

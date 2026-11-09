@@ -93,6 +93,19 @@ def _parser() -> argparse.ArgumentParser:
     )
     criar.add_argument("--escopo-id", default=None)
     criar.set_defaults(comando=_create_user)
+
+    seed = comandos.add_parser("seed", help="dados de demonstração (spec 010)")
+    do_seed = seed.add_subparsers(title="comandos", required=True, metavar="COMANDO")
+    demo = do_seed.add_parser(
+        "demo",
+        help="carrega a massa de demonstração (idempotente; recusada em prod)",
+        description=(
+            "Carrega referências, unidades, equipamentos, serviços e 30 usuários fictícios de"
+            " seeds/demo/. Rodar de novo não duplica. A senha dos usuários vem de SGS_SEED_SENHA"
+            " ou é gerada e mostrada uma vez. Conecta com DATABASE_URL."
+        ),
+    )
+    demo.set_defaults(comando=_seed_demo)
     return parser
 
 
@@ -284,3 +297,31 @@ async def criar_usuario(
     finally:
         await engine.dispose()
     return str(usuario.id)
+
+
+def _seed_demo(args: argparse.Namespace) -> int:
+    from src.tools.seed_demo import SeedRecusado, carregar
+
+    settings = load_settings()
+    try:
+        contagem = asyncio.run(
+            carregar(
+                settings.database_url.get_secret_value(),
+                settings,
+                senha=os.environ.get("SGS_SEED_SENHA"),
+            )
+        )
+    except SeedRecusado as erro:
+        sys.stderr.write(f"sgs-admin: {erro}\n")
+        return 1
+    for tipo in sorted(set(contagem.criados) | set(contagem.pulados)):
+        sys.stdout.write(
+            f"{tipo}: {contagem.criados.get(tipo, 0)} criados,"
+            f" {contagem.pulados.get(tipo, 0)} já existiam\n"
+        )
+    if contagem.senha_gerada is not None:
+        sys.stdout.write(
+            "Senha gerada para os usuários demo.* (anote, não será mostrada de novo):"
+            f" {contagem.senha_gerada}\n"
+        )
+    return 0
