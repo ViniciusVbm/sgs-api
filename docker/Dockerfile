@@ -17,6 +17,8 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY alembic.ini ./
 COPY migrations ./migrations
 COPY src ./src
+# Massa de demonstração do `sgs-admin seed demo` (spec 010); só dados fictícios.
+COPY seeds ./seeds
 RUN uv sync --frozen --no-dev
 
 

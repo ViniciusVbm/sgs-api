@@ -1,4 +1,4 @@
-# Só o necessário para a imagem da API: pyproject, uv.lock, README, alembic, migrations e src.
+# Só o necessário para a imagem da API: pyproject, uv.lock, README, alembic, migrations, src e seeds.
 .git
 .github
 .claude

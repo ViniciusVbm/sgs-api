@@ -202,3 +202,30 @@ def test_nenhuma_chave_nem_certificado_esta_no_git() -> None:
         if caminho.startswith("secrets/") or Path(caminho).suffix.lower() in EXTENSOES_PROIBIDAS
     ]
     assert proibidos == []
+
+
+def test_seed_demo_e_create_user_rodam_no_container(ambiente: None) -> None:
+    """010/T2 e 002/T8 no ambiente do compose, como no README: dados de demonstração idempotentes
+    e o primeiro administrador, pelo `sgs-admin` dentro do container da API."""
+    senha = ["-e", "SGS_SEED_SENHA=senha-demo-e2e-123"]
+    primeira = _compose("exec", "-T", *senha, "api", "sgs-admin", "seed", "demo", timeout=300)
+    segunda = _compose("exec", "-T", *senha, "api", "sgs-admin", "seed", "demo", timeout=300)
+    admin = _compose(
+        "exec",
+        "-T",
+        "-e",
+        "SGS_SENHA_INICIAL=senha-do-admin-e2e",
+        "api",
+        "sgs-admin",
+        "create-user",
+        "--username",
+        "admin.e2e",
+        "--nome",
+        "Admin E2E",
+        timeout=120,
+    )
+
+    assert "unidades: 37 criados" in primeira.stdout
+    assert "unidades: 0 criados, 37 já existiam" in segunda.stdout
+    assert "admin.e2e criado" in admin.stdout
+    assert int(_psql_local("SELECT count(*) FROM health_units").strip()) == 37

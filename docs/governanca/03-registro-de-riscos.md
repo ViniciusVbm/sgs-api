@@ -1,0 +1,25 @@
+# Registro de riscos
+
+P = probabilidade, I = impacto (escalas do [doc 02](02-matriz-de-riscos.md)). A nota residual considera só os controles **já implementados**, cada um com evidência.
+
+| ID | Risco | Categoria | P×I inerente | Controles implementados (evidência) | P×I residual | Mitigação adicional proposta | Continuidade | Dono |
+|---|---|---|---|---|---|---|---|---|
+| R01 | Indisponibilidade do banco (falha do servidor ou do volume) | Interrupção de TI | 3×4 = 12 Alto | Health check `/health/ready` (`src/core/health.py`); `restart: unless-stopped` no compose; migrações idempotentes; reconstrução da estrutura em banco vazio (`make sql-bd`, `tests/integration/tools/test_sql_bd.py`) | 3×3 = 9 Médio | Backup diário com `pg_dump` e teste de restauração; réplica | Restaurar o último backup; `alembic upgrade head`; o seed só em dev | TI |
+| R02 | Perda ou adulteração da trilha de auditoria | Integridade | 2×5 = 10 Alto | `audit_log` só de inserção (triggers e REVOKE da 0001; `test_audit_immutable.py`); cadeia de hash verificável (`POST /api/v1/auditoria/verificar`; `test_consulta_trilha.py::test_verificacao_acusa_o_evento_adulterado`) | 1×5 = 5 Médio | Cópia da cabeça da cadeia fora do banco; verificação agendada | Verificação aponta o primeiro evento adulterado; restaurar a partir do backup | Auditor |
+| R03 | Vazamento de dado pessoal (nome do gestor, e-mail, IP) | Proteção de dados | 3×4 = 12 Alto | Mascaramento na trilha e no log do banco (`test_crud_unidades.py::test_trilha_mascara_o_nome_do_gestor_e_grava_o_papel`); view sem dado pessoal (`test_views.py`); redação de logs (`test_logging_redaction.py`); RBAC com escopo | 2×4 = 8 Médio | Cifrar `manager_name` em repouso; política de retenção de sessões | Revogar sessões; registrar incidente (LGPD art. 48) | Gestor de Dados |
+| R04 | Comprometimento de credenciais (força bruta, roubo de token) | Acesso | 4×5 = 20 Crítico | Argon2id (`test_login.py`); bloqueio após 5 falhas; limite de 10 logins/min por IP (`test_auth_audit.py`); TOTP obrigatório (`test_mfa.py`); access token de 15 min; refresh rotativo com detecção de reuso (`test_refresh.py`) | 2×4 = 8 Médio | Limite distribuído (Redis) com mais de um processo; alerta de `auth.locked` | Revogar sessões do usuário; trocar a chave JWT (rotação por `kid`) | TI |
+| R05 | Dependência ou imagem comprometida na cadeia de fornecedores | Cadeia de fornecedores | 3×5 = 15 Alto | `uv.lock` com hashes; `pip-audit` e `bandit` no CI; tags de imagem fixas | 2×5 = 10 Alto | Fixar imagens por digest; SBOM; Dependabot | Reverter para o `uv.lock` anterior; rebuild | TI |
+| R06 | Vazamento de dado por fornecedor de diretório ou S3 (futuros) | Cadeia de fornecedores | 3×4 = 12 Alto | Ainda não integrados (specs 004 e 005) | 3×4 = 12 Alto | Contrato com cláusula de proteção de dados; STS de curta duração; SSE; URL pré-assinada de 5 min (design da 005) | Desligar a integração; manter o login local | Gestor de Dados |
+| R07 | Alteração indevida por usuário com acesso (abuso de privilégio) | Acesso | 3×4 = 12 Alto | Deny by default e escopo por papel (`test_rotas_protegidas.py`, `test_require.py`); campos estruturais só com escopo amplo; segregação de funções nas atribuições (`test_admin_atribuicoes.py`); toda alteração auditada | 2×3 = 6 Médio | Workflow de aprovação (RF-04) | Histórico mostra de/para; restaurar o valor | Gestor de Dados |
+| R08 | Segredos no repositório ou em logs | Credenciais | 3×5 = 15 Alto | `secrets/` e `.env` no `.gitignore`; `detect-private-key`; prod recusa chaves de exemplo (`test_config.py`); redação de logs | 1×5 = 5 Médio | Cofre de segredos em produção | Rotacionar a chave exposta (JWT por `kid`, cifra por versão) | TI |
+| R09 | Interceptação do tráfego API–banco | Interrupção/confidencialidade | 2×4 = 8 Médio | TLS 1.2+ `verify-full`; `pg_hba` recusa conexão sem TLS (`tests/e2e/test_tls_banco.py`) | 1×4 = 4 Baixo | Certificados da PKI da Prefeitura | — | TI |
+| R10 | Dado de cadastro desatualizado ou inconsistente | Qualidade | 4×3 = 12 Alto | Unicidade de CNES e nome; consultas de qualidade (unidades sem serviço, sem CNES, conciliação); situação cadastral | 3×3 = 9 Médio | Regras de validação (spec 007) | — | Gestor de Dados |
+| R11 | Concorrência sobrescrevendo alteração de outra pessoa | Integridade | 3×3 = 9 Médio | `If-Match` com versão por trigger (412) (`test_crud_unidades.py`) | 1×3 = 3 Baixo | — | — | — |
+| R12 | Crescimento do log do banco sem partição | Interrupção de TI | 3×3 = 9 Médio | Partições mensais criadas por procedimento com cursor; `sgs-admin banco particoes` | 2×2 = 4 Baixo | Agendar o comando mensalmente | Rodar o comando; a partição DEFAULT recebe o excesso | TI |
+
+**Continuidade (resumo):**
+- A estrutura inteira do banco pode ser reconstruída de forma reprodutível (`make sql-bd`, testada num banco vazio).
+- A trilha é verificável.
+- As chaves (JWT e cifra) são versionadas, o que permite rotação sem derrubar sessões.
+
+**O que falta para um plano de continuidade completo:** backup automatizado, ambiente secundário e testes de restauração periódicos. São processos operacionais da Secretaria, fora deste repositório.

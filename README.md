@@ -1,8 +1,16 @@
-# sgs-api · Arquitetura inicial do backend
+# sgs-api · API de Governança de Dados de Saúde
 
 API da Plataforma de Governança de Dados de Saúde · Secretaria de Saúde do Recife · Grupo 01 (CESAR School, CS018).
 
 Documentação, specs e steering vêm primeiro; o código segue as specs aprovadas (spec-driven development).
+
+**O que a API faz:**
+- cadastro único de unidades, equipamentos e serviços de saúde, com busca, escopo por papel, controle de concorrência (`If-Match`) e auditoria;
+- login com senha (Argon2id) e TOTP, tokens ES256, refresh rotativo e RBAC com escopo;
+- trilha de auditoria imutável e verificável, mais o log do banco por trigger;
+- dashboard com as consultas da disciplina de Banco de Dados (anti join, full outer join, subconsultas, views, procedures, triggers) e indicadores.
+
+Estado completo: [docs/RESUMO_STATUS_PROJETO.md](docs/RESUMO_STATUS_PROJETO.md) · relatório técnico: [docs/RELATORIO_VALIDACAO_FINAL.md](docs/RELATORIO_VALIDACAO_FINAL.md) · matriz de requisitos: [docs/REQUISITOS_EVIDENCIAS.md](docs/REQUISITOS_EVIDENCIAS.md).
 
 ## Subir o ambiente (Docker)
 Pré-requisito: Docker 26 ou mais novo, com Compose v2 (o compose monta partes de um volume com `subpath`). O compose sobe a API, o PostgreSQL 17 com TLS e um proxy TLS (Caddy). LDAP, Keycloak e S3 local entram nas specs 004 e 005.
@@ -10,6 +18,7 @@ Pré-requisito: Docker 26 ou mais novo, com Compose v2 (o compose monta partes d
 ```bash
 mkdir -p secrets
 uv run python -m src.tools.jwt_keys --output secrets/jwt-keys.json   # uma vez: chave JWT de dev
+uv run python -m src.tools.crypto_keys --output secrets/crypto-keys.json   # uma vez: chave de cifra
 docker compose -f docker/compose.yml up -d --build --wait
 curl -k https://localhost/health/ready      # {"status":"ok"}
 ```
@@ -58,14 +67,28 @@ O ruleset "revisão humana (ADR-0008)" exige 1 aprovação, descartada quando ch
 
 A regra foi testada em 03/10/2026 numa branch descartável: um PR com lint quebrado falhou no CI e o merge foi recusado ("the base branch policy prohibits the merge"). Na máquina de cada um, o hook `no-commit-to-branch` do pre-commit também recusa commits feitos direto na `main`.
 
+## Dados de demonstração e primeiro administrador
+```bash
+docker compose -f docker/compose.yml exec -e SGS_SEED_SENHA='senha-demo' api sgs-admin seed demo
+docker compose -f docker/compose.yml exec -e SGS_SENHA_INICIAL='senha-longa' api \
+  sgs-admin create-user --username admin --nome "Administrador"
+```
+O seed é idempotente e é recusado em prod. Detalhes em [docs/instalacao.md](docs/instalacao.md).
+
 ## Comece por aqui
 | Documento | Para quê |
 |---|---|
+| [docs/instalacao.md](docs/instalacao.md) | Instalação, execução, variáveis de ambiente, Docker e testes |
+| [docs/api/endpoints.md](docs/api/endpoints.md) · [docs/api/autenticacao.md](docs/api/autenticacao.md) | Os 55 endpoints com a permissão de cada um; fluxo de login para o front |
+| [docs/banco/](docs/banco/) | Disciplina de Banco de Dados: minimundo, modelos, dicionário, objetos, 30 tuplas, prova dos índices |
+| [docs/governanca/](docs/governanca/) | Fornecedores, matriz e registro de riscos, ISO 38500, COBIT APO10, LGPD |
+| [docs/frontend-integracao.md](docs/frontend-integracao.md) | Como o front em HTML usa a API |
+| [docs/integration-audit/](docs/integration-audit/) | Auditoria das 15 branches e plano de consolidação |
 | [docs/research/01-pesquisa-stack-backend.md](docs/research/01-pesquisa-stack-backend.md) | Pesquisa da stack: FastAPI, auth, RBAC, LDAP, OIDC, S3, ferramentas |
 | [docs/architecture/arquitetura-conceitual.md](docs/architecture/arquitetura-conceitual.md) | Papéis, recursos, matriz de permissões, componentes, fluxos, rotas |
 | [docs/architecture/modelo-dados.md](docs/architecture/modelo-dados.md) | Tabelas e relacionamentos |
 | [docs/adr/](docs/adr/) | Decisões arquiteturais (ADR-0001 a 0009) |
-| [specs/](specs/) | Specs SDD 001 a 010 (requisitos EARS, design, tarefas), rastreabilidade e calendário |
+| [specs/](specs/) | Specs SDD 001 a 011 (requisitos EARS, design, tarefas), rastreabilidade e calendário |
 | [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md), [steering/](steering/) | Contexto e regras para agentes de código |
 | [.claude/commands/](.claude/commands/) | Comandos do fluxo SDD no Claude Code |
 | [.github/](.github/) | CI e template de PR |
@@ -74,6 +97,9 @@ A regra foi testada em 03/10/2026 numa branch descartável: um PR com lint quebr
 Ver o calendário em [specs/README.md](specs/README.md#ordem-e-calendário-sugeridos): fundação e login primeiro, depois RBAC e cadastro, validação e dados de demonstração, histórico e dashboard, e por fim LDAP/OIDC e exportação S3.
 
 ## Pendências para o grupo
-- Confirmar FastAPI e atualizar o Documento de Arquitetura da Atividade 5, que ainda diz Node.js (ADR-0001).
-- Aprovar ou ajustar a matriz de papéis × permissões.
-- Definir o dono humano de cada spec.
+Ver [docs/RESUMO_STATUS_PROJETO.md](docs/RESUMO_STATUS_PROJETO.md) § Pendências. Em resumo:
+- aprovar as specs 008, 009 e 010 e as emendas da 011 (o Rafael é o dono);
+- confirmar com o professor a decisão das 30 tuplas nos domínios fechados;
+- integrar o front em HTML;
+- LDAP, OIDC e S3 (specs 004 e 005);
+- confirmar FastAPI e atualizar o Documento de Arquitetura da Atividade 5 (ADR-0001).
