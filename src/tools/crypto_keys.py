@@ -32,8 +32,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         sys.stdout.write(conteudo)
         return 0
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    # Sem chmod 600, como o `jwt_keys`: o compose monta o arquivo como secret com as permissões
+    # do host, e o usuário do container (outro uid) precisa lê-lo. `secrets/` fica fora do Git.
     args.output.write_text(conteudo, encoding="utf-8")
-    args.output.chmod(0o600)
     sys.stdout.write(f"Chaves gravadas em {args.output} (CRYPTO_ACTIVE_KEY=1).\n")
     return 0
 
