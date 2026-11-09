@@ -1,4 +1,4 @@
-.PHONY: check test-all openapi migrate up down
+.PHONY: check test-all openapi migrate up down sql-bd
 
 check:
 	uv run ruff check .
@@ -12,6 +12,9 @@ test-all:
 
 openapi:
 	uv run python -m src.tools.export_openapi > contracts/openapi.yaml
+
+sql-bd:
+	uv run python -m src.tools.sql_bd
 
 migrate:
 	uv run alembic revision --autogenerate -m "$(m)"
