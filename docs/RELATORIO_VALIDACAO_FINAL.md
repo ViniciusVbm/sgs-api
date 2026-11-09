@@ -13,7 +13,7 @@
 **Sequência:**
 1. Fast-forward da `main` para `feat/011-integracao` (`556599f`, 63 commits, histórico preservado).
 2. Inclusão dos documentos da auditoria (`3a8ed1a`, reaplicado como `aa44569`).
-3. Branch de trabalho `feat/consolidacao-final`, com 12 commits de implementação.
+3. Branch de trabalho `feat/consolidacao-final`, com 13 commits.
 4. Fast-forward da `main` para ela.
 
 **`feat/003-interface-dashboard`:** não foi mesclada. Dela vieram só conteúdos, reescritos para o esquema da 011:
@@ -45,9 +45,11 @@
 | `03e3b55` | Correção das permissões do arquivo de chaves (achada no e2e) |
 | `5c713ba` | Documentação: banco, governança, API, instalação, front, README |
 | `549b6c2` | Ajuste do bandit no gerador de SQL |
-| *(último)* | Relatórios finais e checkpoint |
+| `73ebb7a` | Relatórios finais e checkpoint |
+| `fdb0263` | `reports/` no `.gitignore` |
+| *(depois)* | Correções da auditoria de publicação (`docs/RELATORIO_PR_PUBLICACAO.md`) |
 
-Ao todo, 192 arquivos foram alterados em relação a `aa44569`: 132 criados e 60 modificados. Nenhum arquivo do código anterior foi removido.
+Ao todo, até `fdb0263`, 197 arquivos foram alterados em relação a `aa44569`: 135 criados e 62 modificados. Nenhum arquivo do código anterior foi removido.
 
 ## 3. Banco de dados
 **Migração nova:** `migrations/versions/0011_09_ajustes_base.py`, com 17 arquivos em `migrations/sql/0011_09/`. Nenhuma migração já aplicada foi editada.
@@ -218,11 +220,12 @@ Está no fim do `docs/CHECKPOINT_CONSOLIDACAO.md`:
 ## 14. Publicação no repositório novo (quando autorizada)
 Depois de criar o repositório vazio no GitHub, sem README nem licença, substitua `<URL>`:
 ```bash
-cd /home/blue5050/Projetos/sgs-api
+cd sgs-api                                # a pasta do clone local
 git switch main
 git status --short                        # deve estar vazio
 git remote add novo <URL>                 # o remote atual (origin) fica como está
 git push -u novo main                     # só a main: uma única branch principal
-git push novo 'refs/tags/arquivo/*'       # opcional: as tags de preservação
+# Não envie as tags arquivo/003-* e arquivo/002-*: elas trazem o histórico descartado da
+# feat/003 (ver docs/RELATORIO_PR_PUBLICACAO.md). As outras duas apontam para commits da main.
 ```
 Os secrets (`secrets/`, `.env`) não vão, porque estão no `.gitignore`. Antes, confira: `git ls-files | grep -E 'secrets/|\.env$'` não deve listar nada.

@@ -40,6 +40,9 @@
 | ⬜ Exportar relatórios para o S3 (spec 005) | Aprovação da spec |
 | ⬜ Regras de validação e pendências (spec 007) | Aprovação da spec |
 | ⬜ Testes de desempenho da busca e do dashboard | — |
+| ⬜ Mapeamento de grupos do diretório para papéis (003/T8) | Spec 004 (LDAP/OIDC) |
+| ⬜ Conversor da planilha REDE_SAUDE_RECIFE_GEO (010/T3) | A planilha não está disponível |
+| ⬜ Cache do resumo do dashboard (009/T2) | Só se o teste de desempenho exigir |
 
 ## 5. Testes executados (09/11/2026)
 | Execução | Resultado |
