@@ -166,7 +166,7 @@ async def test_dashboard_read_tem_o_escopo_de_cada_papel(banco: BancoDeTeste) ->
                 " WHERE p.code = 'dashboard:read'"
             )
         )
-        escopos = dict(linhas.all())
+        escopos: dict[str, str] = dict(linhas.all())
     await engine.dispose()
 
     assert escopos == {

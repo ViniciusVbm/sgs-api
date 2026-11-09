@@ -7,13 +7,21 @@ requisição, mas não o registro da negação.
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 from uuid import UUID
 
 from src.core.errors import Forbidden, NotFound
 from src.modules.access.application.permissoes import ResolvedorDePermissoes
 from src.modules.access.domain import authorization
-from src.modules.access.domain.authorization import Alvo, EscopoLeitura, PermissoesEfetivas, pode
+from src.modules.access.domain.authorization import (
+    Alvo,
+    EscopoLeitura,
+    PermissoesEfetivas,
+    pode,
+    pode_com_escopo_amplo,
+    tem_escopo_global,
+)
 from src.modules.access.domain.ports import RepositorioDePermissoes, ResolvedorDeAlvo
 from src.modules.audit.application.registrar import Ator, AuditStore, Entidade, registrar
 
@@ -35,6 +43,8 @@ __all__ = [
     "UsuarioAtual",
     "auditar_negacao",
     "escopo_de_leitura",
+    "exigir_escopo_amplo",
+    "exigir_escopo_global",
     "exigir_no_escopo",
     "verificar",
 ]
@@ -47,6 +57,8 @@ class UsuarioAtual:
     id: UUID
     sessao_id: UUID
     permissoes: PermissoesEfetivas
+    papeis: tuple[str, ...] = ()
+    """Códigos dos papéis do usuário na requisição, gravados em `audit_log.actor_roles`."""
 
 
 @dataclass(frozen=True)
@@ -83,7 +95,7 @@ async def verificar(
     """Levanta `AcessoNegado` se o usuário não tem `permissao` em escopo nenhum (R4.2) ou, havendo
     recurso, se nenhum escopo dele cobre o recurso (R4.3). Recurso que não existe dá 404, mas só
     a quem tem a permissão em algum escopo: aos demais, o 403 não diz se ele existe."""
-    permissoes = await resolvedor.permissoes_de(repositorio, usuario_id)
+    permissoes, papeis = await resolvedor.resolver(repositorio, usuario_id)
     if not pode(permissoes, permissao):
         raise AcessoNegado(permissao, recurso)
     if recurso is not None:
@@ -94,7 +106,7 @@ async def verificar(
             raise NotFound("O recurso pedido não existe.")
         if not pode(permissoes, permissao, alvo):
             raise AcessoNegado(permissao, recurso)
-    return UsuarioAtual(id=usuario_id, sessao_id=sessao_id, permissoes=permissoes)
+    return UsuarioAtual(id=usuario_id, sessao_id=sessao_id, permissoes=permissoes, papeis=papeis)
 
 
 def exigir_no_escopo(usuario: UsuarioAtual, permissao: str, alvo: Alvo) -> None:
@@ -105,6 +117,26 @@ def exigir_no_escopo(usuario: UsuarioAtual, permissao: str, alvo: Alvo) -> None:
     recurso (`entity_type` nulo na auditoria) e é auditada pela `SessaoDeNegocio` da camada api.
     """
     if not pode(usuario.permissoes, permissao, alvo):
+        raise AcessoNegado(permissao)
+
+
+def exigir_escopo_amplo(
+    usuario: UsuarioAtual, permissao: str, alvo: Alvo, *, campos: tuple[str, ...] = ()
+) -> None:
+    """Levanta `AcessoNegado` se `permissao` não vale com escopo global ou da área do alvo.
+
+    Os campos que pediram o escopo amplo vão no 403 (`campos_estruturais`, 006/R3.4).
+    """
+    if not pode_com_escopo_amplo(usuario.permissoes, permissao, alvo):
+        negacao = AcessoNegado(permissao)
+        if campos:
+            negacao.extensoes = MappingProxyType({"campos_estruturais": ", ".join(campos)})
+        raise negacao
+
+
+def exigir_escopo_global(usuario: UsuarioAtual, permissao: str) -> None:
+    """Levanta `AcessoNegado` se `permissao` não vale em escopo global (006/R5.2, R6.2)."""
+    if not tem_escopo_global(usuario.permissoes, permissao):
         raise AcessoNegado(permissao)
 
 

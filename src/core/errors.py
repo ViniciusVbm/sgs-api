@@ -61,3 +61,35 @@ class DomainValidationError(AppError):
     def __init__(self, detail: str, errors: Sequence[FieldError] = ()) -> None:
         super().__init__(detail)
         self.errors = tuple(errors)
+
+
+class Unauthorized(AppError):
+    """401 de credenciais (login, segundo fator, refresh). A mensagem é sempre genérica."""
+
+    status = 401
+    type = "urn:sgs:problema:nao-autenticado"
+    title = "Não autenticado"
+
+
+class PreconditionFailed(AppError):
+    """412: o `If-Match` não confere com a versão atual (006/R3.2)."""
+
+    status = 412
+    type = "urn:sgs:problema:versao-desatualizada"
+    title = "Versão desatualizada"
+
+
+class PreconditionRequired(AppError):
+    """428: a alteração exige `If-Match` (006/R3.2; RFC 6585)."""
+
+    status = 428
+    type = "urn:sgs:problema:if-match-obrigatorio"
+    title = "If-Match obrigatório"
+
+
+class TooManyRequests(AppError):
+    """429: limite de requisições ou bloqueio temporário (002/R1.4, R1.5)."""
+
+    status = 429
+    type = "urn:sgs:problema:muitas-requisicoes"
+    title = "Muitas requisições"

@@ -49,7 +49,8 @@ MATRIZ: dict[str, tuple[str, ...]] = {
     "regra_validacao:manage": ("-", "G", "-", "-", "-", "-", "-"),
     "auditoria:read":         ("-", "G", "A", "D", "U", "-", "G"),
     "auditoria:read_acessos": ("G", "-", "-", "-", "-", "-", "G"),
-    "dashboard:read":         ("-", "G", "G", "G", "G", "G", "-"),
+    # Desde a 0011_09 (011/T22, D3), cada papel vê o dashboard só no seu escopo.
+    "dashboard:read":         ("-", "G", "A", "D", "U", "G", "-"),
     "relatorio:export":       ("-", "G", "A", "-", "-", "G", "G"),
     "relatorio:download":     ("-", "G", "A", "-", "-", "G", "G"),
     "usuario:manage":         ("G", "-", "-", "-", "-", "-", "-"),

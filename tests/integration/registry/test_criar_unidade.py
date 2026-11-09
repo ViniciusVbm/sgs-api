@@ -138,7 +138,8 @@ async def test_criacao_audita_unidade_criada_com_todos_os_campos(
                 {"campo": "cnes", "de": None, "para": "2345678"},
                 {"campo": "neighborhood", "de": None, "para": None},
                 {"campo": "phone", "de": None, "para": None},
-                {"campo": "manager_name", "de": None, "para": "Ana Souza"},
+                # Mascarado na trilha desde a 011/T21 (decisão D2, LGPD).
+                {"campo": "manager_name", "de": None, "para": "***"},
                 {"campo": "opening_hours", "de": None, "para": None},
                 {"campo": "latitude", "de": None, "para": -8.063169},
                 {"campo": "longitude", "de": None, "para": None},

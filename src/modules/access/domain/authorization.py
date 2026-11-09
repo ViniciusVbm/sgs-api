@@ -75,6 +75,13 @@ class Concessao:
     escopo_maximo: str
     escopo: Escopo
     valido_ate: datetime | None = None
+    papel: str | None = None
+    """Código do papel da atribuição (`roles.code`), para a auditoria (`actor_roles`)."""
+
+
+def papeis_de(concessoes: Iterable[Concessao]) -> tuple[str, ...]:
+    """Códigos dos papéis das concessões, sem repetição e em ordem alfabética (001/R5.1)."""
+    return tuple(sorted({c.papel for c in concessoes if c.papel is not None}))
 
 
 def permissoes_efetivas(concessoes: Iterable[Concessao]) -> PermissoesEfetivas:
@@ -128,6 +135,23 @@ def pode(perms: PermissoesEfetivas, perm: str, alvo: Alvo | None = None) -> bool
     if alvo is None:
         return bool(escopos)
     return any(_cobre(escopo, alvo) for escopo in escopos)
+
+
+def pode_com_escopo_amplo(perms: PermissoesEfetivas, perm: str, alvo: Alvo) -> bool:
+    """Se algum escopo `Global` ou `Area` da área do alvo dá `perm` (006/R3.4).
+
+    Para as alterações que só o Gestor de Dados e o Coordenador Técnico fazem, como os campos
+    estruturais da unidade: o escopo de distrito ou de unidade não basta.
+    """
+    return any(
+        isinstance(escopo, Global) or (isinstance(escopo, Area) and escopo.id == alvo.area_id)
+        for escopo in perms.get(perm, ())
+    )
+
+
+def tem_escopo_global(perms: PermissoesEfetivas, perm: str) -> bool:
+    """Se `perm` vale em escopo `Global` (equipamento e serviço soltos, 006/R5.2, R6.2)."""
+    return any(isinstance(escopo, Global) for escopo in perms.get(perm, ()))
 
 
 def _cobre(escopo: Escopo, alvo: Alvo) -> bool:

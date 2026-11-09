@@ -127,3 +127,34 @@ class Unidade(DadosDaUnidade):
     def campos_de_negocio(self) -> dict[str, object]:
         """Campo → valor, só os de `DadosDaUnidade` (o que a auditoria e o `diff` comparam)."""
         return {campo: getattr(self, campo) for campo in CAMPOS_DE_NEGOCIO}
+
+
+CAMPOS_PESSOAIS = frozenset({"manager_name"})
+"""Campos com dado pessoal (LGPD). A trilha guarda só `***` no lugar do valor (decisão D2;
+011/T21), como o `db_change_log` da 011 já fazia; a resposta da API continua com o valor."""
+
+MASCARA = "***"
+
+
+def valor_para_auditoria(campo: str, valor: object) -> object:
+    """O valor como vai para `audit_log.changes`: mascarado se pessoal; nulo continua nulo."""
+    if campo in CAMPOS_PESSOAIS and valor is not None:
+        return MASCARA
+    return float(valor) if isinstance(valor, Decimal) else valor
+
+
+ORDENS = ("nome", "distrito", "atualizacao")
+"""Ordenações da listagem (006/R2.4): nome (padrão), distrito ou data de atualização."""
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class FiltrosDeUnidade:
+    """Filtros combináveis da listagem (006/R2.2, R2.3)."""
+
+    q: str | None = None
+    tipo: int | None = None
+    area: int | None = None
+    distrito: int | None = None
+    status: str | None = None
+    com_pendencias: bool | None = None
+    ordem: str = "nome"

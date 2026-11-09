@@ -8,16 +8,26 @@ banco novo copiado dele (CREATE DATABASE ... TEMPLATE), porque o audit_log não 
 import os
 import uuid
 from collections.abc import AsyncIterator, Iterator
+from typing import TYPE_CHECKING
 
 import pytest
 from sqlalchemy import URL, make_url, text
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.pool import NullPool
 from testcontainers.community.postgres import PostgresContainer
 
 from src.core.db import run_migrations
 from tests.factories import make_settings
 from tests.integration.postgres import LOGIN_DA_API, SENHA_DA_API, BancoDeTeste, como_texto
+
+if TYPE_CHECKING:
+    import httpx
+    from fastapi import FastAPI
 
 BANCO_MODELO = "sgs_modelo"
 
@@ -89,3 +99,37 @@ async def banco_vazio(servidor_postgres: URL, banco_modelo: URL) -> AsyncIterato
     """Banco sem nenhuma migração (o modelo garante que o login da API já existe)."""
     async for banco in _banco_novo(servidor_postgres, None):
         yield banco
+
+
+# Fixtures da API para os testes de rota. Um arquivo que defina as próprias, com o mesmo nome,
+# continua valendo (pytest usa a mais próxima).
+
+
+@pytest.fixture
+async def app(banco: BancoDeTeste) -> AsyncIterator["FastAPI"]:
+    from pydantic import SecretStr
+
+    from src.main import create_app
+
+    aplicacao = create_app(make_settings(database_url=SecretStr(banco.url_api)))
+    yield aplicacao
+    await aplicacao.state.engine.dispose()
+
+
+@pytest.fixture
+async def cliente(app: "FastAPI") -> AsyncIterator["httpx.AsyncClient"]:
+    import httpx
+
+    transporte = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transporte, base_url="http://teste") as conexao:
+        yield conexao
+
+
+@pytest.fixture
+async def sessoes(banco: BancoDeTeste) -> AsyncIterator["async_sessionmaker[AsyncSession]"]:
+    """Sessões com o login da API (papel sgs_app), para preparar e conferir os dados."""
+    from tests.integration.postgres import motor
+
+    engine = motor(banco.url_api)
+    yield async_sessionmaker(engine, expire_on_commit=False)
+    await engine.dispose()

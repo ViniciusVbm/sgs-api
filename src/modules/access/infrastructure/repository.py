@@ -8,7 +8,12 @@ from sqlalchemy import Integer, SmallInteger, Uuid, column, or_, select, table, 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.access.domain.authorization import Alvo, Concessao, escopo_de
-from src.modules.access.infrastructure.tables import permissions, role_assignments, role_permissions
+from src.modules.access.infrastructure.tables import (
+    permissions,
+    role_assignments,
+    role_permissions,
+    roles,
+)
 
 # Só a coluna de versão de `users` (spec 002); a tabela completa é da infraestrutura de identity.
 _users = table("users", column("id", Uuid), column("authz_version", Integer))
@@ -46,11 +51,14 @@ class SqlRepositorioDePermissoes:
                 role_assignments.c.scope_type,
                 role_assignments.c.scope_id,
                 role_assignments.c.valid_until,
+                roles.c.code,
             )
             .select_from(
                 role_assignments.join(
                     role_permissions, role_permissions.c.role_id == role_assignments.c.role_id
-                ).join(permissions, permissions.c.id == role_permissions.c.permission_id)
+                )
+                .join(permissions, permissions.c.id == role_permissions.c.permission_id)
+                .join(roles, roles.c.id == role_assignments.c.role_id)
             )
             .where(role_assignments.c.user_id == usuario_id, vigente)
         )
@@ -60,8 +68,9 @@ class SqlRepositorioDePermissoes:
                 escopo_maximo=escopo_maximo,
                 escopo=escopo_de(nivel, id_do_escopo),
                 valido_ate=valido_ate,
+                papel=papel,
             )
-            for codigo, escopo_maximo, nivel, id_do_escopo, valido_ate in resultado.all()
+            for codigo, escopo_maximo, nivel, id_do_escopo, valido_ate, papel in resultado.all()
         ]
 
     async def invalidar(self, usuario_id: UUID) -> None:

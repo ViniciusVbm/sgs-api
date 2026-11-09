@@ -12,7 +12,14 @@ from uuid import UUID
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
-from src.modules.registry.application.unidades import DadosDaUnidade, Unidade
+from src.modules.registry.application.referencias import DadosDaReferencia, Referencia
+from src.modules.registry.application.unidades import DadosDaUnidade, DetalheDaUnidade, Unidade
+from src.modules.registry.application.vinculos import (
+    DadosDoEquipamento,
+    DadosDoServico,
+    Equipamento,
+    Servico,
+)
 
 StatusDaUnidade = Literal["ativa", "inativa", "em_implantacao"]
 
@@ -112,4 +119,270 @@ class UnidadeOut(BaseModel):
             versao=unidade.version,
             criado_em=unidade.created_at,
             atualizado_em=unidade.updated_at,
+        )
+
+
+_CAMPOS_DA_UNIDADE = {
+    "nome": "name",
+    "cnes": "cnes",
+    "tipo_unidade_id": "unit_type_id",
+    "distrito_id": "district_id",
+    "cep": "cep",
+    "endereco": "address",
+    "bairro": "neighborhood",
+    "telefone": "phone",
+    "nome_gestor": "manager_name",
+    "latitude": "latitude",
+    "longitude": "longitude",
+    "status": "status",
+}
+
+
+class UnidadeUpdate(BaseModel):
+    """PATCH: todos opcionais; só os enviados mudam (006/R3.1). Nulo limpa um campo opcional; num
+    obrigatório, o caso de uso responde 422."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    nome: str | None = Field(default=None, min_length=1, max_length=200)
+    cnes: _Cnes | None = None
+    tipo_unidade_id: _IdDeReferencia | None = None
+    distrito_id: _IdDeReferencia | None = None
+    cep: _Cep | None = None
+    endereco: str | None = Field(default=None, min_length=1, max_length=200)
+    bairro: str | None = Field(default=None, min_length=1, max_length=100)
+    telefone: _Telefone | None = None
+    nome_gestor: str | None = Field(default=None, min_length=1, max_length=150)
+    latitude: Decimal | None = Field(default=None, ge=-90, le=90, max_digits=9, decimal_places=6)
+    longitude: Decimal | None = Field(default=None, ge=-180, le=180, max_digits=9, decimal_places=6)
+    status: StatusDaUnidade | None = None
+
+    def alteracoes(self) -> dict[str, object]:
+        """Campo do domínio → valor, só dos campos presentes no corpo."""
+        return {_CAMPOS_DA_UNIDADE[campo]: getattr(self, campo) for campo in self.model_fields_set}
+
+
+class DesativacaoIn(BaseModel):
+    """006/R4.1: a desativação exige motivo."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    motivo: str = Field(min_length=3, max_length=500)
+
+
+StatusDoEquipamento = Literal["ativo", "inativo", "em_manutencao"]
+StatusDoServico = Literal["ativo", "inativo"]
+
+
+class EquipamentoCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    nome: str = Field(min_length=1, max_length=200)
+    tipo_codigo: str = Field(min_length=1, max_length=50, description="Código do tipo.")
+    quantidade: int = Field(default=1, ge=1, le=100_000)
+    status: StatusDoEquipamento = "ativo"
+    cnes: _Cnes | None = None
+
+    def dados(self) -> DadosDoEquipamento:
+        return DadosDoEquipamento(
+            name=self.nome,
+            equipment_type_code=self.tipo_codigo,
+            quantity=self.quantidade,
+            status=self.status,
+            cnes=self.cnes,
+        )
+
+
+_CAMPOS_DO_EQUIPAMENTO = {
+    "nome": "name",
+    "tipo_codigo": "equipment_type_code",
+    "quantidade": "quantity",
+    "status": "status",
+    "cnes": "cnes",
+}
+
+
+class EquipamentoUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    nome: str | None = Field(default=None, min_length=1, max_length=200)
+    tipo_codigo: str | None = Field(default=None, min_length=1, max_length=50)
+    quantidade: int | None = Field(default=None, ge=1, le=100_000)
+    status: StatusDoEquipamento | None = None
+    cnes: _Cnes | None = None
+
+    def alteracoes(self) -> dict[str, object]:
+        return {
+            _CAMPOS_DO_EQUIPAMENTO[campo]: getattr(self, campo) for campo in self.model_fields_set
+        }
+
+
+class EquipamentoOut(BaseModel):
+    id: UUID
+    unidade_id: UUID | None
+    nome: str
+    tipo_codigo: str
+    quantidade: int
+    status: str
+    cnes: str | None
+    criado_em: datetime
+    atualizado_em: datetime
+
+    @classmethod
+    def de(cls, equipamento: Equipamento) -> Self:
+        return cls(
+            id=equipamento.id,
+            unidade_id=equipamento.unit_id,
+            nome=equipamento.name,
+            tipo_codigo=equipamento.equipment_type_code,
+            quantidade=equipamento.quantity,
+            status=equipamento.status,
+            cnes=equipamento.cnes,
+            criado_em=equipamento.created_at,
+            atualizado_em=equipamento.updated_at,
+        )
+
+
+class ServicoCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    nome: str = Field(min_length=1, max_length=200)
+    tipo_servico_id: _IdDeReferencia
+    no_cnes: bool = Field(default=False, description="Se o serviço consta no CNES (006/R6.3).")
+    status: StatusDoServico = "ativo"
+    equipamento_id: UUID | None = None
+
+    def dados(self) -> DadosDoServico:
+        return DadosDoServico(
+            name=self.nome,
+            service_type_id=self.tipo_servico_id,
+            in_cnes=self.no_cnes,
+            status=self.status,
+            equipment_id=self.equipamento_id,
+        )
+
+
+_CAMPOS_DO_SERVICO = {
+    "nome": "name",
+    "tipo_servico_id": "service_type_id",
+    "no_cnes": "in_cnes",
+    "status": "status",
+    "equipamento_id": "equipment_id",
+}
+
+
+class ServicoUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    nome: str | None = Field(default=None, min_length=1, max_length=200)
+    tipo_servico_id: _IdDeReferencia | None = None
+    no_cnes: bool | None = None
+    status: StatusDoServico | None = None
+    equipamento_id: UUID | None = None
+
+    def alteracoes(self) -> dict[str, object]:
+        return {_CAMPOS_DO_SERVICO[campo]: getattr(self, campo) for campo in self.model_fields_set}
+
+
+class ServicoOut(BaseModel):
+    id: UUID
+    unidade_id: UUID | None
+    equipamento_id: UUID | None
+    tipo_servico_id: int
+    nome: str
+    no_cnes: bool
+    status: str
+    criado_em: datetime
+    atualizado_em: datetime
+
+    @classmethod
+    def de(cls, servico: Servico) -> Self:
+        return cls(
+            id=servico.id,
+            unidade_id=servico.unit_id,
+            equipamento_id=servico.equipment_id,
+            tipo_servico_id=servico.service_type_id,
+            nome=servico.name,
+            no_cnes=servico.in_cnes,
+            status=servico.status,
+            criado_em=servico.created_at,
+            atualizado_em=servico.updated_at,
+        )
+
+
+class UnidadeDetalheOut(UnidadeOut):
+    """006/R2.5: a unidade com os equipamentos e serviços vinculados."""
+
+    equipamentos: list[EquipamentoOut]
+    servicos: list[ServicoOut]
+
+    @classmethod
+    def do_detalhe(cls, detalhe: DetalheDaUnidade) -> Self:
+        base = UnidadeOut.de(detalhe.unidade).model_dump()
+        return cls(
+            **base,
+            equipamentos=[EquipamentoOut.de(e) for e in detalhe.equipamentos],
+            servicos=[ServicoOut.de(s) for s in detalhe.servicos],
+        )
+
+
+_Codigo = Annotated[
+    str, Field(min_length=1, max_length=50, pattern=r"^[A-Za-z0-9_\-]+$", description="Código.")
+]
+
+
+class ReferenciaCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    codigo: _Codigo
+    nome: str = Field(min_length=1, max_length=100)
+    area_tecnica_id: _IdDeReferencia | None = Field(
+        default=None, description="Obrigatória só em tipos de unidade."
+    )
+
+    def dados(self) -> DadosDaReferencia:
+        return DadosDaReferencia(
+            code=self.codigo, name=self.nome, technical_area_id=self.area_tecnica_id
+        )
+
+
+_CAMPOS_DA_REFERENCIA = {
+    "codigo": "code",
+    "nome": "name",
+    "ativo": "is_active",
+    "area_tecnica_id": "technical_area_id",
+}
+
+
+class ReferenciaUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    codigo: _Codigo | None = None
+    nome: str | None = Field(default=None, min_length=1, max_length=100)
+    ativo: bool | None = None
+    area_tecnica_id: _IdDeReferencia | None = None
+
+    def alteracoes(self) -> dict[str, object]:
+        return {
+            _CAMPOS_DA_REFERENCIA[campo]: getattr(self, campo)
+            for campo in self.model_fields_set
+            if getattr(self, campo) is not None
+        }
+
+
+class ReferenciaOut(BaseModel):
+    id: int
+    codigo: str
+    nome: str
+    ativo: bool
+    area_tecnica_id: int | None
+
+    @classmethod
+    def de(cls, referencia: Referencia) -> Self:
+        return cls(
+            id=referencia.id,
+            codigo=referencia.code,
+            nome=referencia.name,
+            ativo=referencia.is_active,
+            area_tecnica_id=referencia.technical_area_id,
         )
