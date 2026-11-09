@@ -1,98 +1,66 @@
 # SGS API · Resumo do status do projeto
 
-*Situação em 09/11/2026. Fonte: auditoria em `docs/integration-audit/` (detalhes e evidências nos docs 01 a 11).*
+*Situação em 09/11/2026, depois da consolidação final. Detalhes técnicos: [RELATORIO_VALIDACAO_FINAL.md](RELATORIO_VALIDACAO_FINAL.md). Requisito por requisito: [REQUISITOS_EVIDENCIAS.md](REQUISITOS_EVIDENCIAS.md).*
 
-**Legenda:** ✅ implementado e testado · 🟡 parcial · ⬜ pendente · ⛔ bloqueado (espera decisão ou aprovação de spec)
+**Legenda:** ✅ pronto e testado · 🟡 parcial · ⬜ falta
 
 ---
 
-## 1. Situação atual
+## 1. Situação final
+- **Base única:** a `main` local agora reúne tudo. A base é a `feat/011-integracao`, com o histórico preservado, mais a auditoria e todas as implementações desta consolidação.
+- **Da `feat/003-interface-dashboard` (Vinicius)**, reaproveitamos os dados das unidades, as 4 consultas da Etapa 3, o formato do resumo do dashboard e o desenho das rotas de equipamento, reescritos para o esquema e a segurança da 011. O código dela não foi mesclado.
+- **Nenhuma branch foi apagada** e **nada foi publicado** (sem push). Há backup completo: tags `arquivo/*` e o bundle.
+- **Testes:** 888 casos, **885 aprovados**, 3 pulados de propósito, **0 falhas**.
 
-- **Base escolhida para a versão final: a branch `feat/011-integracao`.**
-- **Por que a 011:**
-  - já tem a maior parte do que a disciplina de Banco de Dados pede;
-  - segue a arquitetura e as regras do projeto;
-  - tem autenticação e permissões seguras;
-  - entra na `main` **sem nenhum conflito**;
-  - todos os testes dela passaram em 09/11/2026 (646 casos no `make check`, mais 5 testes de TLS).
-- **O que vem da `feat/003-interface-dashboard` (Vinicius): só conteúdo, não o código:**
-  - os dados das 30 unidades e dos 30 equipamentos;
-  - as 4 consultas da Etapa 3, a reescrever;
-  - o formato do resumo do dashboard;
-  - o desenho das rotas de equipamento.
-- **Por que não mesclar a 003 diretamente:**
-  - usa outro esquema de banco, incompatível com o da 011;
-  - as migrações dela colidem com as da `main`;
-  - identifica o usuário por um cabeçalho sem senha, o que é uma falha de segurança.
-- **A consolidação ainda não foi feita.** A `main` continua como estava. As 15 branches foram preservadas (tags locais `arquivo/*` e um backup completo) e nenhuma foi apagada.
-
-## 2. O que já está implementado
-
-Tudo abaixo está na `feat/011-integracao`, salvo indicação. A `main` hoje só tem a fundação (marcada com "main").
-
-| Área | Situação |
+## 2. O que foi implementado
+| Área | O que existe agora |
 |---|---|
-| **Banco de dados e integridade** | ✅ PK, FK, CHECK, DEFAULT, UNIQUE; ✅ `ON UPDATE CASCADE` (tipo de equipamento) e `ON DELETE SET NULL` (equipamento do serviço), com teste |
-| **Views, funções, procedures e triggers** | ✅ 2 views (inventário e histórico, com 3 JOINs ou mais); ✅ 2 funções, uma com IF/ELSIF; ✅ 2 procedures (desativar unidade; criar partições, com CURSOR); ✅ 2 triggers (versão da unidade; log do banco); ✅ 7 índices com justificativa (🟡 falta provar o uso) |
-| **Auditoria e rastreabilidade** | ✅ trilha com quem, quando, ação e valor anterior e novo, encadeada por hash e imutável (main); ✅ log automático do banco por trigger; 🟡 os papéis do autor não são gravados; 🟡 o nome do gestor vai sem máscara na trilha |
-| **Autenticação e segurança** | ✅ tokens assinados (ES256) e chaves públicas (JWKS); ✅ TLS entre a API e o banco; ✅ cifra de campos sensíveis (main); ⬜ **não há login** |
-| **RBAC e permissões** | ✅ 7 papéis, 17 permissões, escopo por área, distrito ou unidade, acesso negado por padrão, negações auditadas |
-| **API e endpoints** | 🟡 só criar unidade, duas consultas do dashboard e health. Não há atualizar, excluir, equipamentos nem serviços |
-| **Consultas SQL e dashboard** | ✅ SQL explícito em arquivos `.sql`; ✅ anti-join e FULL OUTER JOIN com filtros; 🟡 só 2 consultas expostas; ⬜ indicadores estatísticos |
-| **Testes e CI** | ✅ testes unitários, de integração (PostgreSQL real) e de arquitetura, todos aprovados no commit `556599f`; ✅ lint, tipos, bandit e pip-audit no CI (o GitHub Actions está bloqueado, e o `make check` local vale no lugar, pelo ADR-0008) |
+| **Cadastro** | ✅ CRUD completo de unidades (com busca sem acento, filtros, controle de edição simultânea e desativação), equipamentos, serviços e tabelas de referência |
+| **Banco de dados** | ✅ Views, funções, procedures (uma com cursor), triggers, índices com prova de uso, CASCADE e SET NULL, 30 registros ou mais nas tabelas de negócio, SQL único que instala tudo (`make sql-bd`) |
+| **Consultas e dashboard** | ✅ 8 consultas (anti join, full outer join, 2 subconsultas e as 4 da Etapa 3), inventário, resumo da rede e catálogo com gráfico sugerido; cada papel vê só o seu escopo |
+| **Login e segurança** | ✅ Usuário e senha (Argon2id) com 2FA por aplicativo (TOTP), sessão renovável e segura, bloqueio por tentativas, limite por IP, logout |
+| **Permissões** | ✅ 7 papéis com escopo, acesso negado por padrão, `/me`, administração de papéis, segregação de funções |
+| **Auditoria** | ✅ Histórico de cada unidade, trilha geral para o auditor, verificação de integridade da cadeia, log do banco; nome do gestor mascarado (LGPD) |
+| **Dados de demonstração** | ✅ `sgs-admin seed demo`: 37 unidades, 31 equipamentos, 35 serviços, 30 usuários fictícios |
+| **Documentação** | ✅ Minimundo, modelos, dicionário de dados, objetos de banco, governança (fornecedores, riscos, ISO 38500, COBIT, LGPD), API, instalação |
 
-**Não existem em nenhuma branch:** front-end (o HTML está fora do repositório e será integrado depois), LDAP, OIDC, S3 e governança.
+## 3. O que foi parcialmente implementado
+| Item | Situação |
+|---|---|
+| 30 registros por tabela | 🟡 As tabelas de negócio passam de 30. Distritos (8), papéis (7) e outros domínios fechados ficam com a quantidade real, com justificativa. **O professor precisa confirmar.** |
+| Gráficos | 🟡 A API entrega os dados e o gráfico sugerido; quem desenha é o front |
+| LGPD | 🟡 Medidas técnicas prontas; processos da Secretaria (titulares, encarregado) ficam fora do sistema |
+| Integração com diretório | 🟡 O banco já prevê usuários LDAP e OIDC, mas a integração não existe |
 
-## 3. O que ainda falta implementar
+## 4. O que falta
+| Item | Depende de |
+|---|---|
+| ⬜ Integrar o front em HTML (o protótipo existe fora do repositório; as telas já têm endpoint mapeado) | Equipe do front |
+| ⬜ LDAP e OIDC (spec 004) | Aprovação da spec |
+| ⬜ Exportar relatórios para o S3 (spec 005) | Aprovação da spec |
+| ⬜ Regras de validação e pendências (spec 007) | Aprovação da spec |
+| ⬜ Testes de desempenho da busca e do dashboard | — |
 
-| Área | O que falta | Prioridade |
-|---|---|---|
-| Cadastro (BD Etapas 3 e 6) | CRUD completo de unidades, equipamentos, serviços e referências (006/T4 a T9) | P0 |
-| Consultas (BD Etapa 4) | 2 consultas com subconsulta (011/T12) | P0 |
-| Índices (BD Etapa 4) | Provar com volume que os índices são usados (011/T9) | P0 |
-| Views e procedures na API | Inventário (011/T13) e log do banco (011/T15); ⛔ histórico pela view (011/T14) depende da **spec 008** | P0 |
-| Modelagem (BD Etapa 1) | Minimundo, modelo conceitual, modelo lógico e dicionário de dados | P0 |
-| Dados de demonstração (BD Etapa 2) | ⛔ 30 registros por tabela: depende do CRUD, da **decisão D1** e da **spec 010** | P0 |
-| Catálogo de consultas | ⛔ lista das consultas para o front (011/T19): depende da 011/T14, portanto da **spec 008** | P0 |
-| SQL consolidado | ⛔ arquivo único `make sql-bd` (011/T20): depende das tarefas T1 a T19 da 011 | P0 |
-| Indicadores do dashboard | ⛔ resumo estatístico: depende da **spec 009** | P0 |
-| Login | Login, renovação e saída, e o comando para criar o primeiro administrador (002/T3, T6, T8) | P1 |
-| Permissões | `GET /me`, administração de papéis, teste que garante a proteção de todas as rotas (003/T5 a T7) | P1 |
-| Testes de aceitação | Roteiro reproduzível e relatório de resultados (depende do CRUD e do login) | P1 |
-| Trilha de auditoria | ⛔ consulta e verificação da trilha: depende da **spec 008** | P1 |
-| Governança | Documentos de fornecedores, matriz de riscos, registro de riscos, ISO 38500, COBIT APO10 e LGPD; ⛔ tabelas no banco só se o grupo decidir (D5) | P1 |
-| LDAP e OIDC | ⛔ depende da **spec 004** (Rascunho) | P2 |
-| Exportação para S3 | ⛔ depende da **spec 005** (Rascunho) | P2 |
+## 5. Testes executados (09/11/2026)
+| Execução | Resultado |
+|---|---|
+| `make check` (qualidade do código + testes rápidos) | 878 aprovados |
+| `make test-all` (tudo, inclusive Docker e TLS) | 885 aprovados, 3 pulados, 0 falhas |
+| Roteiro de aceitação do MVP (login → cadastro → dashboard → auditoria → logout) | Aprovado |
+| Prova de uso dos índices com 1.000 unidades | Aprovada |
+| Análise de segurança (`bandit`, `pip-audit`) | Sem achados |
 
-## 4. Prioridades e prazos
+## 6. Pendências e limitações
+- **Specs em Rascunho:** as specs 008, 009 e 010 e as emendas da 011 foram implementadas antes da aprovação do Rafael, por decisão nossa. **Ele precisa revisá-las e aprová-las.**
+- **CI:** o GitHub Actions segue bloqueado; os testes rodaram localmente.
+- **Proxy:** o ambiente completo com o proxy HTTPS não foi testado nesta máquina, porque as portas estavam ocupadas por outro ambiente, que preservamos. Banco, API, TLS e comandos foram testados num ambiente isolado.
+- **Rate limit:** o limite de login vale por processo da API.
 
-- **P0, até 13/11 (Banco de Dados):**
-  - **pode começar logo após a consolidação:** CRUD (a maior tarefa), subconsultas, inventário, log do banco, prova dos índices e documentos de modelagem;
-  - **depois do CRUD:** dados de demonstração;
-  - **se a 008, a 009 e a 010 forem aprovadas a tempo:** histórico, catálogo, SQL consolidado e indicadores.
-- **P1, até 21/11 às 09h (Projetos, Entrega 11):** login, depois permissões e testes de aceitação; documentos de governança; trilha de auditoria (se a 008 for aprovada).
-- **P2, depois das entregas:** LDAP, OIDC, S3, TOTP, rate limit e otimizações.
+## 7. Próximos passos
+1. **Rafael:** revisar e aprovar as specs 008, 009, 010 e as emendas da 011.
+2. **Grupo:** levar ao professor a decisão das 30 tuplas nos domínios fechados.
+3. **Front:** integrar o HTML seguindo `docs/frontend-integracao.md`.
+4. **Publicação:** criar o repositório novo no GitHub e enviar a `main` (os comandos estão no fim do relatório técnico). Isso depende de autorização.
+5. **Depois das entregas:** specs 004 (LDAP/OIDC), 005 (S3) e 007 (validação).
 
-## 5. Decisões pendentes
-
-| ID | Decisão | Quem decide | O que trava |
-|---|---|---|---|
-| D1 | Tabelas de domínio fechado (8 distritos, 7 papéis…) precisam ter 30 registros, ou basta justificar? | **Professor de BD** (o grupo pergunta) | Dados de demonstração |
-| D2 | Mascarar o nome do gestor da unidade na trilha de auditoria? | Rafael | Ajuste de LGPD |
-| D3 | Cada papel vê o dashboard só do seu escopo, ou todos veem a rede inteira? | Rafael | Comportamento das consultas (não trava a implementação) |
-| D4 | Aprovar as specs 008, 009 e 010 (e depois 004 e 005) | Rafael | Histórico, catálogo, SQL consolidado, dados de demonstração, indicadores, trilha, LDAP, OIDC, S3 |
-| D5 | Governança só em documentos, ou também com tabelas e telas? | Grupo | Escopo da governança |
-| D6 | Criar a tarefa na spec 011 para os ajustes de banco (índices extras, permissões, `updated_at`) | Rafael | Ajustes de base |
-
-**A que mais destrava trabalho:** aprovar a spec **008**, e logo depois a **010**, com a resposta do professor sobre a D1.
-
-## 6. Próximos passos
-
-1. ✅ **Preservar branches e documentos.** Feito em 09/11: tags locais, backup completo do repositório e cópia dos documentos.
-2. **Finalizar a revisão da auditoria.** Os documentos estão revisados; falta a leitura do grupo.
-3. **Submeter a 011 pelo fluxo de PR** (`feat/011-integracao` → `main`, pela interface do GitHub, conforme o ADR-0008).
-4. **Validar a nova `main`:** `make check` e testes de TLS verdes.
-5. **Executar as tarefas prioritárias** (P0 e depois P1), cada uma em sua branch e com seu PR.
-6. **Validar os entregáveis** e preparar a publicação no novo repositório.
-
-> ⚠️ **Ainda dependem de autorização:** a consolidação (passo 3), qualquer push e a publicação no novo repositório. **Nenhuma branch deve ser apagada.** Os secrets de desenvolvimento ficam fora do Git.
+> ⚠️ Push, publicação e exclusão de branches **ainda dependem de autorização**. Os secrets de desenvolvimento ficam fora do Git.

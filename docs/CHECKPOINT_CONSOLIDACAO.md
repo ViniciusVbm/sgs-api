@@ -18,12 +18,20 @@ Arquivo de retomada: se a sessão for interrompida, continue daqui sem refazer o
 | `9602498` | Seed demo (010) e prova dos índices (011/T9) |
 | `1c6c18b` | `make sql-bd` (011/T20) |
 | `d9012f6` | Roteiro de aceitação; tarefas marcadas |
+| `03e3b55` | Permissão do arquivo de chaves (achado no e2e) |
+| `5c713ba` | Documentação: banco, governança, API, instalação, front, README |
+| `549b6c2` | bandit no gerador de SQL |
+| *(último)* | Relatórios finais (`RELATORIO_VALIDACAO_FINAL.md`, `REQUISITOS_EVIDENCIAS.md`, `RESUMO_STATUS_PROJETO.md`) |
 
-## Pendente
-1. Documentação: banco (Etapa 1), governança, API, instalação, README, front.
-2. Relatórios: `RESUMO_STATUS_PROJETO.md`, `RELATORIO_VALIDACAO_FINAL.md`, `REQUISITOS_EVIDENCIAS.md`.
-3. Revisão final e fast-forward da `main`.
+## Situação
+A consolidação terminou. A `main` local foi levada por fast-forward até o último commit da `feat/consolidacao-final`. O que resta não é código desta etapa: aprovação das specs pelo Rafael, D1 com o professor, integração do front, specs 004, 005 e 007 e a publicação (push, que depende de autorização). Ver `docs/RELATORIO_VALIDACAO_FINAL.md` § 11 e § 14.
 
 ## Últimos testes
-- `make check` em `d9012f6`: 878 aprovados, 3 pulados (justificados), 6 `slow` desmarcados.
-- `pytest -m slow`: 6 aprovados (5 e2e de TLS + prova dos índices).
+- `make check`: 878 aprovados, 3 pulados (justificados), 7 `slow` desmarcados.
+- `make test-all` (`reports/junit-test-all.xml`): 888 casos, 885 aprovados, 3 pulados, 0 falhas.
+- `bandit -r src`: 0 achados. `pip-audit`: sem vulnerabilidades conhecidas.
+
+## Como retomar
+1. `git switch main && git log --oneline -1` (deve ser o último commit da consolidação).
+2. `uv sync --frozen && make check`.
+3. Próximo trabalho: o que estiver aprovado entre as specs 004, 005 e 007.
