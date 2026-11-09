@@ -4,6 +4,8 @@
 - **Branch consolidada:** `feat/consolidacao-final`, levada à `main` local por fast-forward (ver § 1).
 - **Testes:** todos executados nesta data, com o resultado em `reports/junit-test-all.xml` (fora do Git).
 
+> **Nota de regularização (09/11/2026):** este relatório é um registro datado e foi mantido como estava. As menções à aprovação do Rafael para as specs 008, 009, 010 e as emendas da 011 e do ADR-0007 foram substituídas, nos documentos vivos, pelo portão do dono de cada spec. Em 09/11/2026 o Vinicius assumiu as 003 e 008 a 011 e aprovou as specs e emendas pendentes. Situação atual e decisões pendentes: [relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md](relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md).
+
 ## 1. Estado inicial e consolidação
 | Item | Antes | Depois |
 |---|---|---|
@@ -194,7 +196,7 @@ São 55 operações, listadas com a permissão de cada uma em `docs/api/endpoint
 | 006/T10 (desempenho da busca) | Não feita |
 | 009/T2 (cache) e T3 (desempenho do resumo) | Não feitas |
 | 010/T3 (conversor da planilha) | Não feita: a planilha não está disponível |
-| Aprovação das specs 008, 009, 010 e das emendas | Do Rafael |
+| Aprovação das specs 008, 009, 010 e das emendas | Do Rafael *(regularizado em 09/11/2026: aprovadas por Vinicius, dono das 003 e 008 a 011, em 09/11/2026; ver § 7 do relatório de regularização)* |
 | Confirmação de D1 | Do professor de BD |
 | Integração do front | Pendente |
 | Backup e continuidade operacional | Processo fora do repositório |

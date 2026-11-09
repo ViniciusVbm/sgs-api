@@ -19,7 +19,7 @@
 | structlog | 26.x |
 | openpyxl | 3.1.x |
 | Uvicorn | 0.54.x (ADR-0007) |
-| slowapi | 0.1.x (ADR-0007) |
+| limits | 5.8.x (ADR-0007, emenda de 09/11/2026: substitui o slowapi) |
 
 Ferramentas: uv, ruff, mypy, import-linter, pytest (+ pytest-asyncio, pytest-cov, httpx, testcontainers, moto, hypothesis, schemathesis), bandit, pip-audit, pre-commit. O pytest-cov entrou pelo ADR-0007.
 

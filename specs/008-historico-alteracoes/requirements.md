@@ -1,7 +1,8 @@
 # 008 · Histórico de alterações · Requisitos
 
-- Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
+- Status: Aprovado (Vinicius, 09/11/2026). Histórico: autoria original de rafareloM (03/10/2026); revisão técnica de ViniciusVbm (09/11/2026); implementada antes da aprovação, por decisão do usuário (`docs/RELATORIO_VALIDACAO_FINAL.md` § 9); aprovação registrada na regularização (`docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md` § 7, item V1)
 - Rastreia: RF-08, RS-05, RS-09; critério 6.1 "alteração aparece no histórico com autor, data e hora"; pilar Controle
+- Dono humano: Vinicius (ViniciusVbm), desde 09/11/2026; antes: nenhum registrado (autoria original: rafareloM, 03/10/2026). Atribuição pelo responsável pelo projeto (`steering/sdd-workflow.md` § Dono da spec)
 
 ## Contexto
 A spec 001 cria a trilha imutável (`audit_log`) e o serviço de gravação. Esta spec entrega a **consulta** da trilha: o histórico de uma unidade, a trilha geral para auditores e a verificação de integridade da cadeia de hash (o protótipo já mostra o hash por evento).

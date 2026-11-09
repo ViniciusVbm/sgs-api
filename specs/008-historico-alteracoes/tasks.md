@@ -1,7 +1,8 @@
 # 008 · Histórico de alterações · Tarefas
 
-- Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
+- Status: Aprovado (Vinicius, 09/11/2026). Histórico: autoria original de rafareloM (03/10/2026); revisão técnica de ViniciusVbm (09/11/2026); implementada antes da aprovação, por decisão do usuário (`docs/RELATORIO_VALIDACAO_FINAL.md` § 9); aprovação registrada na regularização (`docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md` § 7, item V1)
 - Depende de: 001, 003, 006
+- Rastreabilidade (auditoria de 09/11/2026): os arquivos de teste citados em "Pronto quando" foram consolidados em outros; o teste que prova cada tarefa é o da linha "Prova". Ver `docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md` § 3.
 
 - [x] T1. Índices e consulta paginada com filtros
   - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/audit/test_consulta_trilha.py`
@@ -20,3 +21,6 @@
   - Requisitos: R3.1
   - Pronto quando: `tests/integration/audit/test_verificar_cadeia.py` passa
 - ~~T5. Particionamento mensal e comando de manutenção~~: removida (Rafael, 06/11/2026; ver design § Retenção). A R4.1 já é provada por `tests/integration/audit/test_audit_immutable.py` (001).
+- [ ] T6. Testes dos filtros de período e autor (melhoria funcional; D008-5; não bloqueia a aprovação)
+  - Requisitos: R1.3, R2.1
+  - Pronto quando: `tests/integration/audit/test_consulta_trilha.py` tem testes dos filtros `de`, `ate` e `autor` no histórico da unidade e `de`, `ate`, `entidade_tipo`, `entidade_id` e `autor` na trilha geral

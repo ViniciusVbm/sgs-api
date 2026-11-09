@@ -1,6 +1,6 @@
-# ADR-0007: Dependências complementares da stack (Uvicorn, slowapi, pytest-cov)
+# ADR-0007: Dependências complementares da stack (Uvicorn, limits, pytest-cov)
 
-- Status: Aceito (Rafael, 03/10/2026)
+- Status: Aceito (Rafael, 03/10/2026); emenda de 09/11/2026 aceita (Vinicius, 09/11/2026)
 - Data: 2026-10-03
 - Requisitos relacionados: RS-09, RNF-06; specs 001 (R1.1, R7.1) e 002 (R1.5)
 
@@ -30,6 +30,7 @@ Adicionar à stack, com a mesma regra de versão das demais (série fixa, `uv.lo
 - Rate limit próprio em memória: menos código externo, mas reimplementa janela de tempo e chave por IP que o slowapi já resolve e testa.
 - CI sem cobertura: perde a métrica usada na revisão dos PRs.
 
-## Emenda (09/11/2026, consolidação final; aguarda revisão do Rafael)
+## Emenda (09/11/2026, consolidação final; aceita, Vinicius, 09/11/2026, item V6 de `docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md`)
 - **slowapi → limits.** O slowapi aplica o limite por decorador, com um `Limiter` global criado na importação do módulo, o que não combina com a raiz de composição do projeto (um app por `create_app`, um app por teste). A 002/T7 usa direto a biblioteca `limits` (o motor do slowapi), num limitador por app em `src/core/limite.py`, como este ADR já previa ("o limite vira uma dependência FastAPI própria"). As rotas não mudam.
 - **pwdlib[argon2] e pyotp** entram no `pyproject.toml` na 002/T3 e T5, como a `steering/tech.md` prevê.
+- Com o aceite, `steering/tech.md` passou a listar `limits 5.8.x` no lugar de `slowapi 0.1.x`. O título passou a citar `limits` (antes: "Uvicorn, slowapi, pytest-cov"). O texto original deste ADR, que escolheu o slowapi, fica como registro da decisão de 03/10/2026.

@@ -1,7 +1,8 @@
 # 010 · Dados de demonstração · Requisitos
 
-- Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
+- Status: Aprovado (Vinicius, 09/11/2026). Histórico: autoria original de rafareloM (03/10/2026); revisão técnica de ViniciusVbm (09/11/2026); implementada antes da aprovação, por decisão do usuário (`docs/RELATORIO_VALIDACAO_FINAL.md` § 9); aprovação registrada na regularização (`docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md` § 7, item V3)
 - Rastreia: pendência 6 dos Requisitos Esperados ("origem da massa de dados de teste", prazo 07/11); critério 6.1 "sobe em outra máquina"; testes de usabilidade de 24/10
+- Dono humano: Vinicius (ViniciusVbm), desde 09/11/2026; antes: nenhum registrado (autoria original: rafareloM, 03/10/2026). Atribuição pelo responsável pelo projeto (`steering/sdd-workflow.md` § Dono da spec)
 
 ## Contexto
 Sem dados, a demonstração fica vazia e o dashboard não mostra nada. O cliente forneceu um modelo da planilha de rede; o escopo temático do grupo é Saúde Mental (CAPS, CECON, SIM).

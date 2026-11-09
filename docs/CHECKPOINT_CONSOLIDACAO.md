@@ -2,6 +2,8 @@
 
 Arquivo de retomada: se a sessão for interrompida, continue daqui sem refazer o que já tem commit.
 
+> **Nota de regularização (09/11/2026):** este relatório é um registro datado e foi mantido como estava. As menções à aprovação do Rafael para as specs 008, 009, 010 e as emendas da 011 e do ADR-0007 foram substituídas, nos documentos vivos, pelo portão do dono de cada spec. Em 09/11/2026 o Vinicius assumiu as 003 e 008 a 011 e aprovou as specs e emendas pendentes. Situação atual e decisões pendentes: [relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md](relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md).
+
 ## Estado do Git
 - `main` local = `aa44569` (fast-forward para a `feat/011-integracao` + documentos da auditoria). Sem push.
 - Branch de trabalho: `feat/consolidacao-final`. Ao terminar, fast-forward da `main` para ela.

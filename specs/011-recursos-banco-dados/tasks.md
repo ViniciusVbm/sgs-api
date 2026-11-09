@@ -1,6 +1,6 @@
 # 011 · Recursos de banco de dados · Tarefas
 
-- Status: Aprovado (Rafael, 07/11/2026; aprovação só do dono pela exceção provisória de `steering/sdd-workflow.md`)
+- Status: Aprovado (Rafael, 07/11/2026; aprovação só do dono pela exceção provisória de `steering/sdd-workflow.md`) para T1 a T20. A **emenda T21–T22** foi aprovada por Vinicius em 09/11/2026 (item V4 de `docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md`). Dono desde 09/11/2026: Vinicius (ViniciusVbm); ver `requirements.md`
 - Depende de: 002 (`users`, na `main`); 003 (T1 para as tabelas de referência; T2/T4 para o `require` e a emenda `escopo_de_leitura`); 006 (T1, T5, T6, T9); 008 (T2)
 - Issue: #17 · Prazo da disciplina: 13/11/2026
 
@@ -149,12 +149,13 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
 ## Cobertura
 Todos os requisitos de R1.1 a R11.5 aparecem em pelo menos uma tarefa. A R11.5 (teste de integração por objeto) é feita em T2 a T8 e conferida pelo teste de arquitetura da T20.
 
-## Emenda proposta (09/11/2026, consolidação final; aguarda aprovação do Rafael)
+## Emenda T21–T22 (09/11/2026, consolidação final; aprovada, Vinicius, 09/11/2026, item V4)
 Decisões D2, D3 e D6 de `docs/RELATORIO_VALIDACAO_FINAL.md`. Implementadas antes da aprovação por decisão do usuário.
 
 - [x] T21. Ajustes de base na 0011_09
   - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/db/test_ajustes_0011_09.py e tests/integration/registry/test_crud_unidades.py::test_trilha_mascara_o_nome_do_gestor_e_grava_o_papel`
   - Índices `ix_equipments_unit_id` e `ix_services_equipment_id` (FK RESTRICT e SET NULL sem varredura; inventário e conciliação); trigger `trg_set_updated_at` em `equipments`, `services` e nas referências; `REVOKE DELETE` de `sgs_app` em `health_units` e nas referências (exclusão só lógica, 006/R4.2); `REVOKE EXECUTE ... FROM PUBLIC` nas funções de trigger antigas (pergunta em aberto desta spec).
+  - Também na 0011_09, sem estar descrito acima (auditoria de 09/11/2026, D011-1): os CHECKs `ck_equipments_status_valido`, `ck_equipments_quantity_positiva` e `ck_services_status_valido` (`migrations/sql/0011_09/03` a `05`), que respondem à pergunta em aberto da 006 sobre os status de equipamento e serviço. Provados por `test_ajustes_0011_09.py::test_checks_do_equipamento_recusam_valor_invalido` e `::test_check_do_servico_recusa_status_invalido`.
   - Na API: `actor_roles` preenchido com os papéis do usuário (001/R5.1) e `manager_name` mascarado (`***`) no `audit_log`, como já é no `db_change_log` (D2; LGPD).
   - Requisitos: R1, R7.3, R10.1; 006/R4.2
   - Pronto quando: `tests/integration/db/test_ajustes_0011_09.py` e `tests/integration/registry/test_auditoria_lgpd.py` passam
@@ -163,3 +164,4 @@ Decisões D2, D3 e D6 de `docs/RELATORIO_VALIDACAO_FINAL.md`. Implementadas ante
   - `dashboard:read` com escopo máximo `area` para `COORD_TECNICO`, `distrito` para `TECNICO_DISTRITAL` e `unidade` para `GESTOR_UNIDADE` (menor privilégio; responde à pergunta em aberto da R2.5). `GESTOR_DADOS` e `DIRETORIA` continuam `global`.
   - Requisitos: R2.5
   - Pronto quando: `tests/integration/access/test_escopo_dashboard.py` passa
+  - Rastreabilidade (D011-2): os arquivos do "Pronto quando" da T21 e da T22 não existem; a prova é a da linha "Prova". A T22 muda a matriz semeada pela 0003 (spec 003), por isso a 003 foi emendada pelo dono dela, Vinicius desde 09/11/2026 (D011-3; item V8).

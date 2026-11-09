@@ -30,6 +30,18 @@ flowchart LR
 ## Exceção provisória: prazo de Banco de Dados (Rafael, 07/11/2026)
 Para as specs **003, 006 e 011**, por causa da entrega da disciplina de Banco de Dados em 13/11/2026, o Rafael (dono das specs e administrador do repositório) aprova sozinho os portões de design e de tarefas, sem o segundo integrante. Vale só para essas três specs; as demais seguem a tabela acima. A exceção sai quando a 011 for entregue.
 
+A exceção é pessoal: não passa a quem assumir essas specs depois. Desde a transferência da 003 e da 011 para o Vinicius (09/11/2026), as emendas delas seguem a tabela acima, salvo a exceção pontual abaixo.
+
+## Exceção pontual: regularização de 09/11/2026 (Vinicius)
+Os designs revistos na regularização das specs 008, 009, 010 e 011 (itens V1 a V5 de `docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md`) foram aprovados só pelo dono, sem o segundo integrante. Vale só para essa regularização e já se esgotou. A regra geral da tabela (dono + 1 integrante no design) não mudou.
+
+## Dono da spec: atribuição e transferência
+- O dono fica numa linha do cabeçalho do `requirements.md`: `- Dono humano: <nome> (<login>)`. Design e tarefas seguem o dono dos requisitos.
+- Spec sem dono registrado fica com o responsável pelo projeto até alguém assumir. Responsável pelo projeto desde 09/11/2026: Vinicius (ViniciusVbm).
+- Transferir é trocar essa linha por `- Dono humano: <novo> (<login>), desde <data>; antes: <anterior>`, num commit ou PR que diga o motivo. Quem transfere é o dono atual ou o responsável pelo projeto. Não há outro passo.
+- Aprovações e decisões já registradas continuam com o nome e a data de quem as deu. O novo dono não as refaz nem assina nada com data retroativa.
+- Os portões que estavam pendentes passam ao novo dono, com as mesmas regras da tabela.
+
 ## Regras
 - A spec é a fonte da verdade. Código que diverge da spec é bug em um dos dois: corrija o que estiver errado no mesmo PR.
 - Mudanças de requisito no meio do caminho: edite `requirements.md`, volte o status para `Em revisão`, ajuste design e tarefas.
