@@ -20,6 +20,8 @@ from src.modules.access.infrastructure.repository import (
     SqlRepositorioDePermissoes,
     SqlResolvedorDeUnidade,
 )
+from src.modules.audit.api import rotas as auditoria
+from src.modules.audit.infrastructure.consultas import SqlConsultasDeAuditoria
 from src.modules.audit.infrastructure.repository import SqlAuditStore
 from src.modules.dashboard.api import rotas as dashboard
 from src.modules.dashboard.infrastructure.consultas import SqlConsultasDashboard
@@ -72,6 +74,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.repositorio_de_sessoes = SqlSessionRepository
     app.state.repositorio_de_permissoes = SqlRepositorioDePermissoes
     app.state.auditoria = SqlAuditStore
+    app.state.consultas_auditoria = SqlConsultasDeAuditoria
     app.state.repositorio_de_unidades = SqlRepositorioDeUnidades
     app.state.repositorio_de_vinculos = SqlRepositorioDeVinculos
     app.state.repositorio_de_referencias = SqlRepositorioDeReferencias
@@ -88,6 +91,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(vinculos.router)
     app.include_router(referencias.router)
     app.include_router(dashboard.router)
+    app.include_router(dashboard.painel)
+    app.include_router(auditoria.router)
 
     # O último middleware adicionado é o mais externo: contexto > cabeçalhos > CORS > rotas.
     app.add_middleware(

@@ -4,6 +4,7 @@ O dashboard só lê: aqui ficam os valores que entram e saem da porta `Consultas
 banco nem HTTP.
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from uuid import UUID
@@ -15,6 +16,8 @@ class Filtros:
 
     distrito: int | None = None
     tipo: int | None = None
+    area: int | None = None
+    """Área técnica (009/R1.6). Só as consultas que a declaram no catálogo a aceitam."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,3 +71,18 @@ class ItemConciliacao:
     equipamento_nome: str | None
     equipamento_tipo: str | None
     situacao: SituacaoConciliacao
+
+
+type Linha = Mapping[str, object]
+"""Uma linha de consulta estatística, com os nomes de coluna do SQL. O schema da rota fixa o
+contrato de saída (design da 011 § Rotas)."""
+
+
+@dataclass(frozen=True, slots=True)
+class Resumo:
+    """O resumo da rede (009/R1): agregados de unidades, qualidade e alterações."""
+
+    categorias: tuple[Linha, ...]
+    qualidade: Linha
+    alteracoes: Linha
+    recentes: tuple[Linha, ...]

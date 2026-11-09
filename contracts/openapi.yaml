@@ -2084,10 +2084,1872 @@
           }
         }
       }
+    },
+    "/api/v1/dashboard/consultas/distritos-sem-cnes-acima-da-rede": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Distritos com percentual de unidades sem CNES acima da rede (subconsulta)",
+        "description": "011/R2.3, R2.5: a \"rede\" é o escopo de leitura do usuário.",
+        "operationId": "distritos_sem_cnes_acima_da_rede_api_v1_dashboard_consultas_distritos_sem_cnes_acima_da_rede_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 1,
+              "description": "Página, a partir de 1.",
+              "default": 1,
+              "title": "Pagina"
+            },
+            "description": "Página, a partir de 1."
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Itens por página (padrão 20, máximo 100).",
+              "default": 20,
+              "title": "Tamanho"
+            },
+            "description": "Itens por página (padrão 20, máximo 100)."
+          },
+          {
+            "name": "distrito",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do distrito.",
+              "title": "Distrito"
+            },
+            "description": "Id do distrito."
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do tipo de unidade.",
+              "title": "Tipo"
+            },
+            "description": "Id do tipo de unidade."
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id da área técnica.",
+              "title": "Area"
+            },
+            "description": "Id da área técnica."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOut_DistritoSemCnesOut_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `dashboard:read`",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Filtro mal formado, ou distrito ou tipo inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/consultas/unidades-com-servico-fora-do-cnes": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Unidades com ao menos um serviço fora do CNES (subconsulta EXISTS)",
+        "description": "011/R2.4, R2.5.",
+        "operationId": "unidades_com_servico_fora_do_cnes_api_v1_dashboard_consultas_unidades_com_servico_fora_do_cnes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 1,
+              "description": "Página, a partir de 1.",
+              "default": 1,
+              "title": "Pagina"
+            },
+            "description": "Página, a partir de 1."
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Itens por página (padrão 20, máximo 100).",
+              "default": 20,
+              "title": "Tamanho"
+            },
+            "description": "Itens por página (padrão 20, máximo 100)."
+          },
+          {
+            "name": "distrito",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do distrito.",
+              "title": "Distrito"
+            },
+            "description": "Id do distrito."
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do tipo de unidade.",
+              "title": "Tipo"
+            },
+            "description": "Id do tipo de unidade."
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id da área técnica.",
+              "title": "Area"
+            },
+            "description": "Id da área técnica."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOut_UnidadeForaDoCnesOut_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `dashboard:read`",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Filtro mal formado, ou distrito ou tipo inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/consultas/unidades-por-categoria": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Unidades por status, tipo, área e distrito",
+        "description": "009/R2.1 (consulta da Etapa 03 reescrita).",
+        "operationId": "unidades_por_categoria_api_v1_dashboard_consultas_unidades_por_categoria_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "distrito",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do distrito.",
+              "title": "Distrito"
+            },
+            "description": "Id do distrito."
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do tipo de unidade.",
+              "title": "Tipo"
+            },
+            "description": "Id do tipo de unidade."
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id da área técnica.",
+              "title": "Area"
+            },
+            "description": "Id da área técnica."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoriaOut"
+                  },
+                  "title": "Response Unidades Por Categoria Api V1 Dashboard Consultas Unidades Por Categoria Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `dashboard:read`",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Filtro mal formado, ou distrito ou tipo inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/consultas/equipamentos-por-tipo-e-distrito": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Equipamentos por tipo e distrito",
+        "description": "009/R2.2 (consulta da Etapa 03 reescrita).",
+        "operationId": "equipamentos_por_tipo_e_distrito_api_v1_dashboard_consultas_equipamentos_por_tipo_e_distrito_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "distrito",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do distrito.",
+              "title": "Distrito"
+            },
+            "description": "Id do distrito."
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do tipo de unidade.",
+              "title": "Tipo"
+            },
+            "description": "Id do tipo de unidade."
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id da área técnica.",
+              "title": "Area"
+            },
+            "description": "Id da área técnica."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EquipamentosPorTipoOut"
+                  },
+                  "title": "Response Equipamentos Por Tipo E Distrito Api V1 Dashboard Consultas Equipamentos Por Tipo E Distrito Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `dashboard:read`",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Filtro mal formado, ou distrito ou tipo inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/consultas/alteracoes-por-periodo": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Alterações em 7 e 30 dias por distrito",
+        "description": "009/R2.3 (consulta da Etapa 03 reescrita sobre a `vw_unit_history`).",
+        "operationId": "alteracoes_por_periodo_api_v1_dashboard_consultas_alteracoes_por_periodo_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "distrito",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do distrito.",
+              "title": "Distrito"
+            },
+            "description": "Id do distrito."
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do tipo de unidade.",
+              "title": "Tipo"
+            },
+            "description": "Id do tipo de unidade."
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id da área técnica.",
+              "title": "Area"
+            },
+            "description": "Id da área técnica."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlteracoesPorPeriodoOut"
+                  },
+                  "title": "Response Alteracoes Por Periodo Api V1 Dashboard Consultas Alteracoes Por Periodo Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `dashboard:read`",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Filtro mal formado, ou distrito ou tipo inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/consultas/alteracoes-recentes": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "As 10 alterações mais recentes",
+        "description": "009/R2.4 (consulta da Etapa 03 reescrita sobre a `vw_unit_history`).",
+        "operationId": "alteracoes_recentes_api_v1_dashboard_consultas_alteracoes_recentes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "distrito",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do distrito.",
+              "title": "Distrito"
+            },
+            "description": "Id do distrito."
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do tipo de unidade.",
+              "title": "Tipo"
+            },
+            "description": "Id do tipo de unidade."
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id da área técnica.",
+              "title": "Area"
+            },
+            "description": "Id da área técnica."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlteracaoRecenteOut"
+                  },
+                  "title": "Response Alteracoes Recentes Api V1 Dashboard Consultas Alteracoes Recentes Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `dashboard:read`",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Filtro mal formado, ou distrito ou tipo inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/consultas": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Catálogo das consultas e views disponíveis",
+        "description": "011/R3: título, justificativa, parâmetros, colunas, permissão e gráfico sugerido de cada\nconsulta, só das que o usuário pode executar (R3.2).",
+        "operationId": "listar_catalogo_api_v1_dashboard_consultas_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EntradaDoCatalogoOut"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Catalogo Api V1 Dashboard Consultas Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `dashboard:read`",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Filtro mal formado, ou distrito ou tipo inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/dashboard/inventario": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Inventário da rede (vw_unit_inventory)",
+        "description": "011/R4.3: a partir da view, no escopo e nos filtros; `situacao` é a da\n`fn_registration_status`.",
+        "operationId": "inventario_api_v1_dashboard_inventario_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "situacao",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "inativa",
+                    "com_pendencias",
+                    "sem_cnes",
+                    "regular"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Situacao"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 1,
+              "description": "Página, a partir de 1.",
+              "default": 1,
+              "title": "Pagina"
+            },
+            "description": "Página, a partir de 1."
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Itens por página (padrão 20, máximo 100).",
+              "default": 20,
+              "title": "Tamanho"
+            },
+            "description": "Itens por página (padrão 20, máximo 100)."
+          },
+          {
+            "name": "distrito",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do distrito.",
+              "title": "Distrito"
+            },
+            "description": "Id do distrito."
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do tipo de unidade.",
+              "title": "Tipo"
+            },
+            "description": "Id do tipo de unidade."
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id da área técnica.",
+              "title": "Area"
+            },
+            "description": "Id da área técnica."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOut_InventarioOut_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `dashboard:read`",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Filtro mal formado, ou distrito ou tipo inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/resumo": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Resumo da rede: unidades, qualidade e alterações",
+        "description": "009/R1.1 a R1.6, no escopo de leitura do usuário.",
+        "operationId": "resumo_api_v1_dashboard_resumo_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "distrito",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do distrito.",
+              "title": "Distrito"
+            },
+            "description": "Id do distrito."
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id do tipo de unidade.",
+              "title": "Tipo"
+            },
+            "description": "Id do tipo de unidade."
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 32767,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Id da área técnica.",
+              "title": "Area"
+            },
+            "description": "Id da área técnica."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumoOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `dashboard:read`",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Filtro mal formado, ou distrito ou tipo inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/unidades/{id}/historico": {
+      "get": {
+        "tags": [
+          "auditoria"
+        ],
+        "summary": "Histórico da unidade (vw_unit_history)",
+        "description": "008/R1; 011/R4.5: eventos da unidade, de seus equipamentos e serviços, mais recentes\nprimeiro, com autor, papel e `{campo, de, para}` rotulados.",
+        "operationId": "historico_api_v1_unidades__id__historico_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "name": "autor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Autor"
+            }
+          },
+          {
+            "name": "campo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Campo"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 1,
+              "description": "Página, a partir de 1.",
+              "default": 1,
+              "title": "Pagina"
+            },
+            "description": "Página, a partir de 1."
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Itens por página (padrão 20, máximo 100).",
+              "default": 20,
+              "title": "Tamanho"
+            },
+            "description": "Itens por página (padrão 20, máximo 100)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOut_EventoOut_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `auditoria:read` no escopo pedido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "404": {
+            "description": "Unidade inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auditoria/eventos": {
+      "get": {
+        "tags": [
+          "auditoria"
+        ],
+        "summary": "Trilha geral de auditoria",
+        "description": "008/R2.1, R2.2: escopo global; `auth.*` e `acesso.negado` só com\n`auditoria:read_acessos`.",
+        "operationId": "eventos_api_v1_auditoria_eventos_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "name": "acao",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Prefixo da ação.",
+              "title": "Acao"
+            },
+            "description": "Prefixo da ação."
+          },
+          {
+            "name": "entidade_tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 50
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entidade Tipo"
+            }
+          },
+          {
+            "name": "entidade_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entidade Id"
+            }
+          },
+          {
+            "name": "autor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Autor"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 1,
+              "description": "Página, a partir de 1.",
+              "default": 1,
+              "title": "Pagina"
+            },
+            "description": "Página, a partir de 1."
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Itens por página (padrão 20, máximo 100).",
+              "default": 20,
+              "title": "Tamanho"
+            },
+            "description": "Itens por página (padrão 20, máximo 100)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOut_EventoOut_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `auditoria:read` no escopo pedido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auditoria/eventos/{id_}": {
+      "get": {
+        "tags": [
+          "auditoria"
+        ],
+        "summary": "Evento da trilha com hash",
+        "description": "008/R3.2.",
+        "operationId": "evento_api_v1_auditoria_eventos__id___get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id_",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Id "
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventoDetalheOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `auditoria:read` no escopo pedido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "404": {
+            "description": "Evento inexistente",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auditoria/verificar": {
+      "post": {
+        "tags": [
+          "auditoria"
+        ],
+        "summary": "Verificar a integridade da cadeia de hash",
+        "description": "008/R3.1: recalcula a cadeia (só leitura) e responde `integra` ou o primeiro evento que\nquebra.",
+        "operationId": "verificar_api_v1_auditoria_verificar_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificacaoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificacaoOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `auditoria:read` no escopo pedido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auditoria/banco": {
+      "get": {
+        "tags": [
+          "auditoria"
+        ],
+        "summary": "Log do banco (trigger trg_registry_change_log)",
+        "description": "011/R7.7, R7.8: toda escrita no cadastro, inclusive fora da API; escopo global.",
+        "operationId": "log_do_banco_api_v1_auditoria_banco_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "de",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "name": "ate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "name": "tabela",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "health_units",
+                    "equipments",
+                    "services"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tabela"
+            }
+          },
+          {
+            "name": "fora_da_api",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Fora Da Api"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 1,
+              "description": "Página, a partir de 1.",
+              "default": 1,
+              "title": "Pagina"
+            },
+            "description": "Página, a partir de 1."
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Itens por página (padrão 20, máximo 100).",
+              "default": 20,
+              "title": "Tamanho"
+            },
+            "description": "Itens por página (padrão 20, máximo 100)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaOut_RegistroDoBancoOut_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `auditoria:read` no escopo pedido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auditoria/banco/particoes": {
+      "get": {
+        "tags": [
+          "auditoria"
+        ],
+        "summary": "Partições mensais do log do banco",
+        "description": "011/R6.9: efeito do procedimento com cursor `sp_ensure_monthly_partitions`.",
+        "operationId": "particoes_api_v1_auditoria_banco_particoes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ParticaoOut"
+                  },
+                  "type": "array",
+                  "title": "Response Particoes Api V1 Auditoria Banco Particoes Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem access token válido",
+            "content": {
+              "application/problem+json": {}
+            }
+          },
+          "403": {
+            "description": "Sem `auditoria:read` no escopo pedido",
+            "content": {
+              "application/problem+json": {}
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
     "schemas": {
+      "AlteracaoRecenteOut": {
+        "properties": {
+          "audit_id": {
+            "type": "integer",
+            "title": "Audit Id"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "unit_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Unit Id"
+          },
+          "unit_name": {
+            "type": "string",
+            "title": "Unit Name"
+          },
+          "district_name": {
+            "type": "string",
+            "title": "District Name"
+          },
+          "actor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "audit_id",
+          "occurred_at",
+          "action",
+          "unit_id",
+          "unit_name",
+          "district_name",
+          "actor_name"
+        ],
+        "title": "AlteracaoRecenteOut"
+      },
+      "AlteracoesPorPeriodoOut": {
+        "properties": {
+          "district_id": {
+            "type": "integer",
+            "title": "District Id"
+          },
+          "district_name": {
+            "type": "string",
+            "title": "District Name"
+          },
+          "last_7_days": {
+            "type": "integer",
+            "title": "Last 7 Days"
+          },
+          "last_30_days": {
+            "type": "integer",
+            "title": "Last 30 Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "district_id",
+          "district_name",
+          "last_7_days",
+          "last_30_days"
+        ],
+        "title": "AlteracoesPorPeriodoOut"
+      },
+      "AlteracoesResumoOut": {
+        "properties": {
+          "ultimos_7_dias": {
+            "type": "integer",
+            "title": "Ultimos 7 Dias"
+          },
+          "ultimos_30_dias": {
+            "type": "integer",
+            "title": "Ultimos 30 Dias"
+          },
+          "recentes": {
+            "items": {
+              "$ref": "#/components/schemas/AlteracaoRecenteOut"
+            },
+            "type": "array",
+            "title": "Recentes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ultimos_7_dias",
+          "ultimos_30_dias",
+          "recentes"
+        ],
+        "title": "AlteracoesResumoOut"
+      },
+      "AutorOut": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "papeis": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Papeis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "papeis"
+        ],
+        "title": "AutorOut"
+      },
+      "CategoriaOut": {
+        "properties": {
+          "categoria": {
+            "type": "string",
+            "title": "Categoria"
+          },
+          "chave": {
+            "type": "string",
+            "title": "Chave"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "quantidade": {
+            "type": "integer",
+            "title": "Quantidade"
+          }
+        },
+        "type": "object",
+        "required": [
+          "categoria",
+          "chave",
+          "rotulo",
+          "quantidade"
+        ],
+        "title": "CategoriaOut"
+      },
       "ConciliacaoOut": {
         "properties": {
           "unidade_id": {
@@ -2191,6 +4053,109 @@
         ],
         "title": "DesativacaoIn",
         "description": "006/R4.1: a desativação exige motivo."
+      },
+      "DistritoSemCnesOut": {
+        "properties": {
+          "district_id": {
+            "type": "integer",
+            "title": "District Id"
+          },
+          "district_name": {
+            "type": "string",
+            "title": "District Name"
+          },
+          "total_units": {
+            "type": "integer",
+            "title": "Total Units"
+          },
+          "units_without_cnes": {
+            "type": "integer",
+            "title": "Units Without Cnes"
+          },
+          "percent_without_cnes": {
+            "type": "number",
+            "title": "Percent Without Cnes"
+          },
+          "network_percent_without_cnes": {
+            "type": "number",
+            "title": "Network Percent Without Cnes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "district_id",
+          "district_name",
+          "total_units",
+          "units_without_cnes",
+          "percent_without_cnes",
+          "network_percent_without_cnes"
+        ],
+        "title": "DistritoSemCnesOut"
+      },
+      "EntradaDoCatalogoOut": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "rota": {
+            "type": "string",
+            "title": "Rota"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "justificativa": {
+            "type": "string",
+            "title": "Justificativa"
+          },
+          "tecnica_sql": {
+            "type": "string",
+            "title": "Tecnica Sql"
+          },
+          "parametros": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Parametros"
+          },
+          "colunas": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Colunas"
+          },
+          "permissao": {
+            "type": "string",
+            "title": "Permissao"
+          },
+          "grafico_sugerido": {
+            "type": "string",
+            "title": "Grafico Sugerido"
+          },
+          "paginada": {
+            "type": "boolean",
+            "title": "Paginada"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "rota",
+          "titulo",
+          "justificativa",
+          "tecnica_sql",
+          "parametros",
+          "colunas",
+          "permissao",
+          "grafico_sugerido",
+          "paginada"
+        ],
+        "title": "EntradaDoCatalogoOut",
+        "description": "011/R3.1: o que cada consulta mostra, sem o SQL."
       },
       "EquipamentoCreate": {
         "properties": {
@@ -2392,6 +4357,239 @@
         "type": "object",
         "title": "EquipamentoUpdate"
       },
+      "EquipamentosPorTipoOut": {
+        "properties": {
+          "equipment_type_code": {
+            "type": "string",
+            "title": "Equipment Type Code"
+          },
+          "equipment_type_name": {
+            "type": "string",
+            "title": "Equipment Type Name"
+          },
+          "district_id": {
+            "type": "integer",
+            "title": "District Id"
+          },
+          "district_name": {
+            "type": "string",
+            "title": "District Name"
+          },
+          "equipment_count": {
+            "type": "integer",
+            "title": "Equipment Count"
+          },
+          "total_quantity": {
+            "type": "integer",
+            "title": "Total Quantity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "equipment_type_code",
+          "equipment_type_name",
+          "district_id",
+          "district_name",
+          "equipment_count",
+          "total_quantity"
+        ],
+        "title": "EquipamentosPorTipoOut"
+      },
+      "EventoDetalheOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "quando": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Quando"
+          },
+          "acao": {
+            "type": "string",
+            "title": "Acao"
+          },
+          "autor": {
+            "$ref": "#/components/schemas/AutorOut"
+          },
+          "entidade_tipo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entidade Tipo"
+          },
+          "entidade_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entidade Id"
+          },
+          "mudancas": {
+            "items": {
+              "$ref": "#/components/schemas/MudancaOut"
+            },
+            "type": "array",
+            "title": "Mudancas"
+          },
+          "metadados": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadados"
+          },
+          "sessao_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sessao Id"
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "prev_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prev Hash"
+          },
+          "hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "quando",
+          "acao",
+          "autor",
+          "entidade_tipo",
+          "entidade_id",
+          "mudancas",
+          "metadados",
+          "sessao_id",
+          "ip",
+          "request_id",
+          "prev_hash",
+          "hash"
+        ],
+        "title": "EventoDetalheOut",
+        "description": "008/R3.2: com a cadeia de hash e a origem."
+      },
+      "EventoOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "quando": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Quando"
+          },
+          "acao": {
+            "type": "string",
+            "title": "Acao"
+          },
+          "autor": {
+            "$ref": "#/components/schemas/AutorOut"
+          },
+          "entidade_tipo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entidade Tipo"
+          },
+          "entidade_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entidade Id"
+          },
+          "mudancas": {
+            "items": {
+              "$ref": "#/components/schemas/MudancaOut"
+            },
+            "type": "array",
+            "title": "Mudancas"
+          },
+          "metadados": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadados"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "quando",
+          "acao",
+          "autor",
+          "entidade_tipo",
+          "entidade_id",
+          "mudancas",
+          "metadados"
+        ],
+        "title": "EventoOut",
+        "description": "Um evento da trilha (008/R1.2, R2.1)."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2418,6 +4616,116 @@
           "status"
         ],
         "title": "HealthStatus"
+      },
+      "InventarioOut": {
+        "properties": {
+          "unit_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Unit Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "cnes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnes"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "registration_status": {
+            "type": "string",
+            "title": "Registration Status"
+          },
+          "unit_type_id": {
+            "type": "integer",
+            "title": "Unit Type Id"
+          },
+          "unit_type_name": {
+            "type": "string",
+            "title": "Unit Type Name"
+          },
+          "technical_area_id": {
+            "type": "integer",
+            "title": "Technical Area Id"
+          },
+          "technical_area_name": {
+            "type": "string",
+            "title": "Technical Area Name"
+          },
+          "district_id": {
+            "type": "integer",
+            "title": "District Id"
+          },
+          "district_name": {
+            "type": "string",
+            "title": "District Name"
+          },
+          "equipment_count": {
+            "type": "integer",
+            "title": "Equipment Count"
+          },
+          "service_count": {
+            "type": "integer",
+            "title": "Service Count"
+          },
+          "services_outside_cnes_count": {
+            "type": "integer",
+            "title": "Services Outside Cnes Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unit_id",
+          "name",
+          "cnes",
+          "status",
+          "registration_status",
+          "unit_type_id",
+          "unit_type_name",
+          "technical_area_id",
+          "technical_area_name",
+          "district_id",
+          "district_name",
+          "equipment_count",
+          "service_count",
+          "services_outside_cnes_count"
+        ],
+        "title": "InventarioOut",
+        "description": "Linha da `vw_unit_inventory` (011/R4.1); sem dado pessoal (R4.2)."
+      },
+      "ItemDistribuicaoOut": {
+        "properties": {
+          "chave": {
+            "type": "string",
+            "title": "Chave"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "quantidade": {
+            "type": "integer",
+            "title": "Quantidade"
+          }
+        },
+        "type": "object",
+        "required": [
+          "chave",
+          "rotulo",
+          "quantidade"
+        ],
+        "title": "ItemDistribuicaoOut"
       },
       "Jwk": {
         "properties": {
@@ -2479,6 +4787,32 @@
         ],
         "title": "Jwks"
       },
+      "MudancaOut": {
+        "properties": {
+          "campo": {
+            "type": "string",
+            "title": "Campo"
+          },
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo"
+          },
+          "de": {
+            "title": "De"
+          },
+          "para": {
+            "title": "Para"
+          }
+        },
+        "type": "object",
+        "required": [
+          "campo",
+          "rotulo",
+          "de",
+          "para"
+        ],
+        "title": "MudancaOut"
+      },
       "PaginaOut_ConciliacaoOut_": {
         "properties": {
           "itens": {
@@ -2509,6 +4843,161 @@
           "tamanho"
         ],
         "title": "PaginaOut[ConciliacaoOut]"
+      },
+      "PaginaOut_DistritoSemCnesOut_": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/DistritoSemCnesOut"
+            },
+            "type": "array",
+            "title": "Itens"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "pagina": {
+            "type": "integer",
+            "title": "Pagina"
+          },
+          "tamanho": {
+            "type": "integer",
+            "title": "Tamanho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itens",
+          "total",
+          "pagina",
+          "tamanho"
+        ],
+        "title": "PaginaOut[DistritoSemCnesOut]"
+      },
+      "PaginaOut_EventoOut_": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/EventoOut"
+            },
+            "type": "array",
+            "title": "Itens"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "pagina": {
+            "type": "integer",
+            "title": "Pagina"
+          },
+          "tamanho": {
+            "type": "integer",
+            "title": "Tamanho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itens",
+          "total",
+          "pagina",
+          "tamanho"
+        ],
+        "title": "PaginaOut[EventoOut]"
+      },
+      "PaginaOut_InventarioOut_": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/InventarioOut"
+            },
+            "type": "array",
+            "title": "Itens"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "pagina": {
+            "type": "integer",
+            "title": "Pagina"
+          },
+          "tamanho": {
+            "type": "integer",
+            "title": "Tamanho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itens",
+          "total",
+          "pagina",
+          "tamanho"
+        ],
+        "title": "PaginaOut[InventarioOut]"
+      },
+      "PaginaOut_RegistroDoBancoOut_": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/RegistroDoBancoOut"
+            },
+            "type": "array",
+            "title": "Itens"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "pagina": {
+            "type": "integer",
+            "title": "Pagina"
+          },
+          "tamanho": {
+            "type": "integer",
+            "title": "Tamanho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itens",
+          "total",
+          "pagina",
+          "tamanho"
+        ],
+        "title": "PaginaOut[RegistroDoBancoOut]"
+      },
+      "PaginaOut_UnidadeForaDoCnesOut_": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/UnidadeForaDoCnesOut"
+            },
+            "type": "array",
+            "title": "Itens"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "pagina": {
+            "type": "integer",
+            "title": "Pagina"
+          },
+          "tamanho": {
+            "type": "integer",
+            "title": "Tamanho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itens",
+          "total",
+          "pagina",
+          "tamanho"
+        ],
+        "title": "PaginaOut[UnidadeForaDoCnesOut]"
       },
       "PaginaOut_UnidadeOut_": {
         "properties": {
@@ -2571,6 +5060,57 @@
           "tamanho"
         ],
         "title": "PaginaOut[UnidadeResumoOut]"
+      },
+      "ParticaoOut": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "limite": {
+            "type": "string",
+            "title": "Limite"
+          },
+          "linhas": {
+            "type": "integer",
+            "title": "Linhas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "limite",
+          "linhas"
+        ],
+        "title": "ParticaoOut"
+      },
+      "QualidadeOut": {
+        "properties": {
+          "unidades_com_pendencias": {
+            "type": "integer",
+            "title": "Unidades Com Pendencias"
+          },
+          "total_pendencias": {
+            "type": "integer",
+            "title": "Total Pendencias"
+          },
+          "sem_cnes": {
+            "type": "integer",
+            "title": "Sem Cnes"
+          },
+          "servicos_fora_cnes": {
+            "type": "integer",
+            "title": "Servicos Fora Cnes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unidades_com_pendencias",
+          "total_pendencias",
+          "sem_cnes",
+          "servicos_fora_cnes"
+        ],
+        "title": "QualidadeOut"
       },
       "ReferenciaCreate": {
         "properties": {
@@ -2709,6 +5249,84 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ReferenciaUpdate"
+      },
+      "RegistroDoBancoOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "quando": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Quando"
+          },
+          "tabela": {
+            "type": "string",
+            "title": "Tabela"
+          },
+          "operacao": {
+            "type": "string",
+            "title": "Operacao"
+          },
+          "linha_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Linha Id"
+          },
+          "colunas": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Colunas"
+          },
+          "usuario_do_banco": {
+            "type": "string",
+            "title": "Usuario Do Banco"
+          },
+          "pela_api": {
+            "type": "boolean",
+            "title": "Pela Api"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "quando",
+          "tabela",
+          "operacao",
+          "linha_id",
+          "colunas",
+          "usuario_do_banco",
+          "pela_api"
+        ],
+        "title": "RegistroDoBancoOut"
+      },
+      "ResumoOut": {
+        "properties": {
+          "unidades": {
+            "$ref": "#/components/schemas/UnidadesResumoOut"
+          },
+          "qualidade": {
+            "$ref": "#/components/schemas/QualidadeOut"
+          },
+          "alteracoes": {
+            "$ref": "#/components/schemas/AlteracoesResumoOut"
+          },
+          "gerado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Gerado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unidades",
+          "qualidade",
+          "alteracoes",
+          "gerado_em"
+        ],
+        "title": "ResumoOut",
+        "description": "009/design § Resposta: unidades, qualidade e alterações, com a hora de Recife."
       },
       "ServicoCreate": {
         "properties": {
@@ -3246,6 +5864,52 @@
         "title": "UnidadeDetalheOut",
         "description": "006/R2.5: a unidade com os equipamentos e serviços vinculados."
       },
+      "UnidadeForaDoCnesOut": {
+        "properties": {
+          "unit_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Unit Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "cnes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnes"
+          },
+          "unit_type_name": {
+            "type": "string",
+            "title": "Unit Type Name"
+          },
+          "district_name": {
+            "type": "string",
+            "title": "District Name"
+          },
+          "services_outside_cnes_count": {
+            "type": "integer",
+            "title": "Services Outside Cnes Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unit_id",
+          "name",
+          "cnes",
+          "unit_type_name",
+          "district_name",
+          "services_outside_cnes_count"
+        ],
+        "title": "UnidadeForaDoCnesOut"
+      },
       "UnidadeOut": {
         "properties": {
           "id": {
@@ -3626,6 +6290,59 @@
         "title": "UnidadeUpdate",
         "description": "PATCH: todos opcionais; só os enviados mudam (006/R3.1). Nulo limpa um campo opcional; num\nobrigatório, o caso de uso responde 422."
       },
+      "UnidadesResumoOut": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "por_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Por Status"
+          },
+          "por_tipo": {
+            "items": {
+              "$ref": "#/components/schemas/ItemDistribuicaoOut"
+            },
+            "type": "array",
+            "title": "Por Tipo"
+          },
+          "por_area": {
+            "items": {
+              "$ref": "#/components/schemas/ItemDistribuicaoOut"
+            },
+            "type": "array",
+            "title": "Por Area"
+          },
+          "por_distrito": {
+            "items": {
+              "$ref": "#/components/schemas/ItemDistribuicaoOut"
+            },
+            "type": "array",
+            "title": "Por Distrito"
+          },
+          "por_situacao_cadastral": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Por Situacao Cadastral"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "por_status",
+          "por_tipo",
+          "por_area",
+          "por_distrito",
+          "por_situacao_cadastral"
+        ],
+        "title": "UnidadesResumoOut"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -3665,6 +6382,81 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VerificacaoIn": {
+        "properties": {
+          "de": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "De",
+            "description": "Início do período (inclusive)."
+          },
+          "ate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ate",
+            "description": "Fim do período (exclusivo)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VerificacaoIn"
+      },
+      "VerificacaoOut": {
+        "properties": {
+          "integra": {
+            "type": "boolean",
+            "title": "Integra"
+          },
+          "verificados": {
+            "type": "integer",
+            "title": "Verificados"
+          },
+          "primeiro_evento_divergente": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primeiro Evento Divergente"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "integra",
+          "verificados",
+          "primeiro_evento_divergente",
+          "motivo"
+        ],
+        "title": "VerificacaoOut"
       }
     },
     "securitySchemes": {

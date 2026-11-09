@@ -10,6 +10,7 @@ from uuid import UUID
 from src.modules.dashboard.domain.consultas import (
     Filtros,
     ItemConciliacao,
+    Linha,
     Pagina,
     Resultado,
     UnidadeResumo,
@@ -56,4 +57,29 @@ class ConsultasDashboard(Protocol):
     ) -> Resultado[ItemConciliacao]:
         """Pares unidade-equipamento, unidades sem equipamento e equipamentos sem unidade
         (011/R2.2). Os equipamentos sem unidade só vêm com escopo global e sem filtro (R2.6)."""
+        ...
+
+    async def area_existe(self, area: int) -> bool:
+        """Se há área técnica com esse id (009/R1.6)."""
+        ...
+
+    async def pagina(
+        self,
+        nome: str,
+        escopo: EscopoDeLeitura,
+        filtros: Filtros,
+        pagina: Pagina,
+        extras: dict[str, object] | None = None,
+    ) -> Resultado[Linha]:
+        """Uma página de uma consulta paginada do catálogo (`nome` é o arquivo `.sql`)."""
+        ...
+
+    async def linhas(
+        self,
+        nome: str,
+        escopo: EscopoDeLeitura,
+        filtros: Filtros,
+        extras: dict[str, object] | None = None,
+    ) -> tuple[Linha, ...]:
+        """Todas as linhas de uma consulta agregada do catálogo (sem paginação)."""
         ...

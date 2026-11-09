@@ -6,11 +6,15 @@ porta `ConsultasDashboard`, que executa o SQL com o escopo como parâmetros.
 
 from src.core.errors import DomainValidationError, FieldError
 from src.modules.access.application.autorizacao import UsuarioAtual, escopo_de_leitura
+from src.modules.access.domain.authorization import pode
+from src.modules.dashboard.domain.catalogo import CATALOGO, POR_NOME, EntradaDoCatalogo
 from src.modules.dashboard.domain.consultas import (
     Filtros,
     ItemConciliacao,
+    Linha,
     Pagina,
     Resultado,
+    Resumo,
     SituacaoConciliacao,
     UnidadeResumo,
 )
@@ -18,15 +22,22 @@ from src.modules.dashboard.domain.ports import ConsultasDashboard
 
 # Reexportados para a camada api, que só importa a application.
 __all__ = [
+    "CATALOGO",
     "PERMISSAO",
     "ConsultasDashboard",
+    "EntradaDoCatalogo",
     "Filtros",
     "ItemConciliacao",
+    "Linha",
     "Pagina",
     "Resultado",
+    "Resumo",
     "SituacaoConciliacao",
     "UnidadeResumo",
+    "catalogo",
     "conciliacao_unidade_equipamento",
+    "consultar",
+    "resumo",
     "unidades_sem_servico",
 ]
 
@@ -60,5 +71,50 @@ async def _conferir_filtros(consultas: ConsultasDashboard, filtros: Filtros) -> 
         erros.append(FieldError(campo="distrito", mensagem="Distrito inexistente."))
     if filtros.tipo is not None and not await consultas.tipo_de_unidade_existe(filtros.tipo):
         erros.append(FieldError(campo="tipo", mensagem="Tipo de unidade inexistente."))
+    if filtros.area is not None and not await consultas.area_existe(filtros.area):
+        erros.append(FieldError(campo="area", mensagem="Área técnica inexistente."))
     if erros:
         raise DomainValidationError("O filtro aponta para uma referência que não existe.", erros)
+
+
+async def consultar(
+    nome: str,
+    consultas: ConsultasDashboard,
+    usuario: UsuarioAtual,
+    filtros: Filtros,
+    pagina: Pagina | None = None,
+    extras: dict[str, object] | None = None,
+) -> Resultado[Linha]:
+    """Executa uma consulta do catálogo (011/T12, T13; 009/R2) no escopo de leitura do usuário.
+
+    As paginadas devolvem a página e o total; as agregadas, todas as linhas (total = linhas).
+    """
+    entrada = POR_NOME[nome]
+    if entrada.arquivo_sql is None:
+        raise ValueError(f"a consulta {nome!r} tem rota própria")
+    await _conferir_filtros(consultas, filtros)
+    escopo = escopo_de_leitura(usuario, entrada.permissao)
+    if entrada.paginada:
+        if pagina is None:
+            raise ValueError(f"a consulta {nome!r} é paginada")
+        return await consultas.pagina(entrada.arquivo_sql, escopo, filtros, pagina, extras)
+    linhas = await consultas.linhas(entrada.arquivo_sql, escopo, filtros, extras)
+    return Resultado(itens=linhas, total=len(linhas))
+
+
+async def resumo(consultas: ConsultasDashboard, usuario: UsuarioAtual, filtros: Filtros) -> Resumo:
+    """009/R1: unidades por categoria, qualidade e alterações, no escopo do usuário (R1.5)."""
+    await _conferir_filtros(consultas, filtros)
+    escopo = escopo_de_leitura(usuario, PERMISSAO)
+    categorias = await consultas.linhas("units_by_category.sql", escopo, filtros)
+    (qualidade,) = await consultas.linhas("summary_quality.sql", escopo, filtros)
+    (alteracoes,) = await consultas.linhas("summary_changes.sql", escopo, filtros)
+    recentes = await consultas.linhas("recent_changes.sql", escopo, filtros, {"limit": 10})
+    return Resumo(
+        categorias=categorias, qualidade=qualidade, alteracoes=alteracoes, recentes=recentes
+    )
+
+
+def catalogo(usuario: UsuarioAtual) -> list[EntradaDoCatalogo]:
+    """011/R3.2: só as consultas que o usuário tem permissão de executar."""
+    return [entrada for entrada in CATALOGO if pode(usuario.permissoes, entrada.permissao)]

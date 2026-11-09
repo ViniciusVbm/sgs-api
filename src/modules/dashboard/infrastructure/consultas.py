@@ -17,6 +17,7 @@ from src.core.sql import consulta
 from src.modules.dashboard.domain.consultas import (
     Filtros,
     ItemConciliacao,
+    Linha,
     Pagina,
     Resultado,
     SituacaoConciliacao,
@@ -31,6 +32,23 @@ _CONCILIACAO_UNIDADE_EQUIPAMENTO = consulta(_SQL / "unit_equipment_reconciliatio
 # Conferência dos filtros contra as referências da 006, antes da consulta (011/R2.9).
 _DISTRITO_EXISTE = consulta(_SQL / "district_exists.sql")
 _TIPO_DE_UNIDADE_EXISTE = consulta(_SQL / "unit_type_exists.sql")
+_AREA_EXISTE = consulta(_SQL / "technical_area_exists.sql")
+
+# Consultas do catálogo (011/T12, T13; 009/R1, R2), lidas uma vez pelo nome do arquivo.
+_DO_CATALOGO = {
+    nome: consulta(_SQL / nome)
+    for nome in (
+        "districts_cnes_above_network.sql",
+        "units_with_services_outside_cnes.sql",
+        "unit_inventory.sql",
+        "units_by_category.sql",
+        "equipments_by_type_district.sql",
+        "changes_by_period.sql",
+        "recent_changes.sql",
+        "summary_quality.sql",
+        "summary_changes.sql",
+    )
+}
 
 
 class SqlConsultasDashboard:
@@ -109,3 +127,59 @@ class SqlConsultasDashboard:
         primeira = await self._session.execute(consulta, {**parametros, "limit": 1, "offset": 0})
         linha = primeira.mappings().first()
         return [], 0 if linha is None else int(linha["total"])
+
+    async def area_existe(self, area: int) -> bool:
+        return bool(await self._session.scalar(_AREA_EXISTE, {"technical_area_id": area}))
+
+    async def pagina(
+        self,
+        nome: str,
+        escopo: EscopoDeLeitura,
+        filtros: Filtros,
+        pagina: Pagina,
+        extras: dict[str, object] | None = None,
+    ) -> Resultado[Linha]:
+        parametros = {
+            **_parametros(escopo, filtros, extras),
+            "limit": pagina.tamanho,
+            "offset": pagina.offset,
+        }
+        consulta_ = _DO_CATALOGO[nome]
+        linhas = [
+            dict(linha) for linha in (await self._session.execute(consulta_, parametros)).mappings()
+        ]
+        if linhas:
+            total = int(linhas[0].pop("total"))
+            for linha in linhas[1:]:
+                linha.pop("total")
+            return Resultado(itens=tuple(linhas), total=total)
+        if pagina.offset == 0:
+            return Resultado(itens=(), total=0)
+        primeira = await self._session.execute(consulta_, {**parametros, "limit": 1, "offset": 0})
+        contagem = primeira.mappings().first()
+        return Resultado(itens=(), total=0 if contagem is None else int(contagem["total"]))
+
+    async def linhas(
+        self,
+        nome: str,
+        escopo: EscopoDeLeitura,
+        filtros: Filtros,
+        extras: dict[str, object] | None = None,
+    ) -> tuple[Linha, ...]:
+        resultado = await self._session.execute(
+            _DO_CATALOGO[nome], _parametros(escopo, filtros, extras)
+        )
+        return tuple(dict(linha) for linha in resultado.mappings())
+
+
+def _parametros(
+    escopo: EscopoDeLeitura, filtros: Filtros, extras: dict[str, object] | None
+) -> dict[str, Any]:
+    """Escopo, os três filtros do dashboard e os extras de cada consulta, todos como parâmetros."""
+    return {
+        **parametros_de_escopo(escopo),
+        "district_id": filtros.distrito,
+        "unit_type_id": filtros.tipo,
+        "technical_area_id": filtros.area,
+        **(extras or {}),
+    }
