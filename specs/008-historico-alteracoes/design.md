@@ -1,6 +1,6 @@
 # 008 · Histórico de alterações · Design
 
-- Status: Rascunho
+- Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
 
 ## Consulta
 - `audit/application/consultar.py` monta a query sobre `audit_log` com índices `(entity_type, entity_id, occurred_at DESC)` (criado pela spec 011, R1.1) e `(action, occurred_at DESC)` (criado aqui).

@@ -1,6 +1,6 @@
 # 010 · Dados de demonstração · Requisitos
 
-- Status: Rascunho
+- Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
 - Rastreia: pendência 6 dos Requisitos Esperados ("origem da massa de dados de teste", prazo 07/11); critério 6.1 "sobe em outra máquina"; testes de usabilidade de 24/10
 
 ## Contexto

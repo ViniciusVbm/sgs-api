@@ -1,6 +1,6 @@
 # 008 · Histórico de alterações · Requisitos
 
-- Status: Rascunho
+- Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
 - Rastreia: RF-08, RS-05, RS-09; critério 6.1 "alteração aparece no histórico com autor, data e hora"; pilar Controle
 
 ## Contexto
@@ -36,3 +36,4 @@ Como Auditor, quero consultar todos os eventos, inclusive de acesso.
 
 ## Perguntas em aberto
 - O Gestor de Unidade deve ver o histórico completo da própria unidade ou apenas as próprias alterações? (padrão adotado: completo)
+- (revisão de 09/11/2026) Valores sensíveis da R2.3: `manager_name`, que já chega mascarado à trilha pela 011/T21. O papel no momento (R1.2) vem de `actor_roles`, preenchido pela mesma tarefa.

@@ -1,6 +1,6 @@
 # 009 · Dashboard básico · Design
 
-- Status: Rascunho
+- Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
 
 ## Implementação
 - Módulo `dashboard` só lê; consultas `GROUP BY` com `scope_filter` aplicado (spec 003). Sem tabela própria (Atividade 5 §4).

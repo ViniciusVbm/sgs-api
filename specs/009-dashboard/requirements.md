@@ -1,6 +1,6 @@
 # 009 · Dashboard básico · Requisitos
 
-- Status: Rascunho
+- Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
 - Rastreia: RF-06; critério 6.1 "dashboard exibe indicadores que refletem os dados realmente cadastrados"
 
 ## Contexto
@@ -22,3 +22,13 @@ O cliente já tem dashboards e disse que este serve para conferir os dados inser
 
 ## Perguntas em aberto
 - Quais indicadores o Sérgio usa para conferir os dados? (validar na próxima reunião)
+
+## Emenda proposta (09/11/2026; aguarda aprovação do Rafael)
+A spec 011 (§ Fora do escopo) remete à 009 o dashboard estatístico da Etapa 06 da disciplina de Banco de Dados. Esta emenda o inclui, reaproveitando as quatro consultas da Etapa 03 feitas na `feat/003-interface-dashboard` (reescritas para o esquema da 006/011).
+
+### R2. Consultas estatísticas da Etapa 03
+- R2.1 QUANDO um usuário com `dashboard:read` consulta `GET /dashboard/consultas/unidades-por-categoria`, o sistema DEVE responder a contagem de unidades por status, por tipo, por área técnica e sem CNES.
+- R2.2 QUANDO consulta `GET /dashboard/consultas/equipamentos-por-tipo-e-distrito`, o sistema DEVE responder a quantidade de equipamentos (soma de `quantity`) por tipo de equipamento e distrito (JOIN).
+- R2.3 QUANDO consulta `GET /dashboard/consultas/alteracoes-por-periodo`, o sistema DEVE responder, por distrito, as alterações de unidades nos últimos 7 e 30 dias, lidas da `vw_unit_history`.
+- R2.4 QUANDO consulta `GET /dashboard/consultas/alteracoes-recentes`, o sistema DEVE responder as 10 alterações mais recentes, com unidade, distrito, autor e ação, lidas da `vw_unit_history`.
+- R2.5 Todas DEVEM aplicar o escopo de leitura do usuário e aceitar os filtros de distrito e de tipo de unidade (como a 011/R2.5 e R2.7).

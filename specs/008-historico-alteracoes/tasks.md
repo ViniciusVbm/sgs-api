@@ -1,6 +1,6 @@
 # 008 · Histórico de alterações · Tarefas
 
-- Status: Rascunho
+- Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
 - Depende de: 001, 003, 006
 
 - [ ] T1. Índices e consulta paginada com filtros

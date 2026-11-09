@@ -138,3 +138,16 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
 
 ## Cobertura
 Todos os requisitos de R1.1 a R11.5 aparecem em pelo menos uma tarefa. A R11.5 (teste de integração por objeto) é feita em T2 a T8 e conferida pelo teste de arquitetura da T20.
+
+## Emenda proposta (09/11/2026, consolidação final; aguarda aprovação do Rafael)
+Decisões D2, D3 e D6 de `docs/RELATORIO_VALIDACAO_FINAL.md`. Implementadas antes da aprovação por decisão do usuário.
+
+- [ ] T21. Ajustes de base na 0011_09
+  - Índices `ix_equipments_unit_id` e `ix_services_equipment_id` (FK RESTRICT e SET NULL sem varredura; inventário e conciliação); trigger `trg_set_updated_at` em `equipments`, `services` e nas referências; `REVOKE DELETE` de `sgs_app` em `health_units` e nas referências (exclusão só lógica, 006/R4.2); `REVOKE EXECUTE ... FROM PUBLIC` nas funções de trigger antigas (pergunta em aberto desta spec).
+  - Na API: `actor_roles` preenchido com os papéis do usuário (001/R5.1) e `manager_name` mascarado (`***`) no `audit_log`, como já é no `db_change_log` (D2; LGPD).
+  - Requisitos: R1, R7.3, R10.1; 006/R4.2
+  - Pronto quando: `tests/integration/db/test_ajustes_0011_09.py` e `tests/integration/registry/test_auditoria_lgpd.py` passam
+- [ ] T22. Escopo do dashboard por papel (D3)
+  - `dashboard:read` com escopo máximo `area` para `COORD_TECNICO`, `distrito` para `TECNICO_DISTRITAL` e `unidade` para `GESTOR_UNIDADE` (menor privilégio; responde à pergunta em aberto da R2.5). `GESTOR_DADOS` e `DIRETORIA` continuam `global`.
+  - Requisitos: R2.5
+  - Pronto quando: `tests/integration/access/test_escopo_dashboard.py` passa
