@@ -27,3 +27,6 @@ secrets/
 
 # Claude Code (configuração pessoal)
 .claude/settings.local.json
+
+# Relatórios gerados pelos testes (junit, cobertura)
+reports/
