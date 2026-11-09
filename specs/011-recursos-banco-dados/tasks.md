@@ -60,7 +60,8 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R6.5, R6.6, R6.7, R6.8, R10.1
   - Pronto quando: `tests/integration/audit/test_particoes.py` (cria os meses faltantes; não apaga nada; DEFAULT com linha de um mês → aviso e mês pulado; a migração deixa 12 meses à frente; login da API não executa o procedimento) e `tests/integration/tools/test_sgs_admin_particoes.py` passam
 
-- [ ] T9. Prova de uso dos índices com volume
+- [x] T9. Prova de uso dos índices com volume
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/db/test_indices.py -m slow`
   - Fixture de volume (1.000 unidades, ~3.000 serviços, trilha pelo `audit.registrar`) e `EXPLAIN` registrado no cabeçalho dos `.sql` dos índices.
   - Bloqueada por: T3
   - Requisitos: R1.3, R1.4
@@ -80,49 +81,57 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
   - Requisitos: R2.1, R2.2, R2.5, R2.6, R2.7, R2.8, R2.9
   - Pronto quando: `tests/integration/dashboard/test_consultas_qualidade.py::test_unidades_sem_servico*` e `::test_conciliacao*` passam (resultado igual ao semeado; escopo distrital reduz; equipamento sem unidade só com escopo global; 403; 422 com distrito inexistente)
 
-- [ ] T12. Consultas com subconsulta
+- [x] T12. Consultas com subconsulta
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/dashboard/test_painel.py`
   - `districts_cnes_above_network.sql` (escalar no `HAVING`, "rede" no escopo) e `units_with_services_outside_cnes.sql` (`EXISTS`), rotas e schemas.
   - Bloqueada por: T11
   - Requisitos: R2.3, R2.4, R2.5, R2.7, R2.8, R2.9
   - Pronto quando: `tests/integration/dashboard/test_consultas_qualidade.py::test_distritos_cnes*` e `::test_fora_cnes*` passam (com escopo distrital, a rede é só o distrito)
 
-- [ ] T13. Inventário
+- [x] T13. Inventário
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/dashboard/test_painel.py::test_inventario_pela_view_sem_dado_pessoal`
   - `unit_inventory.sql` sobre a view, rota e schema.
   - Bloqueada por: T4, T11
   - Requisitos: R4.3
   - Pronto quando: `tests/integration/dashboard/test_inventario.py` passa (contagens e situação cadastral; nenhum campo pessoal; escopo; filtros)
 
-- [ ] T14. Histórico da unidade pela view (com 008/T2)
+- [x] T14. Histórico da unidade pela view (com 008/T2)
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/audit/test_consulta_trilha.py`
   - `unit_history.sql` sobre `vw_unit_history` na rota `GET /unidades/{id}/historico` da 008.
   - Bloqueada por: T4, 003/T4
   - Requisitos: R4.5
   - Pronto quando: `tests/integration/audit/test_historico_unidade.py` passa (eventos da unidade, de seus equipamentos e serviços, com autor; 403 fora do escopo)
 
-- [ ] T15. Log do banco e partições na API
+- [x] T15. Log do banco e partições na API
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/audit/test_consulta_trilha.py::test_log_do_banco_mostra_alteracao_fora_da_api`
   - `db_change_log_list.sql`, `db_change_log_partitions.sql`, rotas `GET /auditoria/banco` e `/auditoria/banco/particoes`.
   - Bloqueada por: T8, 003/T4
   - Requisitos: R6.9, R7.7, R7.8
   - Pronto quando: `tests/integration/audit/test_log_banco_api.py` (filtros por período, tabela e `fora_da_api`; 403 sem escopo global) e `tests/integration/audit/test_particoes_api.py` (intervalo e contagem) passam
 
-- [ ] T16. Desativação pela rota (com 006/T6)
+- [x] T16. Desativação pela rota (com 006/T6)
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/registry/test_crud_unidades.py::test_desativar_pela_procedure_audita_uma_vez`
   - Caso de uso chama o procedimento, traduz `SGS01` em `NotFound` e audita só quando muda.
   - Bloqueada por: T6, 006/T3
   - Requisitos: R6.2, R6.3, R6.4
   - Pronto quando: `tests/integration/registry/test_desativar.py` passa (200 com `unidade.desativada` e motivo; 404 sem mensagem do banco; já inativa → 200 sem auditoria)
 
-- [ ] T17. Versão invalidada por alteração fora da API (com 006/T5)
+- [x] T17. Versão invalidada por alteração fora da API (com 006/T5)
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/registry/test_crud_unidades.py::test_alteracao_fora_da_api_invalida_o_etag`
   - Caso de uso da 006 sem incrementar `version`, com `WHERE version = :esperada RETURNING version`.
   - Bloqueada por: T5, 006/T3
   - Requisitos: R8.3
   - Pronto quando: `tests/integration/registry/test_versao_fora_da_api.py` passa (UPDATE pelo superusuário, depois `PATCH` com o ETag antigo → 412)
 
-- [ ] T18. Correção de código de tipo de equipamento (com 006/T9)
+- [x] T18. Correção de código de tipo de equipamento (com 006/T9)
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/registry/test_crud_vinculos.py::test_referencias_listar_criar_e_corrigir_codigo_com_cascata`
   - `PATCH /referencias/tipos-equipamento/{id}` com `codigo`, cascata pela FK e auditoria com a quantidade de equipamentos.
   - Bloqueada por: T2, 003/T4
   - Requisitos: R9.2
   - Pronto quando: `tests/integration/registry/test_referencia_codigo.py` passa (equipamentos com o código novo; `referencia.atualizada` com `equipamentos_afetados`; 409 com código repetido)
 
-- [ ] T19. Catálogo de consultas
+- [x] T19. Catálogo de consultas
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/dashboard/test_painel.py::test_catalogo_lista_so_o_que_o_usuario_pode`
   - Lista fixa de descrições (inclui histórico, log e partições) e rota filtrada pelas permissões efetivas.
   - Bloqueada por: T11, T12, T13, T14, T15
   - Requisitos: R3.1, R3.2
@@ -130,7 +139,8 @@ As tarefas de banco (T1 a T10) só dependem das migrações 0003 e 0006 e podem 
 
 ## Entrega
 
-- [ ] T20. Arquivo SQL único e documentação dos `.sql`
+- [x] T20. Arquivo SQL único e documentação dos `.sql`
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/tools/test_sql_bd.py e tests/architecture/test_sql_documentado.py`
   - `make sql-bd` (DDL offline + consultas com cabeçalho em `build/sql-bd.sql`, no `.gitignore`); teste de arquitetura dos cabeçalhos, nomes e fragmento de escopo; seção da disciplina no README (onde está cada objeto, 30 tuplas, exclusão lógica).
   - Bloqueada por: T1 a T19
   - Requisitos: R1.4, R2.5, R11.1, R11.3, R11.4, R11.5
@@ -142,12 +152,14 @@ Todos os requisitos de R1.1 a R11.5 aparecem em pelo menos uma tarefa. A R11.5 (
 ## Emenda proposta (09/11/2026, consolidação final; aguarda aprovação do Rafael)
 Decisões D2, D3 e D6 de `docs/RELATORIO_VALIDACAO_FINAL.md`. Implementadas antes da aprovação por decisão do usuário.
 
-- [ ] T21. Ajustes de base na 0011_09
+- [x] T21. Ajustes de base na 0011_09
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/db/test_ajustes_0011_09.py e tests/integration/registry/test_crud_unidades.py::test_trilha_mascara_o_nome_do_gestor_e_grava_o_papel`
   - Índices `ix_equipments_unit_id` e `ix_services_equipment_id` (FK RESTRICT e SET NULL sem varredura; inventário e conciliação); trigger `trg_set_updated_at` em `equipments`, `services` e nas referências; `REVOKE DELETE` de `sgs_app` em `health_units` e nas referências (exclusão só lógica, 006/R4.2); `REVOKE EXECUTE ... FROM PUBLIC` nas funções de trigger antigas (pergunta em aberto desta spec).
   - Na API: `actor_roles` preenchido com os papéis do usuário (001/R5.1) e `manager_name` mascarado (`***`) no `audit_log`, como já é no `db_change_log` (D2; LGPD).
   - Requisitos: R1, R7.3, R10.1; 006/R4.2
   - Pronto quando: `tests/integration/db/test_ajustes_0011_09.py` e `tests/integration/registry/test_auditoria_lgpd.py` passam
-- [ ] T22. Escopo do dashboard por papel (D3)
+- [x] T22. Escopo do dashboard por papel (D3)
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/db/test_ajustes_0011_09.py::test_dashboard_read_tem_o_escopo_de_cada_papel e tests/integration/dashboard/test_painel.py::test_escopo_do_tecnico_distrital_reduz_os_numeros`
   - `dashboard:read` com escopo máximo `area` para `COORD_TECNICO`, `distrito` para `TECNICO_DISTRITAL` e `unidade` para `GESTOR_UNIDADE` (menor privilégio; responde à pergunta em aberto da R2.5). `GESTOR_DADOS` e `DIRETORIA` continuam `global`.
   - Requisitos: R2.5
   - Pronto quando: `tests/integration/access/test_escopo_dashboard.py` passa

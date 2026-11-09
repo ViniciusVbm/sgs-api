@@ -3,10 +3,12 @@
 - Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
 - Depende de: 006, 007
 
-- [ ] T1. Arquivos YAML de demonstração (Saúde Mental + casos especiais + pendências)
+- [x] T1. Arquivos YAML de demonstração (Saúde Mental + casos especiais + pendências)
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/tools/test_seed_demo.py (JSON validado pela carga)`
   - Requisitos: R1.2, R1.3, R1.5
   - Pronto quando: `tests/unit/seeds/test_yaml_valido.py` passa
-- [ ] T2. Comando `sgs-admin seed demo` idempotente com usuários por papel
+- [x] T2. Comando `sgs-admin seed demo` idempotente com usuários por papel
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/tools/test_seed_demo.py`
   - Requisitos: R1.1, R1.4, R1.6
   - Pronto quando: `tests/integration/seeds/test_seed_demo.py` passa
 - [ ] T3. Conversor da planilha de rede com relatório de rejeitos

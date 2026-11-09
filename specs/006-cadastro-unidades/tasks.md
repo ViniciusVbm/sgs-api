@@ -16,29 +16,35 @@
   - Bloqueada por: T1, T2, 003/T4
   - Requisitos: R1.1–R1.6
   - Pronto quando: `tests/integration/registry/test_criar_unidade.py` passa
-- [ ] T4. Listar, buscar, filtrar, ordenar e detalhar com escopo
+- [x] T4. Listar, buscar, filtrar, ordenar e detalhar com escopo
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/registry/test_crud_unidades.py e test_crud_vinculos.py`
   - Bloqueada por: T1, 003/T4
   - Requisitos: R2.1–R2.6
   - Pronto quando: `tests/integration/registry/test_buscar_unidades.py` passa
-- [ ] T5. Atualizar com `If-Match`, escopo, campos estruturais e auditoria por campo
+- [x] T5. Atualizar com `If-Match`, escopo, campos estruturais e auditoria por campo
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/registry/test_crud_unidades.py e test_crud_vinculos.py`
   - Bloqueada por: T3, 011/T5
   - Sem incrementar `version` (trigger da 011); no mesmo PR da 011/T17.
   - Requisitos: R3.1–R3.6
   - Pronto quando: `tests/integration/registry/test_atualizar_unidade.py` passa
-- [ ] T6. Desativar unidade
+- [x] T6. Desativar unidade
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/registry/test_crud_unidades.py e test_crud_vinculos.py`
   - Bloqueada por: T3, 011/T6
   - Pelo `sp_deactivate_unit` da 011; no mesmo PR da 011/T16.
   - Requisitos: R4.1, R4.2
   - Pronto quando: `tests/integration/registry/test_desativar_unidade.py` passa
-- [ ] T7. Equipamentos (vinculados e sem unidade)
+- [x] T7. Equipamentos (vinculados e sem unidade)
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/registry/test_crud_unidades.py e test_crud_vinculos.py`
   - Bloqueada por: T3
   - Requisitos: R5.1–R5.3
   - Pronto quando: `tests/integration/registry/test_equipamentos.py` passa
-- [ ] T8. Serviços (vinculados e soltos) e vínculo por id
+- [x] T8. Serviços (vinculados e soltos) e vínculo por id
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/registry/test_crud_unidades.py e test_crud_vinculos.py`
   - Bloqueada por: T7
   - Requisitos: R6.1–R6.4
   - Pronto quando: `tests/integration/registry/test_servicos.py` passa
-- [ ] T9. Rotas de referência
+- [x] T9. Rotas de referência
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/registry/test_crud_unidades.py e test_crud_vinculos.py`
   - Bloqueada por: T1, 003/T4
   - Código editável com cascata e auditoria; no mesmo PR da 011/T18.
   - Requisitos: R7.1, R7.2, R7.3

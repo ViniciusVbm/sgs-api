@@ -12,7 +12,8 @@
 - [x] T2. Migração `0002_identity` e repositórios de usuário, sessão e refresh
   - Requisitos: R1.7, R3.3
   - Pronto quando: `tests/integration/identity/test_repositories.py` passa
-- [ ] T3. `PasswordHasher` Argon2id e caso de uso de login com hash fictício e bloqueio
+- [x] T3. `PasswordHasher` Argon2id e caso de uso de login com hash fictício e bloqueio
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/identity/test_login.py`
   - Requisitos: R1.1, R1.2, R1.3, R1.4, R1.6
   - Pronto quando: `tests/integration/identity/test_login.py` passa
 - [x] T4. `TokenService` ES256 + JWKS, com as chaves de assinatura (`JWT_PRIVATE_KEYS`) no `Settings`
@@ -20,16 +21,20 @@
   - Bloqueia: 003/T4 e 003/T6
   - Requisitos: R3.1, R3.2, R3.8; 001/R2.2 e R2.3 para as chaves
   - Pronto quando: `tests/unit/identity/test_tokens.py` passa e `tests/unit/core/test_config.py` cobre as chaves JWT (ausentes ou inválidas recusam a subida; chave de exemplo recusada em prod)
-- [ ] T5. Cadastro e verificação de TOTP, com `CRYPTO_KEYS` e `CRYPTO_ACTIVE_KEY` no `Settings` para montar o `FieldCipher`
+- [x] T5. Cadastro e verificação de TOTP, com `CRYPTO_KEYS` e `CRYPTO_ACTIVE_KEY` no `Settings` para montar o `FieldCipher`
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/identity/test_mfa.py e tests/unit/core/test_config.py`
   - Requisitos: R2.1–R2.6; 001/R2.2 e R2.3 para as chaves
   - Pronto quando: `tests/integration/identity/test_mfa.py` passa e `tests/unit/core/test_config.py` cobre as chaves de criptografia (ausentes, fora de base64, sem 32 bytes ou sem a versão ativa recusam a subida; chave de exemplo recusada em prod)
-- [ ] T6. Refresh rotativo com detecção de reuso, anti-CSRF e logout
+- [x] T6. Refresh rotativo com detecção de reuso, anti-CSRF e logout
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/identity/test_refresh.py`
   - Requisitos: R3.3–R3.7
   - Pronto quando: `tests/integration/identity/test_refresh.py` passa
-- [ ] T7. Rate limit e auditoria dos eventos de acesso
+- [x] T7. Rate limit e auditoria dos eventos de acesso
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/identity/test_auth_audit.py`
   - Requisitos: R1.5, R4.1
   - Pronto quando: `tests/integration/identity/test_auth_audit.py` passa
-- [ ] T8. Comando `sgs-admin create-user` para criar o primeiro administrador
+- [x] T8. Comando `sgs-admin create-user` para criar o primeiro administrador
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/tools/test_sgs_admin_create_user.py`
   - Requisitos: R1.7
   - Auditoria: grava `usuario.criado` com `audit.registrar` na mesma transação (AGENTS.md, regra 5); a R4.1 não lista esse evento
   - Pronto quando: comando documentado no README e coberto por teste

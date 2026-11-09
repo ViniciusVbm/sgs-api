@@ -22,15 +22,18 @@
   - Bloqueada por: T3, 002/T4
   - Requisitos: R4.1, R4.3, R4.4, R4.6
   - Pronto quando: `tests/integration/access/test_require.py` passa
-- [ ] T5. Teste de arquitetura de rotas protegidas
+- [x] T5. Teste de arquitetura de rotas protegidas
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/architecture/test_rotas_protegidas.py`
   - Bloqueada por: T4
   - Requisitos: R4.1
   - Pronto quando: `tests/architecture/test_rotas_protegidas.py` passa
-- [ ] T6. `GET /me`
+- [x] T6. `GET /me`
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/access/test_me.py`
   - Bloqueada por: T3, T4 (`CurrentUser`)
   - Requisitos: R5.1
   - Pronto quando: `tests/integration/access/test_me.py` passa
-- [ ] T7. Rotas de administração de atribuições com validação de escopo e auditoria
+- [x] T7. Rotas de administração de atribuições com validação de escopo e auditoria
+  - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/access/test_admin_atribuicoes.py`
   - Bloqueada por: T4
   - Requisitos: R2.1–R2.5
   - Pronto quando: `tests/integration/access/test_admin_atribuicoes.py` passa

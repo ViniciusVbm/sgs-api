@@ -35,12 +35,11 @@ async def test_refresh_rotativo_e_reuso_revoga_a_sessao(
     novo = await cliente.post("/api/v1/auth/refresh", headers=CABECALHOS)
     novo_cookie = novo.cookies["sgs_refresh"]
     cliente.cookies.clear()
-    reuso = await cliente.post(
-        "/api/v1/auth/refresh", headers=CABECALHOS, cookies={"sgs_refresh": antigo}
-    )
-    depois = await cliente.post(
-        "/api/v1/auth/refresh", headers=CABECALHOS, cookies={"sgs_refresh": novo_cookie}
-    )
+    cliente.cookies.set("sgs_refresh", antigo, domain="teste.local", path="/api/v1/auth")
+    reuso = await cliente.post("/api/v1/auth/refresh", headers=CABECALHOS)
+    cliente.cookies.clear()
+    cliente.cookies.set("sgs_refresh", novo_cookie, domain="teste.local", path="/api/v1/auth")
+    depois = await cliente.post("/api/v1/auth/refresh", headers=CABECALHOS)
     acesso = await cliente.get(
         "/api/v1/me", headers={"Authorization": f"Bearer {novo.json()['access_token']}"}
     )

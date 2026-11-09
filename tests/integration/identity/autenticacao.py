@@ -46,10 +46,10 @@ def codigo(segredo: str, *, adiante: int = 0) -> str:
 
 
 async def cadastrar_e_entrar(
-    cliente: httpx.AsyncClient, username: str
+    cliente: httpx.AsyncClient, username: str, senha: str = SENHA
 ) -> tuple[httpx.Response, str]:
     """login → enroll → confirm; devolve a resposta do confirm e o segredo TOTP."""
-    desafio = (await login(cliente, username)).json()["mfa_token"]
+    desafio = (await login(cliente, username, senha)).json()["mfa_token"]
     uri = (await cliente.post("/api/v1/auth/mfa/enroll", json={"mfa_token": desafio})).json()[
         "otpauth_uri"
     ]
