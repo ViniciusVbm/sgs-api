@@ -105,6 +105,8 @@ service_types = Table(
 )
 
 STATUS_DA_UNIDADE = ("ativa", "inativa", "em_implantacao")
+STATUS_DO_EQUIPAMENTO = ("ativo", "inativo", "em_manutencao")
+STATUS_DO_SERVICO = ("ativo", "inativo")
 
 health_units = Table(
     "health_units",
@@ -168,6 +170,10 @@ equipments = Table(
     Column("quantity", Integer, nullable=False, server_default=text("1")),
     Column("status", String(20), nullable=False),
     *_timestamps(),
+    # 0011_09 (011/T21): domínio do status, quantidade positiva e índice da FK.
+    CheckConstraint(f"status IN {STATUS_DO_EQUIPAMENTO}", name="status_valido"),
+    CheckConstraint("quantity > 0", name="quantity_positiva"),
+    Index("ix_equipments_unit_id", "unit_id"),
 )
 
 services = Table(
@@ -183,4 +189,7 @@ services = Table(
     *_timestamps(),
     # Serviços de uma unidade (migração 0011_03, spec 011 R1.2).
     Index("ix_services_unit_id", "unit_id"),
+    # 0011_09 (011/T21): domínio do status e índice da FK com ON DELETE SET NULL.
+    CheckConstraint(f"status IN {STATUS_DO_SERVICO}", name="status_valido"),
+    Index("ix_services_equipment_id", "equipment_id"),
 )

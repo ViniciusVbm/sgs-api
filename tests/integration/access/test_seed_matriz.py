@@ -126,6 +126,15 @@ async def test_migracao_cria_as_permissoes_da_matriz(banco: BancoDeTeste) -> Non
     assert permissoes == PERMISSOES
 
 
+# A 0011_09 (011/T22, decisão D3) limita `dashboard:read` ao escopo de cada papel; o resto da
+# matriz continua como a 0003 semeou.
+AJUSTES_DA_0011_09: dict[str, dict[str, str]] = {
+    "COORD_TECNICO": {"dashboard:read": "area"},
+    "TECNICO_DISTRITAL": {"dashboard:read": "distrito"},
+    "GESTOR_UNIDADE": {"dashboard:read": "unidade"},
+}
+
+
 @pytest.mark.parametrize("papel", MATRIZ)
 async def test_cada_permissao_do_papel_tem_o_escopo_maximo_da_matriz(
     banco: BancoDeTeste, papel: str
@@ -145,7 +154,7 @@ async def test_cada_permissao_do_papel_tem_o_escopo_maximo_da_matriz(
         escopos: dict[str, str] = dict(linhas.all())
     await engine.dispose()
 
-    assert escopos == MATRIZ[papel]
+    assert escopos == MATRIZ[papel] | AJUSTES_DA_0011_09.get(papel, {})
 
 
 async def test_escopo_maximo_fora_dos_quatro_niveis_e_recusado(banco: BancoDeTeste) -> None:

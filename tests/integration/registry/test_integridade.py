@@ -52,8 +52,12 @@ VINCULOS: dict[str, Callable[[AsyncConnection, UUID], Awaitable[UUID]]] = {
 async def test_unidade_com_vinculos_nao_e_apagada(
     banco: BancoDeTeste, vinculo: Callable[[AsyncConnection, UUID], Awaitable[UUID]]
 ) -> None:
-    """011/R9.3: equipamento ou serviço vinculado impede apagar a unidade (ON DELETE RESTRICT)."""
-    engine = motor(banco.url_api)
+    """011/R9.3: equipamento ou serviço vinculado impede apagar a unidade (ON DELETE RESTRICT).
+
+    O DELETE roda como dono do banco: desde a 0011_09 (011/T21) o login da API nem tem DELETE em
+    `health_units` (exclusão só lógica, 006/R4.2), e o que se prova aqui é a FK.
+    """
+    engine = motor(banco.url_dono)
     async with engine.begin() as conexao:
         unidade = await inserir_unidade(conexao, "CAPS David Capistrano")
         await vinculo(conexao, unidade)
