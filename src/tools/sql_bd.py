@@ -106,7 +106,7 @@ def insercao(senha: str) -> str:
         "-- Gerado por `make sql-bd` a partir de seeds/demo/. Rode depois de build/sql-bd.sql.",
         "-- Referências pelo código; ids de negócio gerados pelo banco (gen_random_uuid()).",
         "BEGIN;",
-        "INSERT INTO unit_types (code, name, technical_area_id)\nSELECT v.code, v.name, a.id"
+        "INSERT INTO unit_types (code, name, technical_area_id)\nSELECT v.code, v.name, a.id"  # nosec B608 (ver o comentário do topo)
         " FROM (VALUES\n"
         + _linhas(
             f"({_texto(t['codigo'])}, {_texto(t['nome'])}, {_texto(t['area'])})"
@@ -114,13 +114,13 @@ def insercao(senha: str) -> str:
         )
         + "\n) AS v (code, name, area) JOIN technical_areas AS a ON a.code = v.area"
         " ON CONFLICT DO NOTHING;",
-        "INSERT INTO equipment_types (code, name) VALUES\n"
+        "INSERT INTO equipment_types (code, name) VALUES\n"  # nosec B608 (ver o comentário do topo)
         + _linhas(
             f"({_texto(t['codigo'])}, {_texto(t['nome'])})"
             for t in referencias["tipos_equipamento"]
         )
         + "\nON CONFLICT DO NOTHING;",
-        "INSERT INTO health_units (id, name, cnes, unit_type_id, district_id, cep, address,"
+        "INSERT INTO health_units (id, name, cnes, unit_type_id, district_id, cep, address,"  # nosec B608 (ver o comentário do topo)
         " neighborhood, phone, status, pending_issues)\n"
         "SELECT gen_random_uuid(), v.name, v.cnes, t.id, d.id, v.cep, v.address, v.bairro,"
         " v.phone, v.status, v.pendencias FROM (VALUES\n"
@@ -147,7 +147,7 @@ def insercao(senha: str) -> str:
         + "\n) AS v (name, cnes, tipo, distrito, cep, address, bairro, phone, status, pendencias)\n"
         "JOIN unit_types AS t ON t.code = v.tipo JOIN districts AS d ON d.code = v.distrito\n"
         "ON CONFLICT DO NOTHING;",
-        "INSERT INTO equipments (id, unit_id, name, equipment_type_code, quantity, status)\n"
+        "INSERT INTO equipments (id, unit_id, name, equipment_type_code, quantity, status)\n"  # nosec B608 (ver o comentário do topo)
         "SELECT gen_random_uuid(), u.id, v.name, v.tipo, v.quantidade, 'ativo' FROM (VALUES\n"
         + _linhas(
             f"({_texto(e['unidade'])}, {_texto(e['nome'])}, {_texto(e['tipo'])},"
@@ -156,7 +156,7 @@ def insercao(senha: str) -> str:
         )
         + "\n) AS v (unidade, name, tipo, quantidade)\n"
         "LEFT JOIN health_units AS u ON u.name = v.unidade;",
-        "INSERT INTO services (id, unit_id, equipment_id, service_type_id, name, in_cnes,"
+        "INSERT INTO services (id, unit_id, equipment_id, service_type_id, name, in_cnes,"  # nosec B608 (ver o comentário do topo)
         " status)\n"
         "SELECT gen_random_uuid(), u.id, e.id, st.id, v.name, v.no_cnes, 'ativo' FROM (VALUES\n"
         + _linhas(
@@ -168,14 +168,14 @@ def insercao(senha: str) -> str:
         "JOIN service_types AS st ON st.code = v.tipo\n"
         "LEFT JOIN health_units AS u ON u.name = v.unidade\n"
         "LEFT JOIN equipments AS e ON e.name = v.equipamento AND e.unit_id = u.id;",
-        "INSERT INTO users (id, username, display_name, password_hash, source) VALUES\n"
+        "INSERT INTO users (id, username, display_name, password_hash, source) VALUES\n"  # nosec B608 (ver o comentário do topo)
         + _linhas(
             f"(gen_random_uuid(), {_texto(u['username'])}, {_texto(u['nome'])},"
             f" {_texto(hash_)}, 'local')"
             for u in usuarios
         )
         + "\nON CONFLICT DO NOTHING;",
-        "INSERT INTO role_assignments (id, user_id, role_id, scope_type, scope_id, origin)\n"
+        "INSERT INTO role_assignments (id, user_id, role_id, scope_type, scope_id, origin)\n"  # nosec B608 (ver o comentário do topo)
         "SELECT gen_random_uuid(), usr.id, r.id, v.escopo_tipo,\n"
         "    CASE v.escopo_tipo\n"
         "        WHEN 'area' THEN (SELECT CAST(id AS text) FROM technical_areas"
