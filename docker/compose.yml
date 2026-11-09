@@ -62,7 +62,6 @@ services:
     environment:
       APP_ENV: dev
       LOG_LEVEL: INFO
-      CORS_ORIGINS: https://localhost:3000
       # A API conecta como sgs_api (membro de sgs_app); as migrações, como o dono.
       DATABASE_URL: postgresql+asyncpg://sgs_api:sgs_api@db:5432/sgs
       DATABASE_MIGRATION_URL: postgresql+asyncpg://sgs:sgs@db:5432/sgs
@@ -72,6 +71,11 @@ services:
       DATABASE_SSL_ROOT_CERT: /certs/ca.crt
       # Chave de assinatura JWT (spec 002), gerada uma vez em secrets/, fora do Git (ver README).
       JWT_PRIVATE_KEYS_FILE: /run/secrets/jwt-keys.json
+      # Chaves do FieldCipher (spec 002, T5), geradas uma vez em secrets/ (ver README).
+      CRYPTO_KEYS_FILE: /run/secrets/crypto-keys.json
+      CRYPTO_ACTIVE_KEY: "1"
+      # O front em HTML, quando servido pelo proxy no mesmo domínio (anti-CSRF do refresh).
+      CORS_ORIGINS: https://localhost,https://localhost:3000
     volumes:
       # Só o certificado da CA. O usuário da API tem o mesmo uid do postgres (999); por isso a
       # chave do servidor não pode ser montada aqui.
@@ -84,6 +88,8 @@ services:
     secrets:
       - source: jwt_keys
         target: jwt-keys.json
+      - source: crypto_keys
+        target: crypto-keys.json
     depends_on:
       db-certs:
         condition: service_completed_successfully
@@ -120,6 +126,8 @@ services:
 secrets:
   jwt_keys:
     file: ../secrets/jwt-keys.json
+  crypto_keys:
+    file: ../secrets/crypto-keys.json
 
 volumes:
   db-data:

@@ -29,3 +29,7 @@ Adicionar à stack, com a mesma regra de versão das demais (série fixa, `uv.lo
 - Hypercorn ou Granian: menos difundidos no ecossistema FastAPI.
 - Rate limit próprio em memória: menos código externo, mas reimplementa janela de tempo e chave por IP que o slowapi já resolve e testa.
 - CI sem cobertura: perde a métrica usada na revisão dos PRs.
+
+## Emenda (09/11/2026, consolidação final; aguarda revisão do Rafael)
+- **slowapi → limits.** O slowapi aplica o limite por decorador, com um `Limiter` global criado na importação do módulo, o que não combina com a raiz de composição do projeto (um app por `create_app`, um app por teste). A 002/T7 usa direto a biblioteca `limits` (o motor do slowapi), num limitador por app em `src/core/limite.py`, como este ADR já previa ("o limite vira uma dependência FastAPI própria"). As rotas não mudam.
+- **pwdlib[argon2] e pyotp** entram no `pyproject.toml` na 002/T3 e T5, como a `steering/tech.md` prevê.

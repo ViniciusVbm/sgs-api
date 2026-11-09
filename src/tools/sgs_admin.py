@@ -12,10 +12,19 @@ A conexão vem da configuração (`Settings`), como nas migrações: DATABASE_MI
 banco) ou, na falta dela, DATABASE_URL. O login da API não executa o procedimento (011/R10.1):
 sem a URL do dono, o comando sai com erro. O `create-user` da spec 002 (T8) entra como outro
 subcomando de primeiro nível.
+
+    uv run sgs-admin create-user --username admin --nome "Administrador" [--papel ADMIN_TI]
+
+- `create-user` (spec 002, T8): cria um usuário local com senha Argon2id e uma atribuição de
+  papel, e grava `usuario.criado` e `papel.atribuido` na mesma transação (AGENTS.md, regra 5). A
+  senha vem de `SGS_SENHA_INICIAL` ou é pedida no terminal (duas vezes); nunca vai para o log.
+  Conecta com DATABASE_URL (o login da API).
 """
 
 import argparse
 import asyncio
+import getpass
+import os
 import sys
 from collections.abc import Callable, Sequence
 
@@ -66,6 +75,24 @@ def _parser() -> argparse.ArgumentParser:
         help=f"meses à frente do atual (padrão: {MESES_A_FRENTE})",
     )
     particoes.set_defaults(comando=_banco_particoes)
+
+    criar = comandos.add_parser(
+        "create-user",
+        help="cria um usuário local (o primeiro administrador)",
+        description=(
+            "Cria um usuário local com senha Argon2id e um papel. A senha vem de"
+            " SGS_SENHA_INICIAL ou é pedida no terminal. Conecta com DATABASE_URL."
+        ),
+    )
+    criar.add_argument("--username", required=True)
+    criar.add_argument("--nome", required=True, help="nome de exibição")
+    criar.add_argument("--email", default=None)
+    criar.add_argument("--papel", default="ADMIN_TI", help="código do papel (padrão: ADMIN_TI)")
+    criar.add_argument(
+        "--escopo-tipo", default="global", choices=("global", "area", "distrito", "unidade")
+    )
+    criar.add_argument("--escopo-id", default=None)
+    criar.set_defaults(comando=_create_user)
     return parser
 
 
@@ -122,3 +149,138 @@ async def garantir_particoes(url: str, settings: Settings, meses: int) -> list[M
     finally:
         await engine.dispose()
     return mensagens
+
+
+SENHA_MINIMA = 12
+
+
+def _senha() -> str | None:
+    senha = os.environ.get("SGS_SENHA_INICIAL")
+    if senha is None:
+        senha = getpass.getpass("Senha: ")
+        if senha != getpass.getpass("Repita a senha: "):
+            sys.stderr.write("sgs-admin: as senhas não conferem\n")
+            return None
+    if len(senha) < SENHA_MINIMA:
+        sys.stderr.write(f"sgs-admin: use uma senha com ao menos {SENHA_MINIMA} caracteres\n")
+        return None
+    return senha
+
+
+def _create_user(args: argparse.Namespace) -> int:
+    senha = _senha()
+    if senha is None:
+        return 1
+    settings = load_settings()
+    try:
+        usuario_id = asyncio.run(
+            criar_usuario(
+                settings.database_url.get_secret_value(),
+                settings,
+                username=args.username,
+                nome=args.nome,
+                email=args.email,
+                senha=senha,
+                papel=args.papel,
+                escopo_tipo=args.escopo_tipo,
+                escopo_id=args.escopo_id,
+            )
+        )
+    except ValueError as erro:
+        sys.stderr.write(f"sgs-admin: {erro}\n")
+        return 1
+    sys.stdout.write(
+        f"Usuário {args.username} criado (id {usuario_id}) com o papel {args.papel}.\n"
+    )
+    return 0
+
+
+async def criar_usuario(
+    url: str,
+    settings: Settings,
+    *,
+    username: str,
+    nome: str,
+    email: str | None,
+    senha: str,
+    papel: str,
+    escopo_tipo: str = "global",
+    escopo_id: str | None = None,
+) -> str:
+    """Cria o usuário e a atribuição numa transação, com auditoria. Levanta `ValueError` com uma
+    mensagem para o terminal se o usuário já existe, o papel não existe ou o escopo não confere."""
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from src.core.ids import uuid7
+    from src.modules.access.domain.atribuicoes import Atribuicao
+    from src.modules.access.infrastructure.repository import SqlRepositorioDeAtribuicoes
+    from src.modules.audit.application.registrar import Ator, Entidade, registrar
+    from src.modules.audit.infrastructure.repository import SqlAuditStore
+    from src.modules.identity.domain.users import User, UserSource
+    from src.modules.identity.infrastructure.passwords import Argon2PasswordHasher
+    from src.modules.identity.infrastructure.repository import SqlUserRepository
+
+    engine = create_engine(url, settings, pooled=False)
+    try:
+        async with AsyncSession(engine, expire_on_commit=False) as sessao, sessao.begin():
+            usuarios = SqlUserRepository(sessao)
+            if await usuarios.get_by_username(username) is not None:
+                raise ValueError(f"já existe o usuário {username!r}")
+            atribuicoes = SqlRepositorioDeAtribuicoes(sessao)
+            definicao = await atribuicoes.papel(papel)
+            if definicao is None:
+                raise ValueError(f"papel inexistente: {papel!r}")
+            if escopo_tipo != definicao.escopo_exigido:
+                raise ValueError(f"o papel {papel} exige escopo {definicao.escopo_exigido}")
+            if escopo_tipo != "global" and (
+                escopo_id is None or not await atribuicoes.escopo_existe(escopo_tipo, escopo_id)
+            ):
+                raise ValueError("escopo inexistente")
+            usuario = User(
+                id=uuid7(),
+                username=username,
+                display_name=nome,
+                source=UserSource.LOCAL,
+                password_hash=Argon2PasswordHasher().hash(senha),
+                email=email,
+            )
+            await usuarios.add(usuario)
+            atribuicao_id = uuid7()
+            await atribuicoes.inserir(
+                Atribuicao(
+                    id=atribuicao_id,
+                    user_id=usuario.id,
+                    papel=papel,
+                    scope_type=escopo_tipo,
+                    scope_id=escopo_id if escopo_tipo != "global" else None,
+                    origin="direct",
+                    valid_until=None,
+                    granted_by=None,
+                )
+            )
+            loja = SqlAuditStore(sessao)
+            sistema = Ator()
+            entidade = Entidade(tipo="usuario", id=str(usuario.id))
+            await registrar(
+                loja,
+                acao="usuario.criado",
+                ator=sistema,
+                entidade=entidade,
+                metadados={"username": usuario.username, "origem": "sgs-admin create-user"},
+            )
+            await registrar(
+                loja,
+                acao="papel.atribuido",
+                ator=sistema,
+                entidade=entidade,
+                metadados={
+                    "atribuicao_id": str(atribuicao_id),
+                    "papel": papel,
+                    "escopo_tipo": escopo_tipo,
+                    "escopo_id": escopo_id,
+                    "origem": "sgs-admin create-user",
+                },
+            )
+    finally:
+        await engine.dispose()
+    return str(usuario.id)

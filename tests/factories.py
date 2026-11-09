@@ -8,7 +8,7 @@ from typing import Any
 
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
-from pydantic import SecretStr
+from pydantic import SecretBytes, SecretStr
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource
 
 from src.core.config import AppEnv, DatabaseSslMode, Settings
@@ -68,6 +68,9 @@ def make_settings(**overrides: Any) -> Settings:
         "database_url": SecretStr(URL_SEM_BANCO),
         "database_ssl_mode": DatabaseSslMode.DISABLE,
         "jwt_private_keys": _jwt_private_keys_de_teste(),
+        # Chave fixa só de teste (não é a de exemplo, de zeros, recusada em prod).
+        "crypto_keys": {1: SecretBytes(bytes(range(32)))},
+        "crypto_active_key": 1,
     }
     return _SettingsSemAmbiente(**(valores | overrides))
 

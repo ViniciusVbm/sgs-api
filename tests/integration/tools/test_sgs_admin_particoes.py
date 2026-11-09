@@ -6,6 +6,8 @@ pelo dono, à parte.
 """
 
 import asyncio
+import base64
+import json
 import os
 import shutil
 import subprocess
@@ -47,13 +49,15 @@ async def _particoes(banco: BancoDeTeste) -> set[str]:
 @pytest.fixture
 def ambiente(monkeypatch: pytest.MonkeyPatch, banco: BancoDeTeste) -> BancoDeTeste:
     """Variáveis de ambiente da configuração (`Settings`) apontando para o banco do teste."""
-    for nome in ("JWT_PRIVATE_KEYS_FILE", "DATABASE_SSL_ROOT_CERT"):
+    for nome in ("JWT_PRIVATE_KEYS_FILE", "CRYPTO_KEYS_FILE", "DATABASE_SSL_ROOT_CERT"):
         monkeypatch.delenv(nome, raising=False)
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("DATABASE_URL", banco.url_api)
     monkeypatch.setenv("DATABASE_MIGRATION_URL", banco.url_dono)
     monkeypatch.setenv("DATABASE_SSL_MODE", "disable")
     monkeypatch.setenv("JWT_PRIVATE_KEYS", make_jwt_private_keys())
+    monkeypatch.setenv("CRYPTO_KEYS", json.dumps({"1": base64.b64encode(bytes(32 * [7])).decode()}))
+    monkeypatch.setenv("CRYPTO_ACTIVE_KEY", "1")
     return banco
 
 

@@ -59,7 +59,14 @@ from src.modules.access.application.autorizacao import (
 )
 from src.modules.identity.api.deps import CurrentUser
 
-__all__ = ["ResourceRef", "SessaoDeNegocio", "UsuarioAtual", "ator_da_requisicao", "require"]
+__all__ = [
+    "Autenticado",
+    "ResourceRef",
+    "SessaoDeNegocio",
+    "UsuarioAtual",
+    "ator_da_requisicao",
+    "require",
+]
 
 
 @dataclass(frozen=True)
@@ -118,6 +125,29 @@ def require(permissao: str, recurso: ResourceRef | None = None) -> Any:
     """Dependência que exige `permissao` do usuário autenticado, no escopo do `recurso` se houver,
     e devolve o `UsuarioAtual`."""
     return _Exigencia(permissao, recurso)
+
+
+class _Autenticacao:
+    """Dependência das rotas que só exigem estar autenticado (`GET /me`, 003/R5.1): carrega as
+    permissões efetivas sem exigir nenhuma. O teste de rotas protegidas (003/T5) a reconhece."""
+
+    def __repr__(self) -> str:
+        return "autenticado()"
+
+    async def __call__(self, request: Request, usuario: CurrentUser) -> UsuarioAtual:
+        estado = request.app.state
+        resolvedor: ResolvedorDePermissoes = estado.resolvedor_de_permissoes
+        async with estado.sessoes() as sessao:
+            repositorio: RepositorioDePermissoes = estado.repositorio_de_permissoes(sessao)
+            permissoes, papeis = await resolvedor.resolver(repositorio, usuario.id)
+        return UsuarioAtual(
+            id=usuario.id, sessao_id=usuario.sessao_id, permissoes=permissoes, papeis=papeis
+        )
+
+
+autenticado = _Autenticacao()
+Autenticado = Annotated[UsuarioAtual, Depends(autenticado)]
+"""O usuário autenticado com as permissões efetivas, sem exigir permissão nenhuma."""
 
 
 async def _sessao_de_negocio(request: Request, usuario: CurrentUser) -> AsyncIterator[Any]:

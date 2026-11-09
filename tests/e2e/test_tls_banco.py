@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from src.tools import jwt_keys
+from src.tools import crypto_keys, jwt_keys
 
 pytestmark = pytest.mark.slow
 
@@ -20,6 +20,7 @@ RAIZ = Path(__file__).resolve().parents[2]
 COMPOSE = RAIZ / "docker" / "compose.yml"
 PROJETO = "sgs-api-e2e-tls"
 CHAVES_JWT = RAIZ / "secrets" / "jwt-keys.json"
+CHAVES_DE_CIFRA = RAIZ / "secrets" / "crypto-keys.json"
 DOCKER = shutil.which("docker")
 GIT = shutil.which("git")
 
@@ -103,9 +104,13 @@ def ambiente() -> Iterator[None]:
     # A API não sobe sem a chave JWT (spec 002); se ela não existe, o teste cria e apaga no fim.
     criou_pasta = not CHAVES_JWT.parent.exists()
     criou_chave = not CHAVES_JWT.exists()
+    criou_cifra = not CHAVES_DE_CIFRA.exists()
     if criou_chave:
         CHAVES_JWT.parent.mkdir(exist_ok=True)
         jwt_keys.main(["--output", str(CHAVES_JWT)])
+    if criou_cifra:  # idem para as chaves do FieldCipher (002/T5)
+        CHAVES_DE_CIFRA.parent.mkdir(exist_ok=True)
+        crypto_keys.main(["--output", str(CHAVES_DE_CIFRA)])
     try:
         subida = _compose("up", "-d", "--build", "--wait", "api", check=False, timeout=900)
         if subida.returncode != 0:
@@ -116,6 +121,8 @@ def ambiente() -> Iterator[None]:
         _compose("down", "-v", "--remove-orphans", check=False, timeout=300)
         if criou_chave:
             CHAVES_JWT.unlink(missing_ok=True)
+        if criou_cifra:
+            CHAVES_DE_CIFRA.unlink(missing_ok=True)
         if criou_pasta:
             CHAVES_JWT.parent.rmdir()
 

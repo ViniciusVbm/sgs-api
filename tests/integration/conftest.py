@@ -111,7 +111,13 @@ async def app(banco: BancoDeTeste) -> AsyncIterator["FastAPI"]:
 
     from src.main import create_app
 
-    aplicacao = create_app(make_settings(database_url=SecretStr(banco.url_api)))
+    aplicacao = create_app(
+        make_settings(
+            database_url=SecretStr(banco.url_api),
+            # Origem do front nos testes do anti-CSRF do refresh (002/R3.6).
+            cors_origins=("https://sgs.teste",),
+        )
+    )
     yield aplicacao
     await aplicacao.state.engine.dispose()
 
@@ -121,7 +127,8 @@ async def cliente(app: "FastAPI") -> AsyncIterator["httpx.AsyncClient"]:
     import httpx
 
     transporte = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transporte, base_url="http://teste") as conexao:
+    # https: o cookie do refresh é `Secure` (002/R3.3) e o httpx só o envia em https.
+    async with httpx.AsyncClient(transport=transporte, base_url="https://teste") as conexao:
         yield conexao
 
 

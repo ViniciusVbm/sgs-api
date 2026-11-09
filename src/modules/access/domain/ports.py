@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
+from src.modules.access.domain.atribuicoes import Atribuicao, DadosDoUsuario, Papel
 from src.modules.access.domain.authorization import Alvo, Concessao
 
 
@@ -39,3 +40,25 @@ class ResolvedorDeAlvo(Protocol):
         """`None` se o recurso não existe. O id chega em texto, como veio no caminho; um id fora
         do formato do recurso também é `None`."""
         ...
+
+
+class RepositorioDeAtribuicoes(Protocol):
+    """Papéis, atribuições e dados básicos do usuário (spec 003, R2 e R5)."""
+
+    async def papeis(self) -> Sequence[Papel]: ...
+
+    async def papel(self, codigo: str) -> Papel | None: ...
+
+    async def usuario(self, usuario_id: UUID) -> DadosDoUsuario | None: ...
+
+    async def atribuicoes(self, usuario_id: UUID | None, agora: datetime) -> Sequence[Atribuicao]:
+        """As vigentes do usuário; com `None`, de todos."""
+        ...
+
+    async def atribuicao(self, id_: UUID) -> Atribuicao | None: ...
+
+    async def escopo_existe(self, nivel: str, id_do_escopo: str) -> bool: ...
+
+    async def inserir(self, atribuicao: Atribuicao) -> None: ...
+
+    async def remover(self, id_: UUID) -> None: ...

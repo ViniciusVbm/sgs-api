@@ -5,9 +5,10 @@ Os bytes são escritos em UTF-8 com LF, iguais em qualquer sistema operacional.
 """
 
 import json
+import os
 import sys
 
-from pydantic import SecretStr
+from pydantic import SecretBytes, SecretStr
 
 from src.core.config import AppEnv, DatabaseSslMode, Settings
 from src.main import create_app
@@ -26,6 +27,10 @@ def build_contract() -> str:
         # chaves fica vazio de propósito, para um JWT_PRIVATE_KEYS_FILE do ambiente não somar.
         jwt_private_keys=json.dumps([new_signing_key("contrato")]),
         jwt_private_keys_file=(),
+        # Idem para a chave do `FieldCipher` (002/T5): descartável, nunca usada.
+        crypto_keys={1: SecretBytes(os.urandom(32))},
+        crypto_keys_file={},
+        crypto_active_key=1,
     )
     schema = create_app(settings).openapi()
     return json.dumps(schema, indent=2, ensure_ascii=False) + "\n"

@@ -75,6 +75,7 @@ jobs:
         run: |
           mkdir -p secrets
           uv run --frozen python -m src.tools.jwt_keys --output secrets/jwt-keys.json
+          uv run --frozen python -m src.tools.crypto_keys --output secrets/crypto-keys.json
       - name: Subir api, db e proxy
         run: docker compose -f docker/compose.yml -f docker/compose.test.yml up -d --build --wait
       - name: /health/ready pelo proxy TLS

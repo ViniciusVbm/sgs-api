@@ -15,6 +15,9 @@ dependencies = [
   "uvicorn>=0.54.0,<0.55",
   "cryptography>=50.0.2,<51",
   "pyjwt[crypto]>=2.15.0,<2.16",
+  "pwdlib[argon2]>=0.3,<0.4",
+  "pyotp>=2.10,<2.11",
+  "limits>=5.8,<6",
 ]
 
 # Comandos de administração (spec 002 § Decisões: argparse). Subcomandos em src/tools/sgs_admin.py.
@@ -161,7 +164,9 @@ id = "infraestrutura-protegida"
 name = "infrastructure só é importada pela raiz de composição"
 type = "protected"
 protected_modules = ["src.modules.*.infrastructure"]
-allowed_importers = ["src.main"]
+# `src.tools` (o `sgs-admin`) é a segunda raiz de composição: monta os mesmos repositórios para
+# os comandos de administração (002/T8, 010/T2), sem passar pela API.
+allowed_importers = ["src.main", "src.tools"]
 
 [[tool.importlinter.contracts]]
 id = "infraestrutura-isolada"

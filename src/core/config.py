@@ -1,7 +1,10 @@
 """Configuração da API, lida só de variáveis de ambiente e validada na subida (spec 001, R2)."""
 
+import base64
+import binascii
 import json
 import re
+from collections.abc import Mapping
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Literal, Self
@@ -15,6 +18,7 @@ from pydantic import (
     ConfigDict,
     Field,
     FilePath,
+    SecretBytes,
     SecretStr,
     ValidationError,
     field_validator,
@@ -96,6 +100,37 @@ class Settings(BaseSettings):
     jwt_private_keys: Annotated[tuple[JwtSigningKey, ...], NoDecode] = ()
     jwt_private_keys_file: Annotated[tuple[JwtSigningKey, ...], NoDecode] = ()
 
+    # Chaves do `FieldCipher` (spec 002, T5): objeto JSON {"<versão>": "<32 bytes em base64>"}
+    # em CRYPTO_KEYS ou num arquivo montado (CRYPTO_KEYS_FILE); CRYPTO_ACTIVE_KEY diz qual cifra.
+    crypto_keys: Annotated[Mapping[int, SecretBytes], NoDecode] = Field(default_factory=dict)
+    crypto_keys_file: Annotated[Mapping[int, SecretBytes], NoDecode] = Field(default_factory=dict)
+    crypto_active_key: int | None = None
+
+    # TOTP obrigatório para contas locais (002, design § Decisões); desligável só em dev.
+    mfa_obrigatorio: bool = True
+
+    @property
+    def chaves_de_cifra(self) -> dict[int, bytes]:
+        """As chaves do `FieldCipher`, de CRYPTO_KEYS ou do arquivo, já validadas."""
+        origem = self.crypto_keys or self.crypto_keys_file
+        return {versao: chave.get_secret_value() for versao, chave in origem.items()}
+
+    @field_validator("crypto_keys", mode="before")
+    @classmethod
+    def _parse_crypto_keys(cls, value: object) -> object:
+        return _parse_crypto_keys(value) if isinstance(value, str) else value
+
+    @field_validator("crypto_keys_file", mode="before")
+    @classmethod
+    def _read_crypto_keys_file(cls, value: object) -> object:
+        if not isinstance(value, str):
+            return value
+        try:
+            content = Path(value).read_text(encoding="utf-8")
+        except OSError:
+            raise _crypto_keys_error("arquivo não encontrado ou ilegível") from None
+        return _parse_crypto_keys(content)
+
     @property
     def jwt_signing_keys(self) -> tuple[JwtSigningKey, ...]:
         """Chaves JWT na ordem configurada, da variável ou do arquivo; a primeira assina."""
@@ -168,6 +203,9 @@ class Settings(BaseSettings):
             problems.append(
                 "JWT_PRIVATE_KEYS_FILE: defina as chaves JWT só nela ou só em JWT_PRIVATE_KEYS"
             )
+        problems.extend(self._crypto_problems())
+        if not self.mfa_obrigatorio and self.app_env is not AppEnv.DEV:
+            problems.append("MFA_OBRIGATORIO: só pode ser desligado em dev")
         if self.app_env is AppEnv.PROD:
             problems.extend(self._production_problems())
         if problems:
@@ -176,8 +214,24 @@ class Settings(BaseSettings):
             )
         return self
 
+    def _crypto_problems(self) -> list[str]:
+        if not self.crypto_keys and not self.crypto_keys_file:
+            return [
+                "CRYPTO_KEYS: variável obrigatória não definida "
+                "(ou CRYPTO_KEYS_FILE, com o caminho do arquivo das chaves)"
+            ]
+        if self.crypto_keys and self.crypto_keys_file:
+            return ["CRYPTO_KEYS_FILE: defina as chaves só nela ou só em CRYPTO_KEYS"]
+        if self.crypto_active_key is None:
+            return ["CRYPTO_ACTIVE_KEY: variável obrigatória não definida"]
+        if self.crypto_active_key not in self.chaves_de_cifra:
+            return ["CRYPTO_ACTIVE_KEY: não há chave com essa versão em CRYPTO_KEYS"]
+        return []
+
     def _production_problems(self) -> list[str]:
         problems: list[str] = []
+        if any(chave == bytes(CRYPTO_KEY_BYTES) for chave in self.chaves_de_cifra.values()):
+            problems.append("CRYPTO_KEYS: chave de exemplo (só zeros) não é aceita em prod")
         if self.debug:
             problems.append("DEBUG: não pode ficar ligado em prod")
         if self.database_ssl_mode is not DatabaseSslMode.VERIFY_FULL:
@@ -207,6 +261,36 @@ def load_settings() -> Settings:
     except ValidationError as error:
         # `from None`: a ValidationError original carrega os valores recebidos, inclusive senhas.
         raise SettingsError(_describe(error)) from None
+
+
+CRYPTO_KEY_BYTES = 32
+
+
+def _parse_crypto_keys(raw: str) -> dict[int, SecretBytes]:
+    """`{"1": "<base64 de 32 bytes>"}` → {1: SecretBytes}. Os valores nunca entram na mensagem."""
+    try:
+        bruto = json.loads(raw)
+    except json.JSONDecodeError:
+        raise _crypto_keys_error('use um objeto JSON {"versão": "chave em base64"}') from None
+    if not isinstance(bruto, dict) or not bruto:
+        raise _crypto_keys_error("use um objeto JSON com ao menos uma chave")
+    chaves: dict[int, SecretBytes] = {}
+    for versao, valor in bruto.items():
+        try:
+            numero = int(versao)
+            chave = base64.b64decode(str(valor), validate=True)
+        except (ValueError, binascii.Error):
+            raise _crypto_keys_error("versão inteira e chave em base64") from None
+        if numero < 1 or len(chave) != CRYPTO_KEY_BYTES:
+            raise _crypto_keys_error(
+                f"cada chave precisa de {CRYPTO_KEY_BYTES} bytes e versão >= 1"
+            )
+        chaves[numero] = SecretBytes(chave)
+    return chaves
+
+
+def _crypto_keys_error(detalhe: str) -> PydanticCustomError:
+    return PydanticCustomError("chaves_de_cifra_invalidas", "{detalhe}", {"detalhe": detalhe})
 
 
 def _parse_jwt_keys(raw: str) -> tuple[JwtSigningKey, ...]:
@@ -276,7 +360,9 @@ _MESSAGES = {
     "path_not_file": "arquivo não encontrado",
 }
 # Erros levantados pelos validadores acima, já com mensagem em português e sem o valor secreto.
-_CUSTOM_ERRORS = frozenset({"origem_invalida", "url_banco_invalida", "chaves_jwt_invalidas"})
+_CUSTOM_ERRORS = frozenset(
+    {"origem_invalida", "url_banco_invalida", "chaves_jwt_invalidas", "chaves_de_cifra_invalidas"}
+)
 
 
 def _describe(error: ValidationError) -> str:

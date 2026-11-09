@@ -1,5 +1,6 @@
 """Configuração por ambiente (spec 001, R2), com as chaves JWT da spec 002 (T4)."""
 
+import base64
 import json
 from collections.abc import Callable
 from pathlib import Path
@@ -24,6 +25,8 @@ VARIAVEIS_DEV = {
     "DATABASE_MIGRATION_URL": "postgresql+asyncpg://sgs:sgs@db:5432/sgs",
     "DATABASE_SSL_MODE": "disable",
     "JWT_PRIVATE_KEYS": make_jwt_private_keys("dev"),
+    "CRYPTO_KEYS": json.dumps({"1": base64.b64encode(bytes(range(32))).decode()}),
+    "CRYPTO_ACTIVE_KEY": "1",
 }
 
 VARIAVEIS_PROD = {
@@ -31,6 +34,8 @@ VARIAVEIS_PROD = {
     "DATABASE_URL": "postgresql+asyncpg://sgs_api:Kx9-segredo-de-verdade@db.interno:5432/sgs",
     "DATABASE_SSL_MODE": "verify-full",
     "JWT_PRIVATE_KEYS": make_jwt_private_keys("2026-11"),
+    "CRYPTO_KEYS": json.dumps({"2": base64.b64encode(bytes(range(1, 33))).decode()}),
+    "CRYPTO_ACTIVE_KEY": "2",
 }
 
 
@@ -291,3 +296,49 @@ def test_erro_de_configuracao_nao_expoe_o_valor_recebido(ambiente: DefinirAmbien
     assert senha not in str(erro.value)
     assert erro.value.__cause__ is None
     assert erro.value.__suppress_context__
+
+
+CHAVE_ZERO = base64.b64encode(bytes(32)).decode()
+
+
+@pytest.mark.parametrize(
+    ("variaveis", "trecho"),
+    [
+        ({"CRYPTO_KEYS": None}, "CRYPTO_KEYS: variável obrigatória"),
+        ({"CRYPTO_KEYS": "não é json"}, "CRYPTO_KEYS: use um objeto JSON"),
+        ({"CRYPTO_KEYS": json.dumps({"1": "@@@"})}, "CRYPTO_KEYS: versão inteira"),
+        (
+            {"CRYPTO_KEYS": json.dumps({"1": base64.b64encode(b"curta").decode()})},
+            "precisa de 32 bytes",
+        ),
+        ({"CRYPTO_ACTIVE_KEY": "9"}, "CRYPTO_ACTIVE_KEY: não há chave"),
+        ({"CRYPTO_ACTIVE_KEY": None}, "CRYPTO_ACTIVE_KEY: variável obrigatória"),
+    ],
+)
+def test_chaves_de_cifra_invalidas_recusam_a_subida(
+    ambiente: DefinirAmbiente, variaveis: dict[str, str | None], trecho: str
+) -> None:
+    """002/T5; 001/R2.2: chave ausente, fora de base64, sem 32 bytes ou sem a versão ativa."""
+    base = {k: v for k, v in (VARIAVEIS_DEV | variaveis).items() if v is not None}
+    ambiente(base)
+
+    with pytest.raises(SettingsError, match=trecho):
+        load_settings()
+
+
+def test_chave_de_cifra_de_exemplo_recusada_em_prod(ambiente: DefinirAmbiente) -> None:
+    """002/T5; 001/R2.3."""
+    ambiente(VARIAVEIS_PROD | {"CRYPTO_KEYS": json.dumps({"2": CHAVE_ZERO})})
+
+    with pytest.raises(SettingsError, match="chave de exemplo"):
+        load_settings()
+
+
+def test_mfa_so_pode_ser_desligado_em_dev(ambiente: DefinirAmbiente) -> None:
+    """002, design § Decisões."""
+    ambiente(VARIAVEIS_DEV | {"MFA_OBRIGATORIO": "false"})
+    assert load_settings().mfa_obrigatorio is False
+
+    ambiente(VARIAVEIS_PROD | {"MFA_OBRIGATORIO": "false"})
+    with pytest.raises(SettingsError, match="MFA_OBRIGATORIO"):
+        load_settings()

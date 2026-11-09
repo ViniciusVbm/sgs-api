@@ -10,13 +10,18 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.core import health
 from src.core.config import AppEnv, Settings, load_settings
+from src.core.crypto import FieldCipher
 from src.core.db import create_engine, run_migrations
+from src.core.ids import uuid7
+from src.core.limite import LimiteDeRequisicoes
 from src.core.logging import configure_logging
 from src.core.problem import install_error_handlers
 from src.core.request_context import RequestContextMiddleware
 from src.core.security_headers import SecurityHeadersMiddleware
+from src.modules.access.api import rotas as acesso
 from src.modules.access.application.permissoes import ResolvedorDePermissoes
 from src.modules.access.infrastructure.repository import (
+    SqlRepositorioDeAtribuicoes,
     SqlRepositorioDePermissoes,
     SqlResolvedorDeUnidade,
 )
@@ -25,9 +30,18 @@ from src.modules.audit.infrastructure.consultas import SqlConsultasDeAuditoria
 from src.modules.audit.infrastructure.repository import SqlAuditStore
 from src.modules.dashboard.api import rotas as dashboard
 from src.modules.dashboard.infrastructure.consultas import SqlConsultasDashboard
-from src.modules.identity.api import jwks
-from src.modules.identity.infrastructure.repository import SqlSessionRepository, SqlUserRepository
+from src.modules.identity.api import auth, jwks
+from src.modules.identity.infrastructure.passwords import Argon2PasswordHasher
+from src.modules.identity.infrastructure.repository import (
+    SqlLoginStateRepository,
+    SqlRefreshTokenRepository,
+    SqlRefreshTokenWriter,
+    SqlSessionRepository,
+    SqlSessionRevoker,
+    SqlUserRepository,
+)
 from src.modules.identity.infrastructure.tokens import JwtTokenService
+from src.modules.identity.infrastructure.totp import PyotpVerificador
 from src.modules.registry.api import referencias, unidades, vinculos
 from src.modules.registry.infrastructure.repository import (
     SqlRepositorioDeReferencias,
@@ -72,7 +86,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # importa a infrastructure; design da 002, Decisões).
     app.state.repositorio_de_usuarios = SqlUserRepository
     app.state.repositorio_de_sessoes = SqlSessionRepository
+    app.state.repositorio_de_login = SqlLoginStateRepository
+    app.state.repositorio_de_refresh = SqlRefreshTokenRepository
+    app.state.escrita_de_refresh = SqlRefreshTokenWriter
+    app.state.revogacao_de_sessao = SqlSessionRevoker
+    # Login local (spec 002): hasher Argon2id, TOTP, cifra do segredo e limite por IP (R1.5).
+    app.state.hasher_de_senha = Argon2PasswordHasher()
+    app.state.verificador_totp = PyotpVerificador()
+    app.state.cifra_de_campo = FieldCipher(
+        settings.chaves_de_cifra, active_version=settings.crypto_active_key or 0
+    )
+    app.state.gerar_id = uuid7
+    app.state.limite_de_login = LimiteDeRequisicoes("10/minute")
     app.state.repositorio_de_permissoes = SqlRepositorioDePermissoes
+    app.state.repositorio_de_atribuicoes = SqlRepositorioDeAtribuicoes
     app.state.auditoria = SqlAuditStore
     app.state.consultas_auditoria = SqlConsultasDeAuditoria
     app.state.repositorio_de_unidades = SqlRepositorioDeUnidades
@@ -87,6 +114,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     install_error_handlers(app)
     app.include_router(health.router)
     app.include_router(jwks.router)
+    app.include_router(auth.router)
+    app.include_router(acesso.router)
     app.include_router(unidades.router)
     app.include_router(vinculos.router)
     app.include_router(referencias.router)
