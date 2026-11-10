@@ -27,6 +27,7 @@ Nenhum código destas specs pode ser escrito antes da aprovação (regra 1 do `A
 ## 3. Grupo
 - Levar ao professor a questão das 30 tuplas nos domínios fechados: distritos (8), papéis (7), áreas técnicas (4) e tipos. Justificativa em [`docs/banco/06-trinta-tuplas.md`](../banco/06-trinta-tuplas.md).
 - Spec 005: confirmar se haverá conta AWS para a demonstração (recomendação: SeaweedFS no compose) e o prazo de guarda dos relatórios (recomendação: 90 dias).
+- Integração do protótipo: decidir o conceito de equipamento (inventário ou equipamento de saúde), a lista de situações da unidade, endereço separado ou não, horário editável, e-mail da unidade e login por e-mail ou por `username`. Detalhes em [`docs/frontend-integracao.md`](../frontend-integracao.md) § 3 e 5. O que mudar a API vira emenda na spec 006 (dono: Rafael).
 
 ## 4. Infraestrutura e outras equipes
 | Pendência | Situação | Quem resolve |
