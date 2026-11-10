@@ -13,7 +13,8 @@ from tests.integration.postgres import BancoDeTeste, motor
 
 @pytest.fixture
 async def cenario(app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes) -> dict[str, Any]:
-    gestor = bearer(app, await logado(sessoes, ("GESTOR_DADOS", GLOBAL)))
+    sessao_do_gestor = await logado(sessoes, ("GESTOR_DADOS", GLOBAL))
+    gestor = bearer(app, sessao_do_gestor)
     corpo = {
         "nome": "CAPS Histórico",
         "tipo_unidade_id": await id_pelo_codigo(sessoes, "tipo_unidade", "CAPS_II"),
@@ -33,7 +34,15 @@ async def cenario(app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes) ->
         json={"nome": "Poli", "tipo_codigo": "POLICLINICA"},
         headers=gestor,
     )
-    return {"gestor": gestor, "unidade": unidade}
+    return {"gestor": gestor, "gestor_id": str(sessao_do_gestor.user_id), "unidade": unidade}
+
+
+async def _acoes(
+    cliente: httpx.AsyncClient, url: str, headers: dict[str, str], **filtros: str
+) -> list[str]:
+    resposta = await cliente.get(url, params=filtros, headers=headers)
+    assert resposta.status_code == 200, resposta.text
+    return [e["acao"] for e in resposta.json()["itens"]]
 
 
 async def test_historico_da_unidade_pela_view_com_rotulos_e_papel(
@@ -67,6 +76,100 @@ async def test_historico_filtra_por_campo(
 
     # A criação grava todos os campos (006/R1.6), inclusive o telefone vazio; o equipamento não.
     assert [e["acao"] for e in resposta.json()["itens"]] == ["unidade.atualizada", "unidade.criada"]
+
+
+async def test_historico_filtra_por_periodo_com_de_inclusivo_e_ate_exclusivo(
+    cliente: httpx.AsyncClient, cenario: dict[str, Any]
+) -> None:
+    """008/R1.3 (008/T6): os limites são instantes de eventos reais, então cada filtro corta
+    exatamente num evento."""
+    url = f"/api/v1/unidades/{cenario['unidade']}/historico"
+    todos = (await cliente.get(url, headers=cenario["gestor"])).json()["itens"]
+    adicionado, atualizada, _criada = (e["quando"] for e in todos)
+
+    assert await _acoes(cliente, url, cenario["gestor"], de=atualizada) == [
+        "unidade.equipamento_adicionado",
+        "unidade.atualizada",
+    ]
+    assert await _acoes(cliente, url, cenario["gestor"], ate=atualizada) == ["unidade.criada"]
+    assert await _acoes(cliente, url, cenario["gestor"], de=atualizada, ate=adicionado) == [
+        "unidade.atualizada"
+    ]
+
+
+async def test_historico_filtra_por_autor(
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes, cenario: dict[str, Any]
+) -> None:
+    """008/R1.3 (008/T6): só os eventos do autor pedido."""
+    outro = await logado(sessoes, ("GESTOR_DADOS", GLOBAL))
+    url = f"/api/v1/unidades/{cenario['unidade']}/historico"
+    criado = await cliente.post(
+        f"/api/v1/unidades/{cenario['unidade']}/equipamentos",
+        json={"nome": "Sala de grupo", "tipo_codigo": "POLICLINICA"},
+        headers=bearer(app, outro),
+    )
+    assert criado.status_code == 201, criado.text
+
+    do_outro = await cliente.get(
+        url, params={"autor": str(outro.user_id)}, headers=cenario["gestor"]
+    )
+
+    assert [(e["acao"], e["autor"]["id"]) for e in do_outro.json()["itens"]] == [
+        ("unidade.equipamento_adicionado", str(outro.user_id))
+    ]
+    assert await _acoes(cliente, url, cenario["gestor"], autor=cenario["gestor_id"]) == [
+        "unidade.equipamento_adicionado",
+        "unidade.atualizada",
+        "unidade.criada",
+    ]
+
+
+async def test_trilha_geral_filtra_por_periodo_entidade_e_autor(
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes, cenario: dict[str, Any]
+) -> None:
+    """008/R2.1 (008/T6): `de`, `ate`, `entidade_tipo`, `entidade_id` e `autor`. Um segundo
+    autor grava um item de referência, que é outra entidade."""
+    outro = await logado(sessoes, ("GESTOR_DADOS", GLOBAL))
+    referencia = await cliente.post(
+        "/api/v1/referencias/tipos-servico",
+        json={"codigo": "OFICINA_T6", "nome": "Oficina"},
+        headers=bearer(app, outro),
+    )
+    assert referencia.status_code == 201, referencia.text
+    url, gestor = "/api/v1/auditoria/eventos", cenario["gestor"]
+    da_unidade = ["unidade.equipamento_adicionado", "unidade.atualizada", "unidade.criada"]
+    todos = (await cliente.get(url, headers=gestor)).json()["itens"]
+    [evento_da_referencia] = [e for e in todos if e["entidade_tipo"] == "referencia"]
+    quando = {e["acao"]: e["quando"] for e in todos if e["entidade_tipo"] == "unidade"}
+
+    # Período: `de` inclui, `ate` exclui.
+    assert await _acoes(
+        cliente,
+        url,
+        gestor,
+        de=quando["unidade.atualizada"],
+        ate=quando["unidade.equipamento_adicionado"],
+    ) == ["unidade.atualizada"]
+    assert await _acoes(cliente, url, gestor, ate=quando["unidade.atualizada"]) == [
+        "unidade.criada"
+    ]
+    # Entidade: por tipo, por id e pelos dois juntos.
+    assert await _acoes(cliente, url, gestor, entidade_tipo="unidade") == da_unidade
+    assert await _acoes(cliente, url, gestor, entidade_tipo="referencia") == [
+        evento_da_referencia["acao"]
+    ]
+    assert await _acoes(cliente, url, gestor, entidade_id=cenario["unidade"]) == da_unidade
+    assert (
+        await _acoes(
+            cliente, url, gestor, entidade_tipo="referencia", entidade_id=cenario["unidade"]
+        )
+        == []
+    )
+    # Autor.
+    assert await _acoes(cliente, url, gestor, autor=str(outro.user_id)) == [
+        evento_da_referencia["acao"]
+    ]
+    assert await _acoes(cliente, url, gestor, autor=cenario["gestor_id"]) == da_unidade
 
 
 async def test_historico_fora_do_escopo_e_403(
