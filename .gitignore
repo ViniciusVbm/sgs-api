@@ -30,3 +30,6 @@ secrets/
 
 # Relatórios gerados pelos testes (junit, cobertura)
 reports/
+
+# Protótipo HTML de referência (spec 012): fica fora do Git até decisão explícita de versionamento
+frontend/prototipo/
