@@ -98,7 +98,7 @@ Ver o calendário em [specs/README.md](specs/README.md#ordem-e-calendário-suger
 
 ## Pendências para o grupo
 Ver [docs/RESUMO_STATUS_PROJETO.md](docs/RESUMO_STATUS_PROJETO.md) § Pendências. Em resumo:
-- aprovar as specs 008, 009 e 010 e as emendas da 011 (o Rafael é o dono);
+- tarefas funcionais abertas das specs aprovadas na regularização de 09/11/2026: 008/T6 (testes de filtros), 009/T2b e T3 (cache e desempenho) e 010/T3 (conversor, depende da planilha do cliente); ver [docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md](docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md);
 - confirmar com o professor a decisão das 30 tuplas nos domínios fechados;
 - integrar o front em HTML;
 - LDAP, OIDC e S3 (specs 004 e 005);

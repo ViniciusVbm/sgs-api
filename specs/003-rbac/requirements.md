@@ -1,6 +1,7 @@
 # 003 · RBAC com escopo · Requisitos
 
-- Status: Aprovado (Rafael, 07/11/2026)
+- Status: Aprovado (Rafael, 07/11/2026). Emenda de 09/11/2026 (escopo de `dashboard:read` por papel) aprovada (Vinicius, 09/11/2026); ver § Emenda
+- Dono humano: Vinicius (ViniciusVbm), desde 09/11/2026; antes: Rafael, autor desta spec e responsável pelas aprovações de requisitos, design e tarefas de 07/11/2026, que continuam válidas e com o nome dele (`steering/sdd-workflow.md` § Dono da spec)
 - Rastreia: RS-02, RS-05, critérios 6.1 "dois perfis veem e alteram dados diferentes" e "gestor de unidade não edita outra unidade"
 
 ## Contexto
@@ -50,3 +51,7 @@ Requisitos obrigatórios: "analisar o contexto para elencar papéis e recursos" 
 - (003/T4) Recurso que não existe numa rota com `ResourceRef`: 403 ou 404? (padrão adotado: quem não tem a permissão em escopo nenhum recebe 403 sem o recurso ser procurado, e o 403 não revela se ele existe; quem tem a permissão em algum escopo recebe 404. Um id fora do formato do recurso conta como inexistente)
 - (003/T4) O resolvedor da unidade (`ResourceRef("unidade")` → id, distrito, área técnica) precisa de `unit_types.technical_area_id`, que nasce na 0006 (006/T1). Quem o entrega? (padrão adotado: a T4 entrega o mecanismo, `ResourceRef` com a porta `ResolvedorDeAlvo` registrada por tipo em `app.state.resolvedores_de_alvo`, e também o resolvedor `unidade`, porque a 0006 entrou na integração durante a tarefa; ele lê `health_units` e `unit_types` em `access/infrastructure`, como a leitura de `users.authz_version`)
 - (003/T4) O design pede `scope_filter(perm, model)`, mas a camada `api` não enxerga as tabelas (a `infrastructure` só é importada pela raiz de composição) e a `infrastructure` de outro módulo não importa a `application` nem a `api` do `access`. Como ficam a assinatura e o lugar? (padrão adotado: `scope_filter(escopo, model)` em `src/core/escopo.py`, que recebe o `EscopoLeitura` de `escopo_de_leitura(usuario, perm)` e um `model` com as colunas `unit_id`, `district_id` e `technical_area_id`, como as views da 011; ao lado, `parametros_de_escopo(escopo)` dá os parâmetros `:scope_*` do fragmento fixo do SQL escrito à mão)
+
+## Emenda (09/11/2026; aprovada, Vinicius, 09/11/2026)
+- **Escopo de `dashboard:read` por papel (011/T22):** a matriz que a R1.1 adota (`docs/architecture/arquitetura-conceitual.md` § 4) passa a dar `dashboard:read` com escopo máximo `A` ao `COORD_TECNICO`, `D` ao `TECNICO_DISTRITAL` e `U` ao `GESTOR_UNIDADE`. `GESTOR_DADOS` e `DIRETORIA` continuam `G`. Menor privilégio: o painel de cada perfil fica no próprio escopo, como pede a história da 011/R2.
+- Implementação já existente, sem mudança de código nesta emenda: a 0003 continua semeando a matriz original e a revisão `0011_09` aplica o ajuste (`migrations/sql/0011_09/17_dashboard_read_escopo_por_papel.sql`). O teste da R1.1 confere a matriz com o delta (`tests/integration/access/test_seed_matriz.py`, `AJUSTES_DA_0011_09`); o efeito no painel é provado por `tests/integration/dashboard/test_painel.py::test_escopo_do_tecnico_distrital_reduz_os_numeros`.

@@ -1,6 +1,6 @@
 # 011 · Recursos de banco de dados · Design
 
-- Status: Aprovado (Rafael, 07/11/2026; aprovação só do dono pela exceção provisória de `steering/sdd-workflow.md`)
+- Status: Aprovado (Rafael, 07/11/2026; aprovação só do dono pela exceção provisória de `steering/sdd-workflow.md`). Revisão aprovada (Vinicius, 09/11/2026): o texto passa a refletir as leituras confirmadas em V5 (`FOR ROLE CURRENT_USER`; `name_normalized` no recorte do trigger de versão), sem revisão por pares, pela exceção pontual V7
 - Requisitos: requirements.md (Aprovado, Rafael, 06/11/2026) · Issue #17
 
 ## Visão geral
@@ -59,7 +59,7 @@ Objetos que a 006 precisa para existir e que esta spec rastreia:
 | # | Objeto | Requisitos |
 |---|---|---|
 | 1 | Papel `sgs_owner NOLOGIN NOSUPERUSER` (criado se não existir); `GRANT USAGE, CREATE ON SCHEMA public TO sgs_owner`; `GRANT SELECT ON health_units, equipments, services, users, audit_log, districts, unit_types, technical_areas TO sgs_owner` (o que as funções DEFINER leem) | R10.2 |
-| 2 | `ALTER DEFAULT PRIVILEGES FOR ROLE sgs REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC` e o mesmo `FOR ROLE sgs_owner` (um arquivo cada) | R10.1 |
+| 2 | `ALTER DEFAULT PRIVILEGES FOR ROLE CURRENT_USER REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC` (o papel que roda as migrações: `sgs` no compose e no CI, o superusuário do container nos testes) e o mesmo `FOR ROLE sgs_owner` (um arquivo cada) | R10.1 |
 | 3 | `ix_audit_log_entity ON audit_log (entity_type, entity_id, occurred_at DESC)` | R1.1 |
 | 4 | `ix_services_unit_id ON services (unit_id)` | R1.2 |
 | 5 | `fn_registration_status(u health_units) RETURNS text LANGUAGE plpgsql IMMUTABLE`: `IF u.status = 'inativa' THEN 'inativa' ELSIF u.pending_issues > 0 THEN 'com_pendencias' ELSIF u.cnes IS NULL THEN 'sem_cnes' ELSE 'regular'` | R5.3 |
@@ -103,7 +103,7 @@ Partições `db_change_log_yAAAAmMM` (`FOR VALUES FROM (início do mês) TO (in�
 - `txid = txid_current()`. Alterações em cascata (SET NULL, CASCADE) disparam o trigger da tabela filha e aparecem como linhas próprias (R7.5).
 
 ### `trg_health_units_version()`
-Se `to_jsonb(NEW) - '{pending_issues,version,updated_at}'` é diferente do mesmo recorte de `OLD`, faz `NEW.version := OLD.version + 1` e `NEW.updated_at := now()`; senão, devolve `NEW` sem tocar (R8.1, R8.2).
+Se `to_jsonb(NEW) - '{pending_issues,version,updated_at,name_normalized}'` é diferente do mesmo recorte de `OLD`, faz `NEW.version := OLD.version + 1` e `NEW.updated_at := now()`; senão, devolve `NEW` sem tocar (R8.1, R8.2). `name_normalized` fica fora porque, num trigger BEFORE, a coluna gerada chega nula em `NEW`; ela deriva de `name`, que continua comparado.
 
 ### `sp_ensure_monthly_partitions`
 Cursor explícito (`DECLARE c_meses CURSOR FOR ...; OPEN; LOOP FETCH ... EXIT WHEN NOT FOUND; ... CLOSE`) sobre `generate_series(date_trunc('month', now()), date_trunc('month', now()) + p_months_ahead meses, '1 month')` com `LEFT JOIN` às partições existentes de `p_table` (`pg_inherits` + `pg_class`, pelo nome `<tabela>_yAAAAmMM`). Para cada mês sem partição:

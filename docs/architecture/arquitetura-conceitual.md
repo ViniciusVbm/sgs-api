@@ -95,7 +95,7 @@ Um usuário pode ter mais de um papel (ex.: um técnico distrital que também é
 | `regra_validacao:manage` | — | G | — | — | — | — | — |
 | `auditoria:read` | — | G | A | D | U | — | G |
 | `auditoria:read_acessos` | G | — | — | — | — | — | G |
-| `dashboard:read` | — | G | G | G | G | G | — |
+| `dashboard:read` | — | G | A | D | U | G | — |
 | `relatorio:export` | — | G | A | — | — | G | G (só auditoria) |
 | `relatorio:download` | — | G | A | — | — | G | G |
 | `usuario:manage` | G | — | — | — | — | — | — |
@@ -106,6 +106,7 @@ Notas:
 - `unidade:read` é global para todos os papéis de negócio porque os dados de unidades são classificados como públicos/internos (Atividade 1, §5.1). Pode ser restringido por escopo sem mudar o código, só os dados de seed.
 - A regra do cliente "se o central propõe, *o outro* central valida" vira uma regra de domínio no workflow futuro: quem propõe não pode validar a própria proposta.
 - A matriz é carregada por migração de seed e testada: um teste parametrizado verifica cada célula.
+- `dashboard:read` era `G` para todos os papéis até 09/11/2026. A emenda da 003 (aprovada por Vinicius em 09/11/2026; 011/T22) restringiu ao escopo de cada papel. O banco aplica a mudança na revisão `0011_09`, sobre a semente da 0003.
 
 ## 5. Como identidade, grupos e papéis se conectam
 

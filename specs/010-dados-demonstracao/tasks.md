@@ -1,7 +1,8 @@
 # 010 · Dados de demonstração · Tarefas
 
-- Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
+- Status: Aprovado (Vinicius, 09/11/2026). Histórico: autoria original de rafareloM (03/10/2026); revisão técnica de ViniciusVbm (09/11/2026); implementada antes da aprovação, por decisão do usuário (`docs/RELATORIO_VALIDACAO_FINAL.md` § 9); aprovação registrada na regularização (`docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md` § 7, item V3)
 - Depende de: 006, 007
+- Rastreabilidade (auditoria de 09/11/2026): os arquivos de teste citados em "Pronto quando" foram consolidados em outros; o teste que prova cada tarefa é o da linha "Prova". Ver `docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md` § 3.
 
 - [x] T1. Arquivos YAML de demonstração (Saúde Mental + casos especiais + pendências)
   - Concluída em 09/11/2026 (consolidação final; `make check` verde). Prova: `tests/integration/tools/test_seed_demo.py (JSON validado pela carga)`

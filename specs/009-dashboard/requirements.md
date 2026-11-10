@@ -1,7 +1,8 @@
 # 009 · Dashboard básico · Requisitos
 
-- Status: Rascunho (revisão técnica de 09/11/2026 por ViniciusVbm na consolidação final; **aguarda aprovação do Rafael**. Implementada antes da aprovação por decisão do usuário; ver `docs/RELATORIO_VALIDACAO_FINAL.md` § Desvios)
+- Status: Aprovado (Vinicius, 09/11/2026). Histórico: autoria original de rafareloM (03/10/2026); revisão técnica de ViniciusVbm (09/11/2026); implementada antes da aprovação, por decisão do usuário (`docs/RELATORIO_VALIDACAO_FINAL.md` § 9); aprovação registrada na regularização (`docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md` § 7, item V2)
 - Rastreia: RF-06; critério 6.1 "dashboard exibe indicadores que refletem os dados realmente cadastrados"
+- Dono humano: Vinicius (ViniciusVbm), desde 09/11/2026; antes: nenhum registrado (autoria original: rafareloM, 03/10/2026). Atribuição pelo responsável pelo projeto (`steering/sdd-workflow.md` § Dono da spec)
 
 ## Contexto
 O cliente já tem dashboards e disse que este serve para conferir os dados inseridos (reunião de 18/09). Por isso o escopo é mínimo: agregados corretos e rápidos, sem gráficos no backend.
@@ -23,7 +24,7 @@ O cliente já tem dashboards e disse que este serve para conferir os dados inser
 ## Perguntas em aberto
 - Quais indicadores o Sérgio usa para conferir os dados? (validar na próxima reunião)
 
-## Emenda proposta (09/11/2026; aguarda aprovação do Rafael)
+## Emenda R2 (09/11/2026; aprovada, Vinicius, 09/11/2026, item V2)
 A spec 011 (§ Fora do escopo) remete à 009 o dashboard estatístico da Etapa 06 da disciplina de Banco de Dados. Esta emenda o inclui, reaproveitando as quatro consultas da Etapa 03 feitas na `feat/003-interface-dashboard` (reescritas para o esquema da 006/011).
 
 ### R2. Consultas estatísticas da Etapa 03

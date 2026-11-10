@@ -4,6 +4,8 @@
 - **Escopo:** auditoria final independente antes de publicar a `main` num repositório GitHub novo.
 - Nenhuma funcionalidade nova, push, mudança de remote ou exclusão de branch.
 
+> **Nota de regularização (09/11/2026):** este relatório é um registro datado e foi mantido como estava. As menções à aprovação do Rafael para as specs 008, 009, 010 e as emendas da 011 e do ADR-0007 foram substituídas, nos documentos vivos, pelo portão do dono de cada spec. Em 09/11/2026 o Vinicius assumiu as 003 e 008 a 011 e aprovou as specs e emendas pendentes. Situação atual e decisões pendentes: [relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md](relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md).
+
 ## 1. Estado do Git
 | Item | Resultado |
 |---|---|
@@ -55,7 +57,7 @@
 | Repositório, consolidação | `make test-all` | 885 aprovados, 3 pulados, 0 falhas (`RELATORIO_VALIDACAO_FINAL.md` § 7) |
 
 ## 5. Riscos restantes
-- **Specs sem aprovação formal** (008, 009, 010 e as emendas da 011 e do ADR-0007). O Rafael precisa aprovar; até lá, essas partes são implementação antecipada.
+- **Specs sem aprovação formal** (008, 009, 010 e as emendas da 011 e do ADR-0007). O Rafael precisa aprovar; até lá, essas partes são implementação antecipada. *(Regularizado em 09/11/2026: aprovadas por Vinicius, dono das 003 e 008 a 011, em 09/11/2026; ver a nota no topo.)*
 - **CI do GitHub não executado** (Actions bloqueado). No repositório novo, rode o workflow, que traz os jobs `quality` e `compose-smoke`, e só então proteja a `main`.
 - **Compose completo com o proxy** não testado nesta máquina. O job `compose-smoke` do CI cobre isso.
 - **Rate limit em memória**, por processo.

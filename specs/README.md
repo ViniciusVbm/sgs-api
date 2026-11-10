@@ -8,19 +8,21 @@ Cada funcionalidade tem uma pasta `NNN-nome/` com três arquivos, escritos e apr
 
 O status fica no cabeçalho de cada arquivo: `Rascunho` → `Em revisão` → `Aprovado`. Um agente só implementa tarefas de uma spec com os três arquivos `Aprovado`.
 
+As specs 008, 009 e 010 e a emenda T21–T22 da 011 foram implementadas antes do portão humano (consolidação de 09/11/2026) e aprovadas na regularização do mesmo dia pelo dono, Vinicius (ViniciusVbm), que também assumiu a 003 (`steering/sdd-workflow.md` § Dono da spec). Aprovações, divergências resolvidas e pendências funcionais estão em [`../docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md`](../docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md).
+
 | Spec | Tema | Origem | Status |
 |---|---|---|---|
 | [001-fundacao](001-fundacao/) | Esqueleto da API, config, banco, erros, logs, auditoria base, CI | base para todos | Aprovado |
 | [002-autenticacao](002-autenticacao/) | Login local, 2FA TOTP, tokens, sessões | obrigatório: RBAC (autenticação) | Aprovado |
-| [003-rbac](003-rbac/) | Papéis, permissões, escopo, `/me`, administração | obrigatório: RBAC | Aprovado |
+| [003-rbac](003-rbac/) | Papéis, permissões, escopo, `/me`, administração | obrigatório: RBAC | Aprovado (Rafael); emenda de `dashboard:read` aprovada (Vinicius, 09/11); dono: Vinicius |
 | [004-diretorio-ldap-oidc](004-diretorio-ldap-oidc/) | Bind e sincronização LDAP, login OIDC, grupos | obrigatório: LDAP/OIDC | Rascunho |
 | [005-exportacao-relatorios-s3](005-exportacao-relatorios-s3/) | Relatórios CSV/XLSX, STS, S3, URL pré-assinada | obrigatório: exportação para nuvem | Rascunho |
 | [006-cadastro-unidades](006-cadastro-unidades/) | Unidades, equipamentos, serviços, busca, referências | MVP: cadastro, consulta, atualização | Aprovado |
 | [007-validacao-dados](007-validacao-dados/) | Regras fixas e configuráveis, 422 claro, pendências | MVP: validação automática | Rascunho |
-| [008-historico-alteracoes](008-historico-alteracoes/) | Histórico por unidade, trilha geral, integridade | MVP: histórico (auditoria) | Rascunho |
-| [009-dashboard](009-dashboard/) | Agregados da rede e da qualidade dos dados | MVP: dashboard básico | Rascunho |
-| [010-dados-demonstracao](010-dados-demonstracao/) | Seed de Saúde Mental, usuários por papel, conversor da planilha | pendência 6 (massa de dados) | Rascunho |
-| [011-recursos-banco-dados](011-recursos-banco-dados/) | Índices, consultas avançadas, views, funções, procedimentos, triggers, log do banco, segurança no SGBD | disciplina de Banco de Dados (Segunda Parte, 13/11) | Aprovado |
+| [008-historico-alteracoes](008-historico-alteracoes/) | Histórico por unidade, trilha geral, integridade | MVP: histórico (auditoria) | Aprovado (Vinicius, 09/11); falta T6 (testes de filtros) |
+| [009-dashboard](009-dashboard/) | Agregados da rede e da qualidade dos dados | MVP: dashboard básico | Aprovado (Vinicius, 09/11); faltam T2b (cache) e T3 (desempenho) |
+| [010-dados-demonstracao](010-dados-demonstracao/) | Seed de Saúde Mental, usuários por papel, conversor da planilha | pendência 6 (massa de dados) | Aprovado (Vinicius, 09/11); falta T3 (planilha do cliente) |
+| [011-recursos-banco-dados](011-recursos-banco-dados/) | Índices, consultas avançadas, views, funções, procedimentos, triggers, log do banco, segurança no SGBD | disciplina de Banco de Dados (Segunda Parte, 13/11) | Aprovado (Rafael, T1–T20); emenda T21–T22 aprovada (Vinicius, 09/11); dono: Vinicius |
 
 ## Rastreabilidade requisito → spec
 

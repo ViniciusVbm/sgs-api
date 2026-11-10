@@ -54,13 +54,13 @@
 | Análise de segurança (`bandit`, `pip-audit`) | Sem achados |
 
 ## 6. Pendências e limitações
-- **Specs em Rascunho:** as specs 008, 009 e 010 e as emendas da 011 foram implementadas antes da aprovação do Rafael, por decisão nossa. **Ele precisa revisá-las e aprová-las.**
+- **Specs regularizadas:** as specs 008, 009 e 010 e as emendas da 011 foram implementadas antes do portão de aprovação, por decisão nossa, e aprovadas em 09/11/2026 pelo dono, Vinicius, que também assumiu a 003 ([relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md](relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md)). **A meta de desempenho do dashboard (009/R1.7) ainda não foi medida.**
 - **CI:** o GitHub Actions segue bloqueado; os testes rodaram localmente.
 - **Proxy:** o ambiente completo com o proxy HTTPS não foi testado nesta máquina, porque as portas estavam ocupadas por outro ambiente, que preservamos. Banco, API, TLS e comandos foram testados num ambiente isolado.
 - **Rate limit:** o limite de login vale por processo da API.
 
 ## 7. Próximos passos
-1. **Rafael:** revisar e aprovar as specs 008, 009, 010 e as emendas da 011.
+1. **Tarefas abertas das specs aprovadas:** 008/T6 (testes de filtros), 009/T2b e T3 (cache e desempenho), 010/T3 (conversor, quando o cliente enviar a planilha).
 2. **Grupo:** levar ao professor a decisão das 30 tuplas nos domínios fechados.
 3. **Front:** integrar o HTML seguindo `docs/frontend-integracao.md`.
 4. **Publicação:** criar o repositório novo no GitHub e enviar a `main` (os comandos estão no fim do relatório técnico). Isso depende de autorização.
