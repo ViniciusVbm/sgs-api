@@ -66,7 +66,7 @@ Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protó
     - **Sensibilidade:** tirar o `fonts.css` derruba as 4 larguras.
     - **Referência:** `tests/e2e_front/referencia/`, gerada do protótipo com `SGS_ATUALIZAR_REFERENCIA=1`.
     - **Arquivos:** `frontend/app/assets/css/{app,fonts}.css` (CSS do protótipo movido sem alteração), `assets/icons.svg`, `assets/fonts/` (Atkinson Hyperlegible, SIL OFL, com `OFL.txt`).
-- [ ] T3. `html.js` (`esc`, `html` com escape), `ui/` (modal, toast, format, form, **estados de carregando, vazio e erro**) e `router.js`, a partir do protótipo
+- [x] T3. `html.js` (`esc`, `html` com escape), `ui/` (modal, toast, format, form, **estados de carregando, vazio e erro**) e `router.js`, a partir do protótipo
   - Requisitos: R15.1, R15.4, R1.5, **R1.6**
   - Arquivos: `frontend/app/js/html.js`, `frontend/app/js/router.js` (hash router), `frontend/app/js/ui/{modal,toast,format,form,estado}.js`.
   - Os 12 grupos de inserção sem escape do protótipo (plano § 5.3) passam por `esc()` ou pela tag `html` com escape.
@@ -74,13 +74,13 @@ Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protó
   - Pronto quando:
     - `tests/architecture/test_frontend_estatico.py` passa (sem `eval`/`new Function`; interpolações escapadas);
     - `tests/e2e_front/test_estados.py` passa (carregando enquanto a API não responde; vazio sem itens; erro com o `detail` da API, incluindo o 5xx com `X-Request-ID`).
-  - **Andamento (10/11/2026), ainda aberta:**
+  - **Concluída em 10/11/2026**. O estado vazio foi provado na T7 (`test_lista.py::test_sem_resultado_mostra_o_estado_vazio`). Histórico do andamento:
     - **Feito:**
       - `html.js` (`esc`, `html`, `raw`, `montar`, que recusa HTML sem escape);
       - `ui/{icone,tema,toast,modal,estado,format}.js`, com o modal prendendo e devolvendo o foco;
       - `router.js`.
     - **Provado:**
-      - `test_frontend_estatico.py`: 83 aprovados no `make check`; 4 mutações detectadas (innerHTML, handler inline, localStorage, domínio externo);
+      - `test_frontend_estatico.py`: 98 aprovados no `make check`, na contagem final, com os arquivos da T7; 4 mutações detectadas (innerHTML, handler inline, localStorage, domínio externo);
       - `test_estados.py`: carregando e erro, 2 aprovados.
     - **Falta:** o estado **vazio**, que precisa de uma tela com lista. É provado na T7.
 - [x] T4. `api.js` e `auth.js`:
@@ -131,12 +131,31 @@ Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protó
     - **Ressalvas:**
       - a lista do distrito aberta no próprio DS (R3.5) depende da tela da T7 e é provada lá;
       - as telas de Início, lista, ficha, qualidade, histórico, cadeia, papéis e cadastro mostram "Tela em implantação", sem dados, até as tarefas T6 a T11 e o complemento de papéis.
-- [ ] T6. Início com `/dashboard/resumo`
+- [x] T6. Início com `/dashboard/resumo`
   - Requisitos: R4.1
   - Pronto quando: `tests/e2e_front/test_inicio.py` passa (os números da tela batem com a resposta da API para dois papéis com escopos diferentes; sem `dashboard:read`, o início é a primeira tela do menu).
-- [ ] T7. Lista de unidades: busca, filtros existentes, ordenação, paginação, filtros na URL
+  - Concluída em 10/11/2026.
+    - **Prova:** `tests/e2e_front/test_inicio.py`, 4 aprovados:
+      - Gestor de Dados e Técnico Distrital, com os números da tela iguais aos da resposta da API;
+      - o escopo do distrito reduz os totais;
+      - a barra leva à lista filtrada.
+    - **Sem `dashboard:read`:** provado em `test_perfis.py::test_inicio_do_papel`.
+    - **Sensibilidade:** alterar o total exibido derruba 2 casos.
+    - **Ainda "em desenvolvimento" (R4.2):** solicitações pendentes e fichas com mais pendências.
+- [x] T7. Lista de unidades: busca, filtros existentes, ordenação, paginação, filtros na URL
   - Requisitos: R5.1, R5.2
   - Pronto quando: `tests/e2e_front/test_lista.py` passa (inclui o estado vazio do R1.6, que fecha a T3, a página além da última e a lista do Técnico Distrital aberta no próprio DS, do R3.5).
+  - Concluída em 10/11/2026.
+    - **Prova:** `tests/e2e_front/test_lista.py`, 6 aprovados:
+      - itens e contagem iguais aos da resposta da API;
+      - nomes de tipo e distrito vindos de `/referencias`;
+      - filtros e ordenação enviados à API e mantidos na URL, inclusive depois de recarregar;
+      - busca e busca do topo;
+      - estado vazio;
+      - paginação e página além da última;
+      - Técnico Distrital abrindo no próprio DS, com a opção "Todos os distritos" (recorte só de navegação, R3.5).
+    - **Exportar:** visível e desabilitado (R5.4).
+    - **Sensibilidade:** não enviar o filtro de distrito derruba 3 casos.
 - [ ] T8. Ficha: dados, histórico, verificações de qualidade só para exibição
   - Requisitos: R6.1 a R6.3
   - Pronto quando: `tests/e2e_front/test_ficha.py` passa:

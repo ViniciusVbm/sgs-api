@@ -10,6 +10,8 @@ import { fecharModal } from './ui/modal.js';
 import { carregando, erro } from './ui/estado.js';
 import { mostrarLogin } from './views/login.js';
 import { semAcesso, naoEncontrada, telaEmDesenvolvimento, telaEmImplantacao } from './views/basicas.js';
+import { telaInicio } from './views/inicio.js';
+import { telaUnidades } from './views/unidades.js';
 
 // Abertura (spec 012, design § Fluxo): refresh silencioso → /me → menu → rota.
 let perfil = null;
@@ -49,8 +51,8 @@ function tela(chave, permitido, desenhar) {
 const sempre = () => true;
 
 function registrarRotas() {
-  rota('inicio', tela('inicio', (p) => p.tem('dashboard:read'), (a) => telaEmImplantacao(a, 'Início', 'T6')));
-  rota('unidades', tela('unidades', (p) => p.tem('unidade:read'), (a) => telaEmImplantacao(a, 'Unidades', 'T7')));
+  rota('inicio', tela('inicio', (p) => p.tem('dashboard:read'), (a) => telaInicio(a, perfil)));
+  rota('unidades', tela('unidades', (p) => p.tem('unidade:read'), (a, _p, consulta) => telaUnidades(a, perfil, consulta)));
   rota('unidade/:id', tela('unidade', (p) => p.tem('unidade:read'), (a) => telaEmImplantacao(a, 'Ficha da unidade', 'T8')));
   rota('unidade/:id/:aba', tela('historico-unidade', (p) => p.tem('unidade:read'), (a) => telaEmImplantacao(a, 'Ficha da unidade', 'T8')));
   rota('nova', tela('nova', (p) => p.global('unidade:create') || p.tem('alteracao:propor'), (a) => {

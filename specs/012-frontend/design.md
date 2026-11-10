@@ -227,15 +227,14 @@ Até a ratificação e o backend, vale o [M]: só o escopo global edita (R7.4).
 - **Fora** = fora do escopo aprovado.
 
 **Estado do frontend (10/11/2026):**
-- **Implementadas:** T1, por exceção do dono; T2, T4 e T5, depois do G2 e do G3.
-- **Parcial:** T3, que ainda precisa do estado vazio, provado na T7.
+- **Implementadas:** T1, por exceção do dono; T2 a T7, depois do G2 e do G3.
 - **Linhas sem marcação de estado:** a funcionalidade existe só no protótipo. As rotas dessas telas mostram "Tela em implantação", **sem dados**, até a tarefa correspondente. Todas as linhas [M] estão também bloqueadas pelo gate: o G2 e o G3 estão pendentes (`AGENTS.md`, regra 1).
 
 | Tela/fluxo | Requisito | Endpoint | Estado da API | Estado do frontend | Dependência | Classificação |
 |---|---|---|---|---|---|---|
 | Entrega no mesmo domínio, CSP | R1.1, R15.2 | Caddy `file_server` + proxy de `/api/*`, `/health/*`, `/.well-known/*` | proxy e roteamento configurados (T1) | **implementado (T1, exceção do dono; `tests/e2e/test_frontend_entrega.py`, 5 aprovados)**; `index.html` mínimo | — | API (infra) |
 | Aparência, tema, responsivo, acessibilidade | R1.2 a R1.5 | — | — | **implementado (T2)**: CSS, ícones e fonte local; `test_aparencia.py`. A responsividade completa é da T13 | — | API |
-| Carregando, vazio, erro | R1.6 | `application/problem+json` (`detail`, `errors`) | existe | **parcial (T3)**: carregando e erro provados (`test_estados.py`); vazio na T7 | T7 | API |
+| Carregando, vazio, erro | R1.6 | `application/problem+json` (`detail`, `errors`) | existe | **implementado (T3)**: `test_estados.py` e o vazio em `test_lista.py` | — | API |
 | Login | R2.1, R2.7, R2.11 | `POST /auth/login` | existe (`mfa_required`, `mfa_enrollment_required`, `mfa_token`; `access_token` só com `MFA_OBRIGATORIO=false`) | **implementado (T4)**; `test_autenticacao.py` | — | API |
 | Cadastro do 2FA | R2.2 | `POST /auth/mfa/enroll` (`otpauth_uri`), `/auth/mfa/confirm` | existe | **implementado (T4)**: chave e URI em texto | — | API |
 | Verificação do 2FA | R2.3 | `POST /auth/mfa/verify` | existe | **implementado (T4)** | — | API |
@@ -243,12 +242,12 @@ Até a ratificação e o backend, vale o [M]: só o escopo global edita (R7.4).
 | Esqueci a senha | R2.8 / R2.9 | — | sem rota de redefinição | **R2.8 implementado (T4)** | R2.9: emenda da 003 | API (R2.8) / Backend (R2.9) |
 | Demonstração fora da UI | R2.10 | `sgs-admin seed demo` | existe | **implementado (T4)**: nada de demonstração no código (`test_frontend_estatico.py`) | — | API |
 | Menu e botões por permissão | R3.1 a R3.4, DF8 | `GET /me` | existe (`papeis`, `permissoes` com escopo) | **implementado (T5)**: 7 papéis; `test_perfis.py` | — | API |
-| Recorte do DS e da unidade | R3.5 | `GET /me`, `GET /unidades?distrito=` | existe (só navegação; leitura global) | **parcial (T5)**: o início do Gestor de Unidade é a própria ficha; a lista filtrada pelo DS fica para a T7 | T7; restrição real: Grupo-DF2 (ratificação) + emenda da 003 (T23) | API (navegação) / Decisão (restrição) |
-| Início | R4.1 | `GET /dashboard/resumo` | existe, no escopo de `dashboard:read` (0011_09) | protótipo | G2/G3 | API |
+| Recorte do DS e da unidade | R3.5 | `GET /me`, `GET /unidades?distrito=` | existe (só navegação; leitura global) | **implementado (T5, T7)**: ficha própria do Gestor de Unidade; lista do Técnico Distrital aberta no DS, com "Todos os distritos" | restrição real: Grupo-DF2 (ratificação) + emenda da 003 (T23) | API (navegação) / Decisão (restrição) |
+| Início | R4.1 | `GET /dashboard/resumo` | existe, no escopo de `dashboard:read` (0011_09) | **implementado (T6)**: `test_inicio.py` | — | API |
 | Início completo | R4.2 | — | sem solicitações nem regras da 007 | protótipo | spec de solicitações, 007 | Backend |
-| Lista, busca, filtros, paginação | R5.1, R5.2 | `GET /unidades`, `GET /referencias/{tipo}` | existe (`q`, `tipo`, `area`, `distrito`, `status`, `com_pendencias`, `ordem`, `pagina`, `tamanho`) | protótipo | G2/G3 | API |
+| Lista, busca, filtros, paginação | R5.1, R5.2 | `GET /unidades`, `GET /referencias/{tipo}` | existe (`q`, `tipo`, `area`, `distrito`, `status`, `com_pendencias`, `ordem`, `pagina`, `tamanho`) | **implementado (T7)**: `test_lista.py` | — | API |
 | Filtros extras | R5.3 | — | sem bairro, sem as 8 verificações, sem "aguardando" | protótipo | 006 (Hélder), 007, solicitações | Backend |
-| Exportação CSV/PDF | R5.4, Grupo-DF15 | — | **não existe** | o protótipo gera CSV no navegador (não será reaproveitado: DF10) | spec do backend; P5; permissão (Grupo-DF13) | Backend + Decisão |
+| Exportação CSV/PDF | R5.4, Grupo-DF15 | — | **não existe** | botão visível e desabilitado na lista (T7); nenhuma geração no navegador (DF10) | spec do backend; PF-06; permissão (Grupo-DF13) | Backend + Decisão |
 | Ficha: dados e serviços | R6.1 | `GET /unidades/{id}` (`ETag`) | existe (devolve ids; nomes pelas referências) | protótipo | G2/G3 | API |
 | Histórico da ficha | R6.2, Grupo-DF9 | `GET /unidades/{id}/historico` | existe, com filtros e paginação | protótipo | G2/G3 | API |
 | Verificações de qualidade | R6.3 | dados de `GET /unidades/{id}` | parcial: número do endereço e horário não existem → "não verificável ainda" | protótipo | 006 (campos) | Parcial |

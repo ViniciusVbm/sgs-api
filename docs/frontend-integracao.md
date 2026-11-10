@@ -13,9 +13,11 @@
     - login com 2FA (cadastro com chave e URI em texto), sessão por refresh e saída (T4);
     - menu e telas por permissão dos 7 papéis, com "sem acesso" (T5);
     - aparência, fonte e ícones locais do protótipo (T2);
-    - base de escape, modal, avisos e estados de carregando e de erro (T3).
+    - base de escape, modal, avisos e estados de carregando, vazio e erro (T3);
+    - Início com os indicadores de `/dashboard/resumo` (T6);
+    - lista de unidades com busca, filtros, ordenação, paginação e filtros na URL (T7).
     
-    As demais telas aparecem como "Tela em implantação", sem dados, até as tarefas T6 a T11. As funcionalidades sem backend aparecem como "em desenvolvimento" (R13.1).
+    A ficha, a edição, os serviços, a qualidade e o histórico aparecem como "Tela em implantação", sem dados, até as tarefas T8 a T11. As funcionalidades sem backend aparecem como "em desenvolvimento" (R13.1).
     - **Testes do front:** `uv run pytest tests/e2e_front -m slow` (Playwright em Python; usa o Chromium do Playwright ou o Chrome do sistema) e `tests/architecture/test_frontend_estatico.py`, que roda no `make check`.
     - **Com portas alternativas,** a origem precisa estar em `CORS_ORIGINS` para o refresh: `SGS_CORS_ORIGINS=https://localhost:18443`, junto com `SGS_HTTPS_PORT=18443`.
 - **Como o protótipo funciona:** é uma página única que **guarda os dados no `localStorage`** e não chama nenhuma API. Integrá-lo é trocar esse armazenamento por chamadas à API.
