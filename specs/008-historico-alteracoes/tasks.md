@@ -21,6 +21,7 @@
   - Requisitos: R3.1
   - Pronto quando: `tests/integration/audit/test_verificar_cadeia.py` passa
 - ~~T5. Particionamento mensal e comando de manutenção~~: removida (Rafael, 06/11/2026; ver design § Retenção). A R4.1 já é provada por `tests/integration/audit/test_audit_immutable.py` (001).
-- [ ] T6. Testes dos filtros de período e autor (melhoria funcional; D008-5; não bloqueia a aprovação)
+- [x] T6. Testes dos filtros de período e autor (melhoria funcional; D008-5; não bloqueia a aprovação)
+  - Concluída em 09/11/2026 (`make check` verde, 881 aprovados). Prova: `tests/integration/audit/test_consulta_trilha.py::test_historico_filtra_por_periodo_com_de_inclusivo_e_ate_exclusivo`, `::test_historico_filtra_por_autor` e `::test_trilha_geral_filtra_por_periodo_entidade_e_autor`. Cada filtro desligado no SQL faz falhar o teste correspondente (conferido à mão).
   - Requisitos: R1.3, R2.1
   - Pronto quando: `tests/integration/audit/test_consulta_trilha.py` tem testes dos filtros `de`, `ate` e `autor` no histórico da unidade e `de`, `ate`, `entidade_tipo`, `entidade_id` e `autor` na trilha geral

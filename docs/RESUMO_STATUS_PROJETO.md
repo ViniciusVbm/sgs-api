@@ -60,7 +60,7 @@
 - **Rate limit:** o limite de login vale por processo da API.
 
 ## 7. Próximos passos
-1. **Tarefas abertas das specs aprovadas:** 008/T6 (testes de filtros), 009/T2b e T3 (cache e desempenho), 010/T3 (conversor, quando o cliente enviar a planilha).
+1. **Tarefas abertas das specs aprovadas:** 009/T2b e T3 (cache e desempenho), 010/T3 (conversor, quando o cliente enviar a planilha).
 2. **Grupo:** levar ao professor a decisão das 30 tuplas nos domínios fechados.
 3. **Front:** integrar o HTML seguindo `docs/frontend-integracao.md`.
 4. **Publicação:** criar o repositório novo no GitHub e enviar a `main` (os comandos estão no fim do relatório técnico). Isso depende de autorização.
