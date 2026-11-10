@@ -10,7 +10,7 @@
     - **Com 80 e 443 ocupadas:** `SGS_HTTP_PORT=18080 SGS_HTTPS_PORT=18443 docker compose -f docker/compose.yml up -d` e abrir `https://localhost:18443/`.
     - **Teste:** `uv run pytest tests/e2e/test_frontend_entrega.py -m slow`.
   - **Desde 10/11/2026, com o G2 e o G3 aprovados:**
-    - login com 2FA (cadastro com chave e URI em texto), sessão por refresh e saída (T4);
+    - login com 2FA (cadastro com chave e URI em texto), sessão por refresh e saída (T4). A saída funciona mesmo com o access token expirado: renova uma vez e repete o logout. Se a API não confirmar, a interface avisa (R2.6);
     - menu e telas por permissão dos 7 papéis, com "sem acesso" (T5);
     - aparência, fonte e ícones locais do protótipo (T2);
     - base de escape, modal, avisos e estados de carregando, vazio e erro (T3);

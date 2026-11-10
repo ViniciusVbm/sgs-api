@@ -49,9 +49,32 @@ export function renovar() {
   return renovacaoEmCurso;
 }
 
+// Sair (R2.6). O logout da API exige access token válido; se ele expirou (401), a interface
+// renova uma única vez pelo refresh e repete o logout uma única vez, sem laço.
+// Devolve true quando não resta sessão restaurável: logout aceito, ou refresh recusado com 401
+// (refresh inválido ou expirado; a API apaga o cookie). Devolve false quando não deu para
+// confirmar (rede, anti-CSRF ou novo 401): o token local é descartado de qualquer forma.
 export async function sair() {
+  const logout = () => chamar('POST', '/auth/logout', { repetir: false });
   try {
-    await chamar('POST', '/auth/logout', { repetir: false });
+    await logout();
+    return true;
+  } catch (falha) {
+    if (falha.status !== 401) return false;
+    try {
+      const { dados } = await chamar('POST', '/auth/refresh', {
+        cabecalhos: { 'X-Requested-With': 'sgs' }, autenticar: false,
+      });
+      guardar(dados);
+    } catch (falhaDoRefresh) {
+      return falhaDoRefresh.status === 401;
+    }
+    try {
+      await logout();
+      return true;
+    } catch {
+      return false;
+    }
   } finally {
     token = null;
   }

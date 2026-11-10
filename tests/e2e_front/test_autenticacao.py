@@ -158,10 +158,10 @@ def test_esqueci_a_senha_orienta_procurar_o_administrador(pagina_anonima: Page) 
     expect(pagina.locator(".toast")).to_contain_text("Administrador de TI")
 
 
-def test_sair_encerra_a_sessao_na_api(
+def test_sair_com_access_token_valido_encerra_a_sessao_na_api(
     pagina_anonima: Page, senha_demo: str, autenticador: Autenticador
 ) -> None:
-    """R2.6: depois de sair, recarregar não recupera a sessão."""
+    """R2.6: logout com access token válido; depois de sair, recarregar não recupera a sessão."""
     pagina = pagina_anonima
     entrar(pagina, USUARIOS["DIRETORIA"], senha_demo, autenticador)
     with pagina.expect_response("**/api/v1/auth/logout") as saida:
@@ -172,3 +172,109 @@ def test_sair_encerra_a_sessao_na_api(
         pagina.reload()
     assert refresh.value.status == 401
     expect(pagina.locator("#lg-user")).to_be_visible()
+
+
+class _Contador:
+    def __init__(self) -> None:
+        self.chamadas: dict[str, int] = {"logout": 0, "refresh": 0}
+
+    def contar(self, nome: str) -> Callable[[Route], None]:
+        def tratar(rota: Route) -> None:
+            self.chamadas[nome] += 1
+            rota.continue_()
+
+        return tratar
+
+
+def _recarregar_sem_sessao(pagina: Page) -> None:
+    pagina.unroute_all()
+    with pagina.expect_response("**/api/v1/auth/refresh") as refresh:
+        pagina.reload()
+    assert refresh.value.status == 401
+    expect(pagina.locator("#lg-user")).to_be_visible()
+    expect(pagina.locator(".shell")).to_have_count(0)
+
+
+def test_sair_com_access_token_expirado_renova_e_encerra_a_sessao(
+    pagina_anonima: Page, senha_demo: str, autenticador: Autenticador
+) -> None:
+    """R2.6: o primeiro logout recebe 401 (access token expirado; a resposta é forçada no teste);
+    a interface renova pelo refresh real, repete o logout uma vez e a sessão acaba na API."""
+    pagina = pagina_anonima
+    entrar(pagina, USUARIOS["COORD_TECNICO"], senha_demo, autenticador)
+    contador = _Contador()
+    expirado = {"forcado": False}
+
+    def logout(rota: Route) -> None:
+        contador.chamadas["logout"] += 1
+        if not expirado["forcado"]:
+            expirado["forcado"] = True
+            rota.fulfill(
+                status=401,
+                content_type="application/problem+json",
+                body='{"detail": "Token expirado."}',
+            )
+        else:
+            rota.continue_()
+
+    pagina.route("**/api/v1/auth/logout", logout)
+    pagina.route("**/api/v1/auth/refresh", contador.contar("refresh"))
+    with pagina.expect_response(lambda r: r.url.endswith("/auth/logout") and r.status == 204):
+        pagina.click("#logoutBtn")
+    expect(pagina.locator("#lg-user")).to_be_visible()
+    assert contador.chamadas == {"logout": 2, "refresh": 1}
+    _recarregar_sem_sessao(pagina)
+
+
+def test_sair_com_refresh_invalido_nao_deixa_sessao_restauravel(
+    pagina_anonima: Page, senha_demo: str, autenticador: Autenticador
+) -> None:
+    """R2.6: sem refresh válido (cookie apagado), não há sessão a restaurar; não há repetição."""
+    pagina = pagina_anonima
+    entrar(pagina, USUARIOS["COORD_TECNICO"], senha_demo, autenticador)
+    pagina.context.clear_cookies()  # o refresh deixa de valer
+    contador = _Contador()
+
+    def logout(rota: Route) -> None:
+        contador.chamadas["logout"] += 1
+        rota.fulfill(status=401, content_type="application/problem+json", body="{}")
+
+    pagina.route("**/api/v1/auth/logout", logout)
+    pagina.route("**/api/v1/auth/refresh", contador.contar("refresh"))
+    pagina.click("#logoutBtn")
+    expect(pagina.locator("#lg-user")).to_be_visible()
+    pagina.wait_for_timeout(1000)
+    assert contador.chamadas == {"logout": 1, "refresh": 1}
+    expect(pagina.locator(".toast.err")).to_have_count(0)
+    _recarregar_sem_sessao(pagina)
+
+
+def test_sair_sem_confirmacao_da_api_avisa_e_nao_entra_em_laco(
+    pagina_anonima: Page, senha_demo: str, autenticador: Autenticador
+) -> None:
+    """R2.6: se o logout recusa sempre, há uma única renovação e uma única repetição, e a
+    interface avisa que não confirmou o encerramento (sem mostrar sessão autenticada)."""
+    pagina = pagina_anonima
+    entrar(pagina, USUARIOS["COORD_TECNICO"], senha_demo, autenticador)
+    contador = _Contador()
+
+    def logout(rota: Route) -> None:
+        contador.chamadas["logout"] += 1
+        rota.fulfill(status=401, content_type="application/problem+json", body="{}")
+
+    pagina.route("**/api/v1/auth/logout", logout)
+    pagina.route("**/api/v1/auth/refresh", contador.contar("refresh"))
+    pagina.click("#logoutBtn")
+    expect(pagina.locator("#lg-user")).to_be_visible()
+    expect(pagina.locator(".toast.err")).to_contain_text("Não foi possível confirmar")
+    pagina.wait_for_timeout(1500)
+    assert contador.chamadas == {"logout": 2, "refresh": 1}
+    expect(pagina.locator(".shell")).to_have_count(0)
+    # Era o caso do aviso: sem a revogação pela API, o refresh ainda restaura a sessão.
+    pagina.unroute_all()
+    pagina.reload()
+    expect(pagina.locator(".shell")).to_be_visible()
+    # Limpeza: agora o logout real revoga a sessão.
+    pagina.click("#logoutBtn")
+    expect(pagina.locator("#lg-user")).to_be_visible()
+    _recarregar_sem_sessao(pagina)

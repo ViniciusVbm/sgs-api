@@ -113,6 +113,22 @@ Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protó
       - sair encerra a sessão na API;
       - `localStorage` só com `sgs-theme`.
     - **Sensibilidade:** tirar a repetição depois do refresh derruba o teste do R2.5.
+  - **Correção de R2.6 (10/11/2026; bloqueante B1 da revisão por agente do PR #4):**
+    - **Problema:** o logout da API exige access token válido (`POST /auth/logout`, `CurrentUser`). Com o token expirado, a API respondia 401, e a sessão e o cookie de refresh continuavam valendo, de modo que recarregar a página restaurava a sessão.
+    - **Correção, só no front** (`auth.js` `sair()`, aviso em `main.js` `encerrar()`):
+      - num 401 do logout, renova uma única vez pelo refresh e repete o logout uma única vez;
+      - se o refresh responder 401 (inválido ou expirado; a API apaga o cookie), não há sessão restaurável;
+      - em qualquer outra falha (rede, anti-CSRF, novo 401), o token local é descartado e a interface avisa que não confirmou o encerramento;
+      - sem laço, e sem mudança de contrato nem de backend.
+    - **Prova** (`test_autenticacao.py`, agora com 11 testes):
+      - `test_sair_com_access_token_valido_encerra_a_sessao_na_api`;
+      - `test_sair_com_access_token_expirado_renova_e_encerra_a_sessao`: o 401 do primeiro logout é forçado, e o refresh e o segundo logout são reais;
+      - `test_sair_com_refresh_invalido_nao_deixa_sessao_restauravel`;
+      - `test_sair_sem_confirmacao_da_api_avisa_e_nao_entra_em_laco`: exatamente 2 logouts e 1 refresh.
+
+      Os quatro conferem que recarregar não restaura a sessão depois de um logout confirmado. Antes da correção, os três novos falhavam; depois, passam.
+    - **Execução:** 3 rodadas seguidas do arquivo inteiro com 11/11; suíte E2E completa com 50/50.
+    - **Instabilidade:** numa rodada intermediária, um caso falhou uma vez e não se repetiu. A causa não foi identificada; fica registrada para a T14 (E2E no CI).
     - **Configuração:** o anti-CSRF do refresh exige a origem em `CORS_ORIGINS` (R2.4). O compose aceita `SGS_CORS_ORIGINS`, com padrão inalterado.
 - [x] T5. `perms.js` e menu a partir do `/me` (`papeis`, `permissoes` com escopo); view "sem acesso"; telas dos 7 papéis só com as permissões existentes (DF8, tabela do design); lista do distrito aberta no próprio DS (R3.5, só navegação)
   - Requisitos: R3.1 a R3.5

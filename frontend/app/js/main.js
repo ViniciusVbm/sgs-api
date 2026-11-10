@@ -30,9 +30,15 @@ function voltarAoLogin(aviso = '') {
 }
 
 async function encerrar() {
-  try { await sair(); } catch { /* a sessão local é descartada de qualquer forma (R2.6) */ }
+  let confirmado = false;
+  try { confirmado = await sair(); } catch { /* a sessão local é descartada de qualquer forma */ }
   document.getElementById('toasts').replaceChildren();
   voltarAoLogin();
+  // R2.6: sem confirmação da API, a sessão pode continuar válida no servidor.
+  if (!confirmado) {
+    toast('err', 'Não foi possível confirmar o encerramento da sessão.',
+      'Feche o navegador se o computador for compartilhado e entre de novo para sair.');
+  }
 }
 
 // Cada tela declara a chave do menu e a condição de acesso; sem permissão, "sem acesso" (R3.3).
