@@ -11,7 +11,7 @@
 
 ### Issue tracker
 
-Issues no GitHub (`rafareloM/sgs-api`, via `gh`), usadas como entrada de pedidos. O trabalho em si segue as specs de `specs/`. Ver `docs/agents/issue-tracker.md`.
+Issues no GitHub (`ViniciusVbm/sgs-api`, via `gh`), usadas como entrada de pedidos. O trabalho em si segue as specs de `specs/`. Ver `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

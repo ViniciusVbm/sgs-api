@@ -12,6 +12,8 @@
 ## Modelo
 Migração `0007_validacao`: `validation_rules` (ver modelo de dados) e `unit_pending_issues (unit_id, rule_id, field, message, detected_at)`.
 
+Revisão de 09/11/2026, agente; aguarda o dono: o modelo de dados (`docs/architecture/modelo-dados.md`) nomeia os tipos de regra em inglês (`required`, `regex`, `enum`, `range`), e a R2.1 em português (`obrigatorio`, `regex`, `lista`, `intervalo`). Falta escolher um dos dois e alinhar o outro documento.
+
 ## Rotas
 | Método e rota | Permissão | Requisitos |
 |---|---|---|

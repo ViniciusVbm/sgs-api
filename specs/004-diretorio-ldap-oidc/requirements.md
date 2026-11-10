@@ -2,6 +2,7 @@
 
 - Status: Rascunho
 - Rastreia: RS-01, RS-02, RS-03, RS-05, RS-08, requisito obrigatório "consumo de credenciais via LDAP e OIDC para popular as tabelas locais dos usuários e grupos"
+- Dono humano: Vinicius (ViniciusVbm), como responsável pelo projeto: a spec não tinha dono registrado (`steering/sdd-workflow.md` § Dono da spec). Linha registrada na revisão de 09/11/2026.
 
 ## Contexto
 A Secretaria (como a maioria dos órgãos públicos) já mantém identidades em diretório corporativo. A API deve consumir essas identidades por LDAP e por OIDC, espelhá-las em `users`, `groups` e `user_groups`, e transformar grupos em papéis pelo mapeamento da spec 003.
@@ -50,3 +51,4 @@ Como Admin TI, quero importar usuários e grupos do diretório para não cadastr
 ## Perguntas em aberto
 - A Secretaria usa Active Directory ou OpenLDAP? (o design suporta ambos via configuração de atributos)
 - Qual atributo do diretório indica distrito ou unidade, se houver? (útil para escopo automático)
+- (revisão de 09/11/2026, agente; aguarda o dono) O ADR-0003 (identidade federada com tokens próprios), base desta spec, está `Proposto`. Convém aceitá-lo junto com a aprovação dos requisitos.

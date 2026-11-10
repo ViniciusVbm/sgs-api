@@ -101,7 +101,7 @@ Caminhos de teste relativos a `tests/`.
 | Autenticação segura | Argon2id, TOTP, ES256, refresh rotativo, bloqueio, rate limit | `src/modules/identity/` | `integration/identity/*` | ✅ |
 | Autorização no backend e proteção de rotas | `require()`, deny by default | `access/api/deps.py` | `test_require.py`, `test_rotas_protegidas.py` | ✅ |
 | Gerenciamento de credenciais | Chaves versionadas, fora do Git, recusadas se de exemplo em prod | `src/core/config.py`, `src/tools/*_keys.py` | `unit/core/test_config.py` | ✅ |
-| Grupos e sincronização | `group_role_mappings` existe; faltam `groups` e a sincronização | — | — | ⬜ spec 004 |
+| Grupos e sincronização | `group_role_mappings` existe (sem FK em `group_id`, sem rotas, 0 registros) e `role_assignments` aceita origem `group`; faltam `groups`, `user_groups`, `directory_sync_runs`, o cadastro de mapeamentos (003/T8) e a sincronização (004) | `0003_access.py` | — | ⬜ specs 003/T8 e 004 |
 | LDAP / OIDC | — | `specs/004-*` (Rascunho) | — | ⬜ spec 004 |
-| Persistência local de identidades externas | `users.source`, `external_id` | `0002_identity.py` | `integration/identity/test_repositories.py` | 🟡 estrutura pronta |
+| Persistência local de identidades externas | `users.source` (`local`/`ldap`/`oidc`), `external_id` e `synced_at`; unicidade e CHECK `credencial_conforme_origem` no banco e no domínio; o login local recusa conta externa. Faltam busca por `external_id`, upsert e preenchimento do `synced_at` (004/T3, T7) | `0002_identity.py`, `identity/domain/users.py`, `identity/application/login.py` | `unit/identity/test_users.py` (regras de origem); usuários `ldap` gravados em `integration/access/test_permissoes_efetivas.py` | 🟡 estrutura pronta |
 | Exportação para S3 | — | `specs/005-*` (Rascunho) | — | ⬜ spec 005 |

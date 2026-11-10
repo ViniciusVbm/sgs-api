@@ -3,6 +3,13 @@
 - Status: Rascunho
 - Depende de: 002, 003
 
+## O que já existe no código (revisão de 09/11/2026, agente; aguarda o dono)
+- T1: as colunas `users.source`, `users.external_id` e `users.synced_at`, a unicidade (`source`, `external_id`) e o CHECK `credencial_conforme_origem` já existem (migração `0002_identity`). A T1 fica com `groups`, `user_groups`, `directory_sync_runs` e a FK de `group_role_mappings.group_id` para `groups`, que a `0003_access` deixou sem FK (003, pergunta de T1).
+- T5: o login local já recusa conta externa (`identity/application/login.py`), o que cobre a parte "senha local" da R4.1.
+- A permissão `diretorio:sync` já está semeada para o `ADMIN_TI`.
+- As bibliotecas `ldap3` e `authlib` estão em `steering/tech.md`, mas não no `pyproject.toml`: entram na T2 e na T6.
+- A 003/T8 (mapeamento de grupos para papéis) só pode começar depois da T1 desta spec.
+
 - [ ] T1. Migração com `groups`, `user_groups`, `directory_sync_runs` e colunas `source`/`external_id`
   - Requisitos: R1.5, R1.9
   - Pronto quando: `tests/integration/identity/test_directory_tables.py` passa

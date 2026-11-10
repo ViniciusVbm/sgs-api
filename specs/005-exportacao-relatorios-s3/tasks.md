@@ -3,6 +3,12 @@
 - Status: Rascunho
 - Depende de: 001, 003 (escopo de leitura). O gerador de inventário depende de `health_units` (spec 006); até lá, usa o stub da spec 003.
 
+## Observações (revisão de 09/11/2026, agente; aguarda o dono)
+- A spec 006 já está implementada: o gerador de inventário usa `health_units` real, sem o stub da 003.
+- As permissões `relatorio:export` e `relatorio:download` já estão semeadas (`0003_access`).
+- `boto3` e `openpyxl` estão em `steering/tech.md`, e `moto` nas ferramentas de teste, mas nenhum está no `pyproject.toml`.
+- Falta a tarefa da R5 (assinatura digital). Proposta, a confirmar pelo dono: `T9. Assinatura do hash do relatório, chave própria com rotação e rota pública das chaves de verificação` (R5.1–R5.5).
+
 - [ ] T1. Migração `report_jobs` e repositório
   - Requisitos: R1.1, R2.5
   - Pronto quando: `tests/integration/reports/test_report_jobs.py` passa

@@ -174,7 +174,7 @@ Matriz documentada (`arquitetura-conceitual.md` § 4, adotada pela 003/R1.1), ba
 ### 7.4 Pendências funcionais (não impedem as aprovações)
 | Spec | Tarefa | Situação |
 |---|---|---|
-| 008 | T6: testes dos filtros de período e autor (D008-5) | Aberta |
+| 008 | T6: testes dos filtros de período e autor (D008-5) | Aberta. *Nota posterior: concluída em 09/11/2026 (PR #2).* |
 | 009 | T3: teste de desempenho (R1.7: menos de 1 s com 1.000 unidades) | Aberta; a meta **não está comprovada** |
 | 009 | T2b: cache com invalidação por versão | Aberta, só se a T3 mostrar p95 acima de 1 s |
 | 009 | Pendências do resumo (R1.2) com significado real | Depende da spec 007 (D009-4) |

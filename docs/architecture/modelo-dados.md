@@ -4,6 +4,8 @@
 
 ## 1. Identidade e acesso
 
+> **Ainda não implementadas:** `groups`, `user_groups` e `directory_sync_runs` nascem na spec 004 (T1), em Rascunho. `group_role_mappings` já existe, mas sem FK em `group_id` até lá. O banco real está em [`docs/banco/04-dicionario-dados.md`](../banco/04-dicionario-dados.md).
+
 ```mermaid
 erDiagram
   users ||--o{ user_groups : pertence
