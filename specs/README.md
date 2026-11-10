@@ -23,6 +23,7 @@ As specs 008, 009 e 010 e a emenda T21–T22 da 011 foram implementadas antes do
 | [009-dashboard](009-dashboard/) | Agregados da rede e da qualidade dos dados | MVP: dashboard básico | Aprovado (Vinicius, 09/11); faltam T2b (cache) e T3 (desempenho) |
 | [010-dados-demonstracao](010-dados-demonstracao/) | Seed de Saúde Mental, usuários por papel, conversor da planilha | pendência 6 (massa de dados) | Aprovado (Vinicius, 09/11); falta T3 (planilha do cliente) |
 | [011-recursos-banco-dados](011-recursos-banco-dados/) | Índices, consultas avançadas, views, funções, procedimentos, triggers, log do banco, segurança no SGBD | disciplina de Banco de Dados (Segunda Parte, 13/11) | Aprovado (Rafael, T1–T20); emenda T21–T22 aprovada (Vinicius, 09/11); dono: Vinicius |
+| [012-frontend](012-frontend/) | Interface real a partir do protótipo HTML: autenticação, perfis, unidades, serviços, qualidade, histórico | Entrega 11 (21/11) | Requisitos aprovados (Vinicius, 09/11; emenda documental 1 aguarda o dono); design e tarefas em Rascunho (G2 e G3 pendentes) |
 
 ## Rastreabilidade requisito → spec
 

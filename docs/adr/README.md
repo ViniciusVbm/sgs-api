@@ -13,5 +13,7 @@ Cada decisão arquitetural relevante vira um arquivo curto e imutável. Para mud
 | [0007](0007-dependencias-complementares.md) | Dependências complementares da stack (Uvicorn, limits, pytest-cov) | Aceito (emenda de 09/11/2026) |
 | [0008](0008-merge-admin-com-ci-obrigatorio.md) | Merge pelo administrador sem aprovação, com CI obrigatório | Aceito |
 | [0009](0009-sql-explicito-modulos-disciplina.md) | SQL explícito nos módulos cobrados pela disciplina de Banco de Dados | Proposto |
+| [0010](0010-frontend-modulos-es-sem-build.md) | Frontend no mesmo repositório, módulos ES, sem framework e sem build | Proposto |
+| [0011](0011-e2e-playwright-python.md) | Playwright com Python para os testes end-to-end do frontend | Proposto |
 
 Modelo: `0000-modelo.md`.
