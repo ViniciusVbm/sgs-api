@@ -1,6 +1,25 @@
 # Proxy TLS local (spec 001, R1.1): HTTPS com certificado da CA interna do Caddy.
 # A porta 80 só redireciona para HTTPS. O Caddy repassa X-Forwarded-For e X-Forwarded-Proto.
+#
+# Spec 012 (T1, R1.1 e R15.2): o front estático é servido no mesmo domínio da API.
+# /api/*, /health/* e /.well-known/* vão para a API; o resto vem de /srv/frontend, com CSP.
 localhost {
 	tls internal
-	reverse_proxy api:8000
+
+	@api path /api/* /health/* /.well-known/*
+	handle @api {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		root * /srv/frontend
+		header {
+			# 'unsafe-inline' em style-src é exceção temporária (design da 012 § Entrega pelo Caddy).
+			Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+			X-Content-Type-Options "nosniff"
+			Referrer-Policy "no-referrer"
+		}
+		try_files {path} /index.html
+		file_server
+	}
 }
