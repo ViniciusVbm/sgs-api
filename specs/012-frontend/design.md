@@ -1,15 +1,8 @@
 # 012 · Frontend SGS Recife · Design
 
-- Status: Rascunho (revisão 4, 10/11/2026: P1 a P5 tratadas e pendências formais PF-01 a PF-07; revisão 3, 10/11/2026). Mudanças da revisão 3:
-  - sincronização com a `novo/main` `9c37029`;
-  - responsáveis atualizados;
-  - decisões e premissas do Grupo 01 registradas;
-  - seções de histórico, exportação e perfis-alvo;
-  - matriz de integração.
-
-  O G1 está aprovado (requisitos: Vinicius, 09/11/2026). **O G2 está pendente**: aguarda o registro do dono e do revisor (§ Registro de aprovação).
+- Status: **Aprovado (Vinicius, Igor Fugagnoli e Erick Sanches, 10/11/2026)**. G2 registrado pelo dono; ver § Registro de aprovação, inclusive sobre a forma da evidência. Revisão 4 (10/11/2026): P1 a P5 tratadas e pendências formais PF-01 a PF-07. Revisão 3 (10/11/2026): sincronização com a `novo/main` `9c37029`, responsáveis atualizados, decisões e premissas do Grupo 01, seções de histórico, exportação e perfis-alvo, matriz de integração.
 - Autor do design: Hélder (decisão do Grupo 01, 10/11/2026). Dono da spec: Vinicius (ViniciusVbm).
-- Revisão do G2 indicada pelo grupo: Igor Fugagnoli (principal; **disponibilidade a confirmar**) e Erick Sanches (suplente).
+- Revisão do G2: Igor Fugagnoli (principal) e Erick Sanches (suplente). Os dois aprovaram em 10/11/2026 (§ Registro de aprovação).
 - Requisitos: requirements.md (com a emenda documental 1, que aguarda o dono)
 - Decisões: ADR-0010 (front no mesmo repositório, módulos ES, sem build), ADR-0011 (Playwright com Python), ambos Propostos
 
@@ -233,21 +226,24 @@ Até a ratificação e o backend, vale o [M]: só o escopo global edita (R7.4).
 - **Decisão/gate** = bloqueada por decisão ou gate;
 - **Fora** = fora do escopo aprovado.
 
-**Estado do frontend:** em todas as linhas, exceto a entrega (T1, implementada em 10/11/2026 por exceção pontual do dono), a funcionalidade existe só no protótipo, com dados locais, e **nenhum código de tela foi escrito**. Todas as linhas [M] estão também bloqueadas pelo gate: o G2 e o G3 estão pendentes (`AGENTS.md`, regra 1).
+**Estado do frontend (10/11/2026):**
+- **Implementadas:** T1, por exceção do dono; T2, T4 e T5, depois do G2 e do G3.
+- **Parcial:** T3, que ainda precisa do estado vazio, provado na T7.
+- **Linhas sem marcação de estado:** a funcionalidade existe só no protótipo. As rotas dessas telas mostram "Tela em implantação", **sem dados**, até a tarefa correspondente. Todas as linhas [M] estão também bloqueadas pelo gate: o G2 e o G3 estão pendentes (`AGENTS.md`, regra 1).
 
 | Tela/fluxo | Requisito | Endpoint | Estado da API | Estado do frontend | Dependência | Classificação |
 |---|---|---|---|---|---|---|
 | Entrega no mesmo domínio, CSP | R1.1, R15.2 | Caddy `file_server` + proxy de `/api/*`, `/health/*`, `/.well-known/*` | proxy e roteamento configurados (T1) | **implementado (T1, exceção do dono; `tests/e2e/test_frontend_entrega.py`, 5 aprovados)**; `index.html` mínimo | — | API (infra) |
-| Aparência, tema, responsivo, acessibilidade | R1.2 a R1.5 | — | — | protótipo | G2/G3 | API |
-| Carregando, vazio, erro | R1.6 | `application/problem+json` (`detail`, `errors`) | existe | não iniciado | G2/G3 | API |
-| Login | R2.1, R2.7, R2.11 | `POST /auth/login` | existe (`mfa_required`, `mfa_enrollment_required`, `mfa_token`; `access_token` só com `MFA_OBRIGATORIO=false`) | protótipo com usuários fixos (sai) | G2/G3 | API |
-| Cadastro do 2FA | R2.2 | `POST /auth/mfa/enroll` (`otpauth_uri`), `/auth/mfa/confirm` | existe | não existe no protótipo | G2/G3 | API |
-| Verificação do 2FA | R2.3 | `POST /auth/mfa/verify` | existe | protótipo com código fixo (sai) | G2/G3 | API |
-| Sessão: refresh, 401, logout | R2.4 a R2.6 | `POST /auth/refresh` (`X-Requested-With: sgs`, `Origin` em `CORS_ORIGINS`), `/auth/logout` | existe; o compose tem `https://localhost` | não iniciado | G2/G3 | API |
-| Esqueci a senha | R2.8 / R2.9 | — | sem rota de redefinição | orientação no protótipo | R2.9: emenda da 003 | API (R2.8) / Backend (R2.9) |
-| Demonstração fora da UI | R2.10 | `sgs-admin seed demo` | existe | `seed()` e `resetDemo` no protótipo (saem) | G2/G3 | API |
-| Menu e botões por permissão | R3.1 a R3.4, DF8 | `GET /me` | existe (`papeis`, `permissoes` com escopo) | perfis fixos no protótipo | G2/G3 | API |
-| Recorte do DS e da unidade | R3.5 | `GET /me`, `GET /unidades?distrito=` | existe (só navegação; leitura global) | protótipo | Restrição real: Grupo-DF2 (ratificação) + emenda da 003 (T23) | API (navegação) / Decisão (restrição) |
+| Aparência, tema, responsivo, acessibilidade | R1.2 a R1.5 | — | — | **implementado (T2)**: CSS, ícones e fonte local; `test_aparencia.py`. A responsividade completa é da T13 | — | API |
+| Carregando, vazio, erro | R1.6 | `application/problem+json` (`detail`, `errors`) | existe | **parcial (T3)**: carregando e erro provados (`test_estados.py`); vazio na T7 | T7 | API |
+| Login | R2.1, R2.7, R2.11 | `POST /auth/login` | existe (`mfa_required`, `mfa_enrollment_required`, `mfa_token`; `access_token` só com `MFA_OBRIGATORIO=false`) | **implementado (T4)**; `test_autenticacao.py` | — | API |
+| Cadastro do 2FA | R2.2 | `POST /auth/mfa/enroll` (`otpauth_uri`), `/auth/mfa/confirm` | existe | **implementado (T4)**: chave e URI em texto | — | API |
+| Verificação do 2FA | R2.3 | `POST /auth/mfa/verify` | existe | **implementado (T4)** | — | API |
+| Sessão: refresh, 401, logout | R2.4 a R2.6 | `POST /auth/refresh` (`X-Requested-With: sgs`, `Origin` em `CORS_ORIGINS`), `/auth/logout` | existe; o compose tem `https://localhost`, configurável por `SGS_CORS_ORIGINS` | **implementado (T4)** | — | API |
+| Esqueci a senha | R2.8 / R2.9 | — | sem rota de redefinição | **R2.8 implementado (T4)** | R2.9: emenda da 003 | API (R2.8) / Backend (R2.9) |
+| Demonstração fora da UI | R2.10 | `sgs-admin seed demo` | existe | **implementado (T4)**: nada de demonstração no código (`test_frontend_estatico.py`) | — | API |
+| Menu e botões por permissão | R3.1 a R3.4, DF8 | `GET /me` | existe (`papeis`, `permissoes` com escopo) | **implementado (T5)**: 7 papéis; `test_perfis.py` | — | API |
+| Recorte do DS e da unidade | R3.5 | `GET /me`, `GET /unidades?distrito=` | existe (só navegação; leitura global) | **parcial (T5)**: o início do Gestor de Unidade é a própria ficha; a lista filtrada pelo DS fica para a T7 | T7; restrição real: Grupo-DF2 (ratificação) + emenda da 003 (T23) | API (navegação) / Decisão (restrição) |
 | Início | R4.1 | `GET /dashboard/resumo` | existe, no escopo de `dashboard:read` (0011_09) | protótipo | G2/G3 | API |
 | Início completo | R4.2 | — | sem solicitações nem regras da 007 | protótipo | spec de solicitações, 007 | Backend |
 | Lista, busca, filtros, paginação | R5.1, R5.2 | `GET /unidades`, `GET /referencias/{tipo}` | existe (`q`, `tipo`, `area`, `distrito`, `status`, `com_pendencias`, `ordem`, `pagina`, `tamanho`) | protótipo | G2/G3 | API |
@@ -264,14 +260,14 @@ Até a ratificação e o backend, vale o [M]: só o escopo global edita (R7.4).
 | Observação no modal | R7.6 | — | o `PATCH` recusa campos extras | protótipo | emenda da 006 | Backend |
 | Serviços | R8.1 | `GET/POST/DELETE /unidades/{id}/servicos[/{id}]`, `GET /referencias/tipos-servico` | existe | protótipo | G2/G3; catálogo (DF5) | API |
 | Equipamentos (aparelhos) | R9.1, R9.2 | — (`/unidades/{id}/equipamentos` é equipamento de saúde, outro conceito) | sem entidade de infraestrutura | protótipo | DF1; spec de infraestrutura | API (aba visível, R9.1) / Backend + Decisão (R9.2) |
-| Solicitações e validações (menu) | R10.1 | — | — | protótipo | G2/G3 | API (só "em desenvolvimento") |
-| Notificações | R11.1, R11.2 | — | não existe | protótipo | spec de notificações | API (R11.1) / Backend (R11.2) |
+| Solicitações e validações (menu) | R10.1 | — | — | **implementado (T5)**: itens e telas "em desenvolvimento", sem chamar a API | spec de solicitações | API (só "em desenvolvimento") |
+| Notificações | R11.1, R11.2 | — | não existe | **R11.1 implementado (T5)**: sino sem contagem, "em desenvolvimento" | spec de notificações | API (R11.1) / Backend (R11.2) |
 | Painel de qualidade | R12.1 | `GET /dashboard/consultas/*`, `/dashboard/inventario` | existe | protótipo | G2/G3 | API |
 | Histórico geral (central) | R12.2, Grupo-DF9 | `GET /auditoria/eventos` | existe (a Grupo-DF9 cita `/historico`, que não existe) | protótipo | G2/G3; rota `/historico`: emenda da 008 | Parcial (o nome da rota diverge) |
 | Histórico geral no escopo do distrito | R12.3 | — | a trilha geral exige escopo global | protótipo | emenda da 008; DF9 | Backend + Decisão |
 | Verificação da cadeia | R12.4 | `POST /auditoria/verificar` | existe (`auditoria:read` global) | não existe no protótipo | G2/G3 | API |
 | Papéis e atribuições (Admin TI) | R3.2 (DF8) | `GET /admin/papeis`, `GET/POST/DELETE /admin/atribuicoes` | existe | não existe no protótipo | G2/G3 | API |
-| Importar planilha | R14.1, R14.2 | — | não existe | protótipo | spec de importação | API (R14.1, visível) / Backend (R14.2) |
+| Importar planilha | R14.1, R14.2 | — | não existe | **R14.1 implementado (T5)**: "em desenvolvimento" só para o escopo global de `unidade:create` | spec de importação | API (R14.1, visível) / Backend (R14.2) |
 | Segurança da interface | R15.1 a R15.4 | — | — | 12 grupos de inserção sem escape no protótipo (plano § 5.3) | G2/G3 | API |
 | Leitura limitada ao escopo | Grupo-DF2 (DF13) | `unidade:read` com escopo D/U | **não**: a leitura é global | — | ratificação; emenda da 003 e migração | Decisão + Backend |
 
@@ -312,7 +308,7 @@ Regra (`steering/sdd-workflow.md`): o design é aprovado pelo **dono da spec + 1
 - suplente: Erick Sanches;
 - autor do design: Hélder.
 
-Em 10/11/2026 não havia evidência de que o Igor tenha aceitado a revisão nem parecer registrado. Ainda não existe PR com a spec 012.
+**Histórico:** na manhã de 10/11/2026 não havia aceite nem parecer. O PR #4 (`feat/integracao-frontend`) foi aberto para a revisão no mesmo dia.
 
 Este registro fica **em branco** até cada pessoa aprovar de fato. Cada aprovador faz uma das duas coisas, de preferência as duas:
 1. **No GitHub** (prova verificável): aprova (*Approve*) o PR que traz esta spec, num comentário de revisão citando "Aprovo o design da spec 012 (G2)".
@@ -320,7 +316,13 @@ Este registro fica **em branco** até cada pessoa aprovar de fato. Cada aprovado
 
 | Integrante | Papel no G2 | Data | Evidência (link do PR ou da revisão) |
 |---|---|---|---|
-| | Dono (Vinicius) | | |
-| | Integrante: Igor Fugagnoli (principal) ou Erick Sanches (suplente) | | |
+| Vinicius (ViniciusVbm) | Dono da spec | 10/11/2026 | Registro feito pelo dono na sessão de trabalho de 10/11/2026 (PR #4) |
+| Igor Fugagnoli | Revisor principal | 10/11/2026 | Aprovação **comunicada pelo dono**: o Igor foi consultado e aprovou o design. Não há *review* nem comentário dele no PR #4; em 10/11/2026 ele não era colaborador do repositório (`ViniciusVbm`, `ifbr-cesar`) |
+| Erick Sanches | Suplente | 10/11/2026 | Idem: aprovação comunicada pelo dono; sem registro próprio no PR #4 |
+
+**Sobre a evidência:**
+- O registro acima é a declaração do dono. Não é assinatura dos revisores, e o agente não escreveu parecer em nome deles.
+- **Comentários e ajustes pedidos:** nenhum foi registrado (o PR #4 não tinha *review* nem comentário de revisor em 10/11/2026), então nenhum ajuste foi incorporado.
+- **Recomendação:** quando tiverem acesso, o Igor e o Erick confirmam no PR #4 (*Approve*, com "Aprovo o design da spec 012 (G2)"), para a evidência ficar verificável.
 
 Com as duas linhas preenchidas e o G1 aprovado, a linha `Status` passa a `Aprovado (<dono> e <integrante>, DD/MM/AAAA)`. A aprovação coletiva do time sobre a direção da integração (`docs/PLANO_INTEGRACAO_FRONTEND.md`) não substitui o registro individual exigido pelo fluxo.
