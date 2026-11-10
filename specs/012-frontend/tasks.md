@@ -14,7 +14,7 @@
 Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protótipo **movido** sem alteração) e testável, e cobre os requisitos citados. Só ganha `[x]` quando o teste citado passa no `make check` ou no CI (o job `quality` roda nos PRs; os E2E são `slow`).
 
 ## Escopo mínimo (21/11/2026)
-- [ ] T1. Entrega pelo Caddy: `file_server` de `frontend/app`, proxy de `/api/*`, `/health/*` e `/.well-known/*`, CSP e cabeçalhos; `index.html` mínimo
+- [x] T1. **(Exceção pontual do dono, 10/11/2026: implementada antes do G2 e do G3; ver `steering/sdd-workflow.md` § Exceção pontual: spec 012, tarefa T1.)** Entrega pelo Caddy: `file_server` de `frontend/app`, proxy de `/api/*`, `/health/*` e `/.well-known/*`, CSP e cabeçalhos; `index.html` mínimo
   - Requisitos: R1.1, R15.2
   - Arquivos:
     - `docker/caddy/Caddyfile`: hoje só tem `reverse_proxy api:8000`. Passa a ter `handle /api/*`, `/health/*` e `/.well-known/*` → `reverse_proxy api:8000`; o resto vai para `root * /srv/frontend`, `try_files {path} /index.html` e `file_server`, com os cabeçalhos do design só nas respostas estáticas;
@@ -28,6 +28,12 @@ Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protó
     - `/health/ready` dá 200;
     - `/.well-known/jwks.json` dá 200;
     - uma rota desconhecida do front devolve o `index.html`.
+  - Concluída em 10/11/2026.
+    - **Prova:** `tests/e2e/test_frontend_entrega.py` (`-m slow`), 5 aprovados, no projeto compose `sgs-api-e2e-front` com as portas 18080 e 18443 e TLS conferido contra a CA interna do Caddy.
+    - **Sensibilidade:** tirar `/api/*` do matcher derruba 2 testes; tirar a CSP derruba 1.
+    - **`make check`:** 881 aprovados, 3 pulados.
+    - **Arquivos:** `docker/caddy/Caddyfile`, `docker/compose.yml` (portas `SGS_HTTP_PORT` e `SGS_HTTPS_PORT`, com padrão 80 e 443, e o volume do front), `frontend/app/index.html`.
+    - O `index.html` é um marcador honesto ("interface em implantação"), sem funcionalidade simulada; as telas vêm da T2 em diante, depois do G2 e do G3.
 - [ ] T2. Mover CSS, ícones e fonte local do protótipo para `assets/`, sem mudança visual
   - Requisitos: R1.2, R1.3, R1.5
   - Arquivos:
@@ -166,7 +172,7 @@ Estas tarefas ficam listadas para não descartar funcionalidade. Cada uma só se
   - Pendência: PF-07
 
 ## O que pode começar (10/11/2026)
-- **Antes do G2 e do G3:** só preparação, sem código de interface (`AGENTS.md`, regra 1):
+- **Antes do G2 e do G3:** só preparação, sem código de interface (`AGENTS.md`, regra 1), **salvo a T1**, por exceção pontual do dono (10/11/2026):
   - PR com a spec para a revisão do G2;
   - `.gitignore` do protótipo;
   - documentação.

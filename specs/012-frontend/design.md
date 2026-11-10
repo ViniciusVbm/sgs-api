@@ -233,11 +233,11 @@ Até a ratificação e o backend, vale o [M]: só o escopo global edita (R7.4).
 - **Decisão/gate** = bloqueada por decisão ou gate;
 - **Fora** = fora do escopo aprovado.
 
-**Estado do frontend:** em todas as linhas, a funcionalidade existe só no protótipo, com dados locais, e **nenhum código de interface foi escrito**. Todas as linhas [M] estão também bloqueadas pelo gate: o G2 e o G3 estão pendentes (`AGENTS.md`, regra 1).
+**Estado do frontend:** em todas as linhas, exceto a entrega (T1, implementada em 10/11/2026 por exceção pontual do dono), a funcionalidade existe só no protótipo, com dados locais, e **nenhum código de tela foi escrito**. Todas as linhas [M] estão também bloqueadas pelo gate: o G2 e o G3 estão pendentes (`AGENTS.md`, regra 1).
 
 | Tela/fluxo | Requisito | Endpoint | Estado da API | Estado do frontend | Dependência | Classificação |
 |---|---|---|---|---|---|---|
-| Entrega no mesmo domínio, CSP | R1.1, R15.2 | Caddy `file_server` + proxy de `/api/*`, `/health/*`, `/.well-known/*` | O Caddyfile atual só faz `reverse_proxy api:8000`; `file_server` e CSP entram na T1 | não iniciado | G2/G3 | API (infra) |
+| Entrega no mesmo domínio, CSP | R1.1, R15.2 | Caddy `file_server` + proxy de `/api/*`, `/health/*`, `/.well-known/*` | proxy e roteamento configurados (T1) | **implementado (T1, exceção do dono; `tests/e2e/test_frontend_entrega.py`, 5 aprovados)**; `index.html` mínimo | — | API (infra) |
 | Aparência, tema, responsivo, acessibilidade | R1.2 a R1.5 | — | — | protótipo | G2/G3 | API |
 | Carregando, vazio, erro | R1.6 | `application/problem+json` (`detail`, `errors`) | existe | não iniciado | G2/G3 | API |
 | Login | R2.1, R2.7, R2.11 | `POST /auth/login` | existe (`mfa_required`, `mfa_enrollment_required`, `mfa_token`; `access_token` só com `MFA_OBRIGATORIO=false`) | protótipo com usuários fixos (sai) | G2/G3 | API |

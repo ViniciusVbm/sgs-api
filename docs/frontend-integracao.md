@@ -5,7 +5,11 @@
   - Os requisitos foram aprovados por Vinicius em 09/11/2026. O design e as tarefas estão em Rascunho, aguardando o G2 e o G3.
   - Pelo ADR-0010 (Proposto), o front fica neste repositório, em `frontend/app/`, servido pelo Caddy no mesmo domínio da API.
   - O protótipo de referência é `frontend/prototipo/Prototipo_SGS_Recife_v2.html` (25/09/2026, 145 KB). Ele fica **fora do Git**, e cópias também existem nas máquinas dos integrantes.
-  - **Ainda não há código de interface**: nenhuma tarefa da 012 pode começar antes do G2 e do G3 (`AGENTS.md`, regra 1).
+  - **Entrega pronta (T1, 10/11/2026, por exceção pontual do dono):** o Caddy serve `frontend/app/` em `https://localhost/`, com CSP, e mantém `/api/*`, `/health/*` e `/.well-known/*` na API. Por enquanto é só um `index.html` mínimo, que diz que a interface está em implantação.
+    - **Rodar:** `docker compose -f docker/compose.yml up -d`.
+    - **Com 80 e 443 ocupadas:** `SGS_HTTP_PORT=18080 SGS_HTTPS_PORT=18443 docker compose -f docker/compose.yml up -d` e abrir `https://localhost:18443/`.
+    - **Teste:** `uv run pytest tests/e2e/test_frontend_entrega.py -m slow`.
+  - **As telas (T2 em diante)** só começam depois do G2 e do G3 (`AGENTS.md`, regra 1).
 - **Como o protótipo funciona:** é uma página única que **guarda os dados no `localStorage`** e não chama nenhuma API. Integrá-lo é trocar esse armazenamento por chamadas à API.
 - **Divergências:** as da seção 3 estão ligadas às decisões da spec 012 (DF1 a DF15 e as decisões e premissas do Grupo 01, em `specs/012-frontend/requirements.md` § Decisões). A matriz completa de tela, endpoint e estado está em `specs/012-frontend/design.md` § Matriz de integração.
 
