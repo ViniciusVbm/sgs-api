@@ -9,7 +9,15 @@
     - **Rodar:** `docker compose -f docker/compose.yml up -d`.
     - **Com 80 e 443 ocupadas:** `SGS_HTTP_PORT=18080 SGS_HTTPS_PORT=18443 docker compose -f docker/compose.yml up -d` e abrir `https://localhost:18443/`.
     - **Teste:** `uv run pytest tests/e2e/test_frontend_entrega.py -m slow`.
-  - **As telas (T2 em diante)** só começam depois do G2 e do G3 (`AGENTS.md`, regra 1).
+  - **Desde 10/11/2026, com o G2 e o G3 aprovados:**
+    - login com 2FA (cadastro com chave e URI em texto), sessão por refresh e saída (T4);
+    - menu e telas por permissão dos 7 papéis, com "sem acesso" (T5);
+    - aparência, fonte e ícones locais do protótipo (T2);
+    - base de escape, modal, avisos e estados de carregando e de erro (T3).
+    
+    As demais telas aparecem como "Tela em implantação", sem dados, até as tarefas T6 a T11. As funcionalidades sem backend aparecem como "em desenvolvimento" (R13.1).
+    - **Testes do front:** `uv run pytest tests/e2e_front -m slow` (Playwright em Python; usa o Chromium do Playwright ou o Chrome do sistema) e `tests/architecture/test_frontend_estatico.py`, que roda no `make check`.
+    - **Com portas alternativas,** a origem precisa estar em `CORS_ORIGINS` para o refresh: `SGS_CORS_ORIGINS=https://localhost:18443`, junto com `SGS_HTTPS_PORT=18443`.
 - **Como o protótipo funciona:** é uma página única que **guarda os dados no `localStorage`** e não chama nenhuma API. Integrá-lo é trocar esse armazenamento por chamadas à API.
 - **Divergências:** as da seção 3 estão ligadas às decisões da spec 012 (DF1 a DF15 e as decisões e premissas do Grupo 01, em `specs/012-frontend/requirements.md` § Decisões). A matriz completa de tela, endpoint e estado está em `specs/012-frontend/design.md` § Matriz de integração.
 

@@ -1,6 +1,6 @@
 # 012 · Frontend SGS Recife · Tarefas
 
-- Status: Rascunho (revisão 4, 10/11/2026: T1 a T4 detalhadas com arquivos e contratos, pendências PF-01 a PF-07 ligadas às tarefas bloqueadas, R5.5 proposto na T21; revisão 3: ajustes do G3; preparado para o G3 do dono, **só depois do G2**)
+- Status: **Aprovado (Vinicius, 10/11/2026)**, depois do G2 aprovado no mesmo dia (design § Registro de aprovação). Revisão 5 (10/11/2026): consolidação do G3 com a infraestrutura comum dos E2E e a referência visual. Revisão 4: T1 a T4 detalhadas, PF-01 a PF-07 ligadas às tarefas bloqueadas, R5.5 proposto na T21.
 - Depende de:
   - 002, 003, 006, 008, 009 (APIs existentes, conferidas em `novo/main` `9c37029`);
   - ADR-0010 e ADR-0011 (Propostos).
@@ -10,6 +10,14 @@
   3. este arquivo aprovado pelo dono (G3).
 
   **Este arquivo não pode ser aprovado antes do design**, e nenhuma tarefa é implementada antes dos três estarem `Aprovado` (`AGENTS.md`, regra 1).
+
+**Consolidação do G3 (10/11/2026):**
+- as tarefas conferem com o design aprovado (rotas, perfis, matriz de integração);
+- os 57 requisitos aprovados e o R5.5 proposto têm tarefa;
+- a T1 está concluída por exceção do dono;
+- as T2 a T14 não dependem de PF-01 a PF-07 nem de backend novo;
+- as T15 a T23 continuam bloqueadas pelas dependências registradas;
+- nenhuma pendência impede o escopo mínimo.
 
 Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protótipo **movido** sem alteração) e testável, e cobre os requisitos citados. Só ganha `[x]` quando o teste citado passa no `make check` ou no CI (o job `quality` roda nos PRs; os E2E são `slow`).
 
@@ -34,14 +42,30 @@ Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protó
     - **`make check`:** 881 aprovados, 3 pulados.
     - **Arquivos:** `docker/caddy/Caddyfile`, `docker/compose.yml` (portas `SGS_HTTP_PORT` e `SGS_HTTPS_PORT`, com padrão 80 e 443, e o volume do front), `frontend/app/index.html`.
     - O `index.html` é um marcador honesto ("interface em implantação"), sem funcionalidade simulada; as telas vêm da T2 em diante, depois do G2 e do G3.
-- [ ] T2. Mover CSS, ícones e fonte local do protótipo para `assets/`, sem mudança visual
+- [x] T2. Mover CSS, ícones e fonte local do protótipo para `assets/`, sem mudança visual
   - Requisitos: R1.2, R1.3, R1.5
   - Arquivos:
     - `frontend/app/assets/css/app.css`: o `<style>` do protótipo;
     - `frontend/app/assets/icons.svg`: os `<symbol>`;
     - `frontend/app/assets/fonts/`: Atkinson Hyperlegible, SIL OFL, com a licença junto.
   - Dependência: a T1; e o Playwright no grupo `dev` do `pyproject.toml` (ADR-0011, Proposto), com o navegador instalado por `playwright install chromium`.
-  - Pronto quando: `tests/e2e_front/test_aparencia.py` passa (capturas em 1280, 860 e 390 px comparadas à referência; nenhuma requisição externa).
+  - Infraestrutura comum dos E2E do front (`tests/e2e_front/conftest.py`), usada da T2 em diante:
+    - o mesmo compose da T1, num projeto próprio com portas alternativas, mais o `sgs-admin seed demo` com `SGS_SEED_SENHA` gerada no teste;
+    - **Playwright em Python** (ADR-0011): usa o navegador instalado por `playwright install chromium` ou, na falta dele, o Chrome do sistema (`channel="chrome"`);
+    - uma sessão por papel, reaproveitada por cookie de refresh, porque o login tem limite de 10 por minuto por IP; a fixture espera a janela quando a API responde 429.
+  - **Referência visual:** o próprio protótipo, aberto pelo Playwright com as requisições ao Google Fonts redirecionadas para a fonte local (o protótipo não muda). Compara a tela de login, que existe nos dois, sem dados de negócio.
+  - Pronto quando: `tests/e2e_front/test_aparencia.py` passa:
+    - capturas da tela de login em 1280, 860 e 390 px, com diferença de pixels abaixo do limiar contra o protótipo;
+    - nenhuma requisição a outro domínio.
+  - Concluída em 10/11/2026.
+    - **Prova:** `tests/e2e_front/test_aparencia.py` (4 aprovados).
+    - **Elementos comparados:** símbolo, nome, título, texto, fluxo e botão principal. Os dois lados precisam ter **caixa e estilos calculados iguais**. A diferença de pixels (≤ 1%) é medida quando a posição fracionária coincide, porque frações diferentes só mudam o serrilhado do texto.
+    - **Fora da comparação:** as faixas decorativas do painel acompanham a altura da página, que é menor sem as contas de demonstração (R2.10).
+    - **Fonte:** local, conferida no navegador.
+    - **Requisições:** nenhuma a outro domínio.
+    - **Sensibilidade:** tirar o `fonts.css` derruba as 4 larguras.
+    - **Referência:** `tests/e2e_front/referencia/`, gerada do protótipo com `SGS_ATUALIZAR_REFERENCIA=1`.
+    - **Arquivos:** `frontend/app/assets/css/{app,fonts}.css` (CSS do protótipo movido sem alteração), `assets/icons.svg`, `assets/fonts/` (Atkinson Hyperlegible, SIL OFL, com `OFL.txt`).
 - [ ] T3. `html.js` (`esc`, `html` com escape), `ui/` (modal, toast, format, form, **estados de carregando, vazio e erro**) e `router.js`, a partir do protótipo
   - Requisitos: R15.1, R15.4, R1.5, **R1.6**
   - Arquivos: `frontend/app/js/html.js`, `frontend/app/js/router.js` (hash router), `frontend/app/js/ui/{modal,toast,format,form,estado}.js`.
@@ -50,7 +74,16 @@ Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protó
   - Pronto quando:
     - `tests/architecture/test_frontend_estatico.py` passa (sem `eval`/`new Function`; interpolações escapadas);
     - `tests/e2e_front/test_estados.py` passa (carregando enquanto a API não responde; vazio sem itens; erro com o `detail` da API, incluindo o 5xx com `X-Request-ID`).
-- [ ] T4. `api.js` e `auth.js`:
+  - **Andamento (10/11/2026), ainda aberta:**
+    - **Feito:**
+      - `html.js` (`esc`, `html`, `raw`, `montar`, que recusa HTML sem escape);
+      - `ui/{icone,tema,toast,modal,estado,format}.js`, com o modal prendendo e devolvendo o foco;
+      - `router.js`.
+    - **Provado:**
+      - `test_frontend_estatico.py`: 83 aprovados no `make check`; 4 mutações detectadas (innerHTML, handler inline, localStorage, domínio externo);
+      - `test_estados.py`: carregando e erro, 2 aprovados.
+    - **Falta:** o estado **vazio**, que precisa de uma tela com lista. É provado na T7.
+- [x] T4. `api.js` e `auth.js`:
   - login (campo "Usuário", DF7);
   - cadastro do 2FA com chave e URI em texto (DF6) e verificação;
   - **login direto quando a API devolve `access_token` (`MFA_OBRIGATORIO=false`, dev)**;
@@ -69,19 +102,41 @@ Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protó
   - Pronto quando:
     - `tests/e2e_front/test_autenticacao.py` passa, incluindo um caso com `MFA_OBRIGATORIO=false`;
     - `test_frontend_estatico.py` não acha segredos de demonstração.
-- [ ] T5. `perms.js` e menu a partir do `/me` (`papeis`, `permissoes` com escopo); view "sem acesso"; telas dos 7 papéis só com as permissões existentes (DF8, tabela do design); lista do distrito aberta no próprio DS (R3.5, só navegação)
+  - Concluída em 10/11/2026.
+    - **Prova:** `tests/e2e_front/test_autenticacao.py`, 8 aprovados, contra a API real do compose com `seed demo`:
+      - 2FA no primeiro acesso, com chave e URI em texto e sem QR Code;
+      - mensagem da API no 401 e no 429;
+      - login direto em dev (R2.11, com a resposta da API simulada no teste);
+      - recarregar mantém a sessão pelo refresh;
+      - 401 → refresh → repetir uma vez;
+      - "esqueci a senha";
+      - sair encerra a sessão na API;
+      - `localStorage` só com `sgs-theme`.
+    - **Sensibilidade:** tirar a repetição depois do refresh derruba o teste do R2.5.
+    - **Configuração:** o anti-CSRF do refresh exige a origem em `CORS_ORIGINS` (R2.4). O compose aceita `SGS_CORS_ORIGINS`, com padrão inalterado.
+- [x] T5. `perms.js` e menu a partir do `/me` (`papeis`, `permissoes` com escopo); view "sem acesso"; telas dos 7 papéis só com as permissões existentes (DF8, tabela do design); lista do distrito aberta no próprio DS (R3.5, só navegação)
   - Requisitos: R3.1 a R3.5
   - Pronto quando: `tests/e2e_front/test_perfis.py` passa:
     - os 7 papéis do seed, cada um com o menu da tabela do design;
     - a rota de outro perfil mostra "sem acesso" e a API dá 403;
     - nenhuma permissão nova é exigida;
     - os 3 perfis de referência (Gestor de Dados, Técnico Distrital do DS IV e Gestor de Unidade de um CAPS II) são cobertos explicitamente.
+  - Concluída em 10/11/2026.
+    - **Prova:** `tests/e2e_front/test_perfis.py`, 18 aprovados:
+      - menu dos 7 papéis igual à tabela do design, com os itens "em desenvolvimento" marcados;
+      - início de cada papel, e o Gestor de Unidade na própria ficha;
+      - rota de outro perfil mostra "sem acesso" e a API responde 403;
+      - o Técnico Distrital não tem formulário de escrita.
+    - **Sensibilidade:** trocar a permissão de um item do menu derruba 5 casos.
+    - **Ressalvas:**
+      - a lista do distrito aberta no próprio DS (R3.5) depende da tela da T7 e é provada lá;
+      - as telas de Início, lista, ficha, qualidade, histórico, cadeia, papéis e cadastro mostram "Tela em implantação", sem dados, até as tarefas T6 a T11 e o complemento de papéis.
 - [ ] T6. Início com `/dashboard/resumo`
   - Requisitos: R4.1
   - Pronto quando: `tests/e2e_front/test_inicio.py` passa (os números da tela batem com a resposta da API para dois papéis com escopos diferentes; sem `dashboard:read`, o início é a primeira tela do menu).
 - [ ] T7. Lista de unidades: busca, filtros existentes, ordenação, paginação, filtros na URL
   - Requisitos: R5.1, R5.2
-  - Pronto quando: `tests/e2e_front/test_lista.py` passa (inclui estado vazio e página além da última).
+  - Pronto quando: `tests/e2e_front/test_lista.py` passa (inclui o estado vazio do R1.6, que fecha a T3, a página além da última e a lista do Técnico Distrital aberta no próprio DS, do R3.5).
 - [ ] T8. Ficha: dados, histórico, verificações de qualidade só para exibição
   - Requisitos: R6.1 a R6.3
   - Pronto quando: `tests/e2e_front/test_ficha.py` passa:

@@ -75,7 +75,8 @@ services:
       CRYPTO_KEYS_FILE: /run/secrets/crypto-keys.json
       CRYPTO_ACTIVE_KEY: "1"
       # O front em HTML, quando servido pelo proxy no mesmo domínio (anti-CSRF do refresh).
-      CORS_ORIGINS: https://localhost,https://localhost:3000
+      # Origens aceitas no refresh (anti-CSRF, 002/R3.6); trocável junto com as portas do proxy.
+      CORS_ORIGINS: ${SGS_CORS_ORIGINS:-https://localhost,https://localhost:3000}
     volumes:
       # Só o certificado da CA. O usuário da API tem o mesmo uid do postgres (999); por isso a
       # chave do servidor não pode ser montada aqui.

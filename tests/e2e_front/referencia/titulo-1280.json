@@ -1,0 +1,22 @@
+{
+ "largura": 365.109375,
+ "altura": 132,
+ "fx": 0,
+ "fy": 0.71875,
+ "estilo": {
+  "font-family": "\"Atkinson Hyperlegible\", \"Segoe UI\", system-ui, -apple-system, sans-serif",
+  "font-size": "40px",
+  "font-weight": "700",
+  "font-style": "normal",
+  "line-height": "44px",
+  "color": "rgb(255, 255, 255)",
+  "background-color": "rgba(0, 0, 0, 0)",
+  "border-radius": "0px",
+  "border-top-width": "0px",
+  "border-top-color": "rgb(255, 255, 255)",
+  "padding-top": "0px",
+  "padding-left": "0px",
+  "letter-spacing": "-0.4px",
+  "text-transform": "none"
+ }
+}
