@@ -13,6 +13,7 @@ Nenhum código destas specs pode ser escrito antes da aprovação (regra 1 do `A
 | 004 · LDAP e OIDC | Aprovar os três arquivos e aceitar o ADR-0003 | Requisito obrigatório da disciplina; mapeamento de grupos para papéis (003/T8) |
 | 005 · Exportação para S3 | Aprovar os três arquivos, aceitar o ADR-0005 e incluir design e tarefa da R5 (assinatura digital), hoje ausentes | Requisito obrigatório da disciplina; objetivo de assinatura digital da disciplina de Criptografia |
 | 010 · Dados de demonstração | Aprovar a correção do design do conversor (D010-6) | Nada até a planilha chegar |
+| 012 · Frontend | Requisitos aprovados (Vinicius, 09/11/2026); falta aprovar a emenda documental 1 (10/11/2026). G2 do design: dono + Igor Fugagnoli (principal, **disponibilidade a confirmar**) ou Erick Sanches (suplente). Depois, G3 das tarefas pelo dono | Toda a implementação do front (`AGENTS.md`, regra 1) |
 
 ## 2. Cliente (Secretaria de Saúde)
 | Pergunta | Para quê | Spec |
@@ -23,14 +24,19 @@ Nenhum código destas specs pode ser escrito antes da aprovação (regra 1 do `A
 | Algum atributo do diretório indica o distrito ou a unidade do usuário? | Dar o escopo de acesso automaticamente | 004 |
 | Quais campos são obrigatórios além dos atuais? (o campo "Gerente" foi citado) | Definir as regras de validação | 007 |
 | Alguma unidade fica fora da faixa de CEP de Recife (50000-000 a 52999-999)? | Validar o CEP sem recusar unidades reais | 007 |
+| **Ratificar as premissas adotadas pelo Grupo 01 em 10/11/2026** (PF-07; pendências derivadas PF-01 a PF-05, com responsável, prazo e solução provisória em `specs/012-frontend/requirements.md` § Pendências formais) (sem retorno do cliente até essa data): acesso e leitura no escopo do perfil (Grupo-DF2), permissões por perfil (Grupo-DF13) e campos de edição direta × sensíveis (Grupo-DF14), com as perguntas P1 a P4 | Fluxo de solicitações, leitura por escopo e permissões de exportação | 012 (§ Decisões), 003, spec de solicitações |
 
 ## 3. Grupo
 - Levar ao professor a questão das 30 tuplas nos domínios fechados: distritos (8), papéis (7), áreas técnicas (4) e tipos. Justificativa em [`docs/banco/06-trinta-tuplas.md`](../banco/06-trinta-tuplas.md).
 - Spec 005: confirmar se haverá conta AWS para a demonstração (recomendação: SeaweedFS no compose) e o prazo de guarda dos relatórios (recomendação: 90 dias).
-- Integração do protótipo: decidir o conceito de equipamento (inventário ou equipamento de saúde), a lista de situações da unidade, endereço separado ou não, horário editável, e-mail da unidade e login por e-mail ou por `username`. Detalhes em [`docs/frontend-integracao.md`](../frontend-integracao.md) § 3 e 5. O que mudar a API vira emenda na spec 006 (dono: Rafael).
+- **Integração do protótipo** (decisões numeradas na spec 012, § Decisões):
+  - **já decididas:** login por `username` com o rótulo "Usuário" (DF7), 2FA em texto (DF6), telas para os 7 papéis (DF8), exportação pelo backend (DF10, Grupo-DF15);
+  - **pendentes:** conceito de equipamento (DF1), lista de situações (DF3), endereço separado, horário editável e e-mail da unidade (emenda da 006), colunas do CSV e layout do PDF (P5).
+
+  Detalhes em [`docs/frontend-integracao.md`](../frontend-integracao.md) § 3 e 5. O que mudar a API vira emenda na spec 006. **Responsável pela 006: Hélder** (decisão do Grupo 01, 10/11/2026; a formalização na spec parte da `feat/003-interface-dashboard` e do ADR-0009).
 
 ## 4. Infraestrutura e outras equipes
 | Pendência | Situação | Quem resolve |
 |---|---|---|
-| GitHub Actions bloqueado | A `main` exige 2 verificações de CI, que não rodam; o `make check` local substitui o CI (ADR-0008), e o merge é feito pelo administrador | Vinicius |
-| Integração do front | O protótipo HTML existe fora do repositório; as rotas de cada tela estão em [`docs/frontend-integracao.md`](../frontend-integracao.md) | Equipe do front |
+| GitHub Actions | **Atualização de 10/11/2026:** as verificações `quality` e `compose-smoke` rodaram e passaram nos PRs #1, #2 e #3 (`gh pr checks`), então o bloqueio descrito antes não se confirma mais. O merge continua sendo feito pelo administrador (ADR-0008) | Vinicius |
+| Integração do front | Especificada na spec 012 (requisitos aprovados; design e tarefas aguardando o G2 e o G3). O protótipo fica fora do Git, em `frontend/prototipo/`. A matriz de tela, endpoint e estado está em `specs/012-frontend/design.md` | Vinicius (dono da 012); Hélder (autor do design, UX) |
