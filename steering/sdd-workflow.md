@@ -35,6 +35,17 @@ A exceção é pessoal: não passa a quem assumir essas specs depois. Desde a tr
 ## Exceção pontual: regularização de 09/11/2026 (Vinicius)
 Os designs revistos na regularização das specs 008, 009, 010 e 011 (itens V1 a V5 de `docs/relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md`) foram aprovados só pelo dono, sem o segundo integrante. Vale só para essa regularização e já se esgotou. A regra geral da tabela (dono + 1 integrante no design) não mudou.
 
+## Exceção pontual: spec 012, tarefa T1 (Vinicius, 10/11/2026)
+- **O que permite:** implementar só a **T1** da spec 012 antes do G2 (design) e do G3 (tarefas). A T1 é a entrega do front pelo Caddy: `Caddyfile`, volume no compose, `index.html` mínimo e o teste de entrega.
+- **Quem decidiu:** o dono da spec, Vinicius, em 10/11/2026, na sessão de trabalho registrada no PR #4.
+- **Motivo:** a T1 é infraestrutura e não depende das decisões de UX do design, e a revisão independente do design (Igor Fugagnoli, suplente Erick Sanches) ainda não aconteceu.
+- **Condições:**
+  - o G2 continua obrigatório e é revisado em paralelo no PR #4;
+  - o PR **não** é integrado à `main` antes do registro do G2;
+  - se o revisor pedir mudança que afete a T1, ela é refeita;
+  - as T2 a T23 seguem a regra geral (requisitos, design e tarefas `Aprovado`).
+- **Alcance:** vale só para a T1 da 012 e não se estende a outras tarefas nem a outras specs.
+
 ## Dono da spec: atribuição e transferência
 - O dono fica numa linha do cabeçalho do `requirements.md`: `- Dono humano: <nome> (<login>)`. Design e tarefas seguem o dono dos requisitos.
 - Spec sem dono registrado fica com o responsável pelo projeto até alguém assumir. Responsável pelo projeto desde 09/11/2026: Vinicius (ViniciusVbm).
