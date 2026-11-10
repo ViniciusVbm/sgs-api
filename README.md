@@ -10,7 +10,7 @@ Documentação, specs e steering vêm primeiro; o código segue as specs aprovad
 - trilha de auditoria imutável e verificável, mais o log do banco por trigger;
 - dashboard com as consultas da disciplina de Banco de Dados (anti join, full outer join, subconsultas, views, procedures, triggers) e indicadores.
 
-Estado completo: [docs/RESUMO_STATUS_PROJETO.md](docs/RESUMO_STATUS_PROJETO.md) · relatório técnico: [docs/RELATORIO_VALIDACAO_FINAL.md](docs/RELATORIO_VALIDACAO_FINAL.md) · matriz de requisitos: [docs/REQUISITOS_EVIDENCIAS.md](docs/REQUISITOS_EVIDENCIAS.md).
+Estado atual (10/11/2026): [relatório geral de andamento](docs/RELATORIO_GERAL_ANDAMENTO_SGS_RECIFE.md). Registro de 09/11: [docs/RESUMO_STATUS_PROJETO.md](docs/RESUMO_STATUS_PROJETO.md) · relatório técnico: [docs/RELATORIO_VALIDACAO_FINAL.md](docs/RELATORIO_VALIDACAO_FINAL.md) · matriz de requisitos: [docs/REQUISITOS_EVIDENCIAS.md](docs/REQUISITOS_EVIDENCIAS.md).
 
 ## Subir o ambiente (Docker)
 Pré-requisito: Docker 26 ou mais novo, com Compose v2 (o compose monta partes de um volume com `subpath`). O compose sobe a API, o PostgreSQL 17 com TLS e um proxy TLS (Caddy). LDAP, Keycloak e S3 local entram nas specs 004 e 005.
@@ -36,7 +36,7 @@ curl -k https://localhost/health/ready      # {"status":"ok"}
   curl --cacert secrets/caddy-root.crt https://localhost/health/ready
   ```
   No Windows, o `curl.exe` (Schannel) precisa também de `--ssl-no-revoke`, porque a CA local não publica lista de revogação.
-- Documentação interativa (só em `dev` e `test`): https://localhost/docs.
+- Documentação interativa (só em `dev` e `test`): hoje **não** abre pelo proxy, porque desde a spec 012 (T1) o `/docs` cai no front. Use o contorno do [guia de execução](docs/GUIA_EXECUCAO_LOCAL_SGS_RECIFE.md) § 1.6 ou o contrato [contracts/openapi.yaml](contracts/openapi.yaml). Achado A1 do [relatório de implementação](docs/RELATORIO_IMPLEMENTACAO_SGS_RECIFE.md).
 - Parar: `docker compose -f docker/compose.yml down` (com `-v`, apaga também o banco).
 
 ## Desenvolvimento
@@ -78,17 +78,20 @@ O seed é idempotente e é recusado em prod. Detalhes em [docs/instalacao.md](do
 ## Comece por aqui
 | Documento | Para quê |
 |---|---|
+| **Relatório geral de andamento:** [Markdown](docs/RELATORIO_GERAL_ANDAMENTO_SGS_RECIFE.md) · [PDF](docs/RELATORIO_GERAL_ANDAMENTO_SGS_RECIFE.pdf) | **Comece por este.** Histórico, estado atual, entregas, decisões, pendências e próximos passos |
+| **Guia de execução, uso e testes:** [Markdown](docs/GUIA_EXECUCAO_LOCAL_SGS_RECIFE.md) · [PDF](docs/GUIA_EXECUCAO_LOCAL_SGS_RECIFE.pdf) | Caminho rápido para subir o sistema, usuários de demonstração e 2FA, testes manuais e automatizados, problemas comuns, roteiro de demonstração |
+| **Relatório de implementação:** [Markdown](docs/RELATORIO_IMPLEMENTACAO_SGS_RECIFE.md) · [PDF](docs/RELATORIO_IMPLEMENTACAO_SGS_RECIFE.pdf) | O que está implementado (backend e front), arquitetura, perfis, tarefas, testes e problemas conhecidos |
 | [docs/instalacao.md](docs/instalacao.md) | Instalação, execução, variáveis de ambiente, Docker e testes |
 | [docs/api/endpoints.md](docs/api/endpoints.md) · [docs/api/autenticacao.md](docs/api/autenticacao.md) | Os 55 endpoints com a permissão de cada um; fluxo de login para o front |
 | [docs/banco/](docs/banco/) | Disciplina de Banco de Dados: minimundo, modelos, dicionário, objetos, 30 tuplas, prova dos índices |
 | [docs/governanca/](docs/governanca/) | Fornecedores, matriz e registro de riscos, ISO 38500, COBIT APO10, LGPD |
-| [docs/frontend-integracao.md](docs/frontend-integracao.md) | Como o front em HTML usa a API |
+| [docs/frontend-integracao.md](docs/frontend-integracao.md) | Como o front (`frontend/app`, spec 012) usa a API |
 | [docs/integration-audit/](docs/integration-audit/) | Auditoria das 15 branches e plano de consolidação |
 | [docs/research/01-pesquisa-stack-backend.md](docs/research/01-pesquisa-stack-backend.md) | Pesquisa da stack: FastAPI, auth, RBAC, LDAP, OIDC, S3, ferramentas |
 | [docs/architecture/arquitetura-conceitual.md](docs/architecture/arquitetura-conceitual.md) | Papéis, recursos, matriz de permissões, componentes, fluxos, rotas |
 | [docs/architecture/modelo-dados.md](docs/architecture/modelo-dados.md) | Tabelas e relacionamentos |
-| [docs/adr/](docs/adr/) | Decisões arquiteturais (ADR-0001 a 0009) |
-| [specs/](specs/) | Specs SDD 001 a 011 (requisitos EARS, design, tarefas), rastreabilidade e calendário |
+| [docs/adr/](docs/adr/) | Decisões arquiteturais (ADR-0001 a 0011) |
+| [specs/](specs/) | Specs SDD 001 a 012 (requisitos EARS, design, tarefas), rastreabilidade e calendário |
 | [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md), [steering/](steering/) | Contexto e regras para agentes de código |
 | [.claude/commands/](.claude/commands/) | Comandos do fluxo SDD no Claude Code |
 | [.github/](.github/) | CI e template de PR |
