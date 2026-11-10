@@ -1,6 +1,6 @@
 # Issue tracker: GitHub
 
-As issues deste repo ficam no GitHub Issues de `rafareloM/sgs-api`. Use o `gh` CLI para todas as operações. Títulos, corpos e comentários em português.
+As issues deste repo ficam no GitHub Issues de `ViniciusVbm/sgs-api` (repositório oficial desde a publicação de 09/11/2026). Use o `gh` CLI para todas as operações. Títulos, corpos e comentários em português.
 
 ## Relação com o fluxo SDD
 

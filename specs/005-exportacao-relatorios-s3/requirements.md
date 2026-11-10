@@ -2,6 +2,7 @@
 
 - Status: Rascunho
 - Rastreia: RF-07 (parcial), RNF-05, RS-03, RS-04, RS-05, requisito obrigatório "exportação de relatórios para armazenamento em nuvem com mecanismos de autenticação avançados", objetivo "assinaturas digitais e certificados" da disciplina de Criptografia (R5)
+- Dono humano: Vinicius (ViniciusVbm), como responsável pelo projeto: a spec não tinha dono registrado (`steering/sdd-workflow.md` § Dono da spec). Linha registrada na revisão de 09/11/2026.
 
 ## Contexto
 Relatórios avançados estão fora do MVP (Requisitos Esperados §2.2). Esta spec entrega o mínimo que cumpre o requisito obrigatório: dois relatórios simples exportados para S3 com credenciais temporárias, criptografia e download controlado. Ver ADR-0005.
@@ -56,3 +57,6 @@ Proposto em 06/11/2026, a pedido do Rafael, para cobrir o objetivo "assinaturas 
 - A chave pública de relatórios é distribuída como certificado X.509 autoassinado da plataforma ou só como chave pública (JWK)? Certificado ICP-Brasil fica fora do alcance do projeto.
 - O grupo terá uma conta AWS para a demonstração (AWS Educate/Academy)? Se não, a demo usa SeaweedFS.
 - Por quanto tempo os relatórios ficam no bucket? (padrão: regra de ciclo de vida de 90 dias)
+- (revisão de 09/11/2026, agente; aguarda o dono) A R5 (assinatura digital, proposta em 06/11/2026) não tem design nem tarefa: o `design.md` e o `tasks.md` cobrem só R1 a R4. Falta decidir o algoritmo, onde a chave fica, a rota que publica as chaves públicas (R5.4) e a tarefa. Proposta: ECDSA P-256 (ES256), como os tokens, mas com chave própria em `secrets/` (R5.2), e chaves públicas em JWK numa rota pública; isso também responde a primeira pergunta acima com "JWK".
+- (revisão de 09/11/2026, agente; aguarda o dono) Recomendações para as perguntas acima, a confirmar pelo grupo: demonstração com SeaweedFS no compose, sem depender de conta AWS; ciclo de vida de 90 dias.
+- (revisão de 09/11/2026, agente; aguarda o dono) O ADR-0005 (exportação para S3), base desta spec, está `Proposto`. Convém aceitá-lo junto com a aprovação dos requisitos.

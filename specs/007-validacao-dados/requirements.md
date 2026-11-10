@@ -2,6 +2,7 @@
 
 - Status: Rascunho
 - Rastreia: RF-03, RS-08; critério 6.1 "dado inválido gera mensagem clara e não é gravado"; pilar Confiabilidade
+- Dono humano: Vinicius (ViniciusVbm), como responsável pelo projeto: a spec não tinha dono registrado (`steering/sdd-workflow.md` § Dono da spec). Linha registrada na revisão de 09/11/2026.
 
 ## Contexto
 A funcionalidade que mais diferencia a plataforma das planilhas (Requisitos Esperados §3.5). Combina regras fixas em código (formato) com regras de negócio configuráveis pelo Gestor de Dados, e mede a qualidade da base ("pendências").
@@ -35,3 +36,7 @@ A funcionalidade que mais diferencia a plataforma das planilhas (Requisitos Espe
 ## Perguntas em aberto
 - Quais campos o cliente considera obrigatórios além dos da spec 006? (o campo "Gerente" foi citado como problemático)
 - A faixa de CEP de Recife está correta para todas as unidades (algumas podem estar na região metropolitana)?
+- (revisão de 09/11/2026, agente; aguarda o dono) R1.3 pede validar e-mail, mas a unidade não tem campo de e-mail (spec 006). Opções: (a) tirar o e-mail da R1.3; (b) emenda na 006 criando o campo. Recomendação: (a), sem campo novo no MVP.
+- (revisão de 09/11/2026, agente; aguarda o dono) R1.3 pede coordenadas "dentro do município" sem dizer como. Opções: (a) retângulo envolvente de Recife, com os limites no design; (b) polígono do município (exato, exige dado geográfico e cálculo de ponto em polígono). Recomendação: (a).
+- (revisão de 09/11/2026, agente; aguarda o dono) R1.6 manda tirar a máscara do telefone, mas hoje ele é gravado com máscara (ex.: `(81) 3355-0000`) e o front exibe assim. Gravar só dígitos muda dados existentes e a exibição. Opções: (a) gravar só dígitos e formatar na saída; (b) aceitar com máscara e validar contando os dígitos. Recomendação: (b), sem migração de dados.
+- (revisão de 09/11/2026, agente; aguarda o dono) Unidades já cadastradas podem não passar nas regras novas (CEP fora da faixa, telefone com 9 dígitos). Opções: (a) bloquear qualquer gravação da unidade até corrigir; (b) bloquear só o campo enviado na requisição e tratar o legado como pendência na revalidação (R3.3). Recomendação: (b), para não travar edições que não tocam o campo.

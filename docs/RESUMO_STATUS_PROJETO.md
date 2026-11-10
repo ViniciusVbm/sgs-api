@@ -9,7 +9,7 @@
 ## 1. Situação final
 - **Base única:** a `main` local agora reúne tudo. A base é a `feat/011-integracao`, com o histórico preservado, mais a auditoria e todas as implementações desta consolidação.
 - **Da `feat/003-interface-dashboard` (Vinicius)**, reaproveitamos os dados das unidades, as 4 consultas da Etapa 3, o formato do resumo do dashboard e o desenho das rotas de equipamento, reescritos para o esquema e a segurança da 011. O código dela não foi mesclado.
-- **Nenhuma branch foi apagada** e **nada foi publicado** (sem push). Há backup completo: tags `arquivo/*` e o bundle.
+- **Nenhuma branch foi apagada.** Há backup completo: tags `arquivo/*` e o bundle. A `main` foi publicada depois em `ViniciusVbm/sgs-api`, que é o repositório oficial; as mudanças entram por PR (#1, regularização das specs; #2, 008/T6).
 - **Testes:** 888 casos, **885 aprovados**, 3 pulados de propósito, **0 falhas**.
 
 ## 2. O que foi implementado
@@ -54,7 +54,7 @@
 | Análise de segurança (`bandit`, `pip-audit`) | Sem achados |
 
 ## 6. Pendências e limitações
-- **Specs regularizadas:** as specs 008, 009 e 010 e as emendas da 011 foram implementadas antes do portão de aprovação, por decisão nossa, e aprovadas em 09/11/2026 pelo dono, Vinicius, que também assumiu a 003 ([relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md](relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md)). **A meta de desempenho do dashboard (009/R1.7) ainda não foi medida.**
+- **Specs regularizadas:** as specs 008, 009 e 010 e as emendas da 011 foram implementadas antes do portão de aprovação, por decisão nossa, e aprovadas em 09/11/2026 pelo dono, Vinicius, que também assumiu a 003 ([relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md](relatorios/REGULARIZACAO_GOVERNANCA_SPECS.md)). **A meta de desempenho do dashboard (009/R1.7) não tem teste formal (009/T3).** Medição exploratória de 09/11/2026, sem proxy e sem concorrência: `GET /dashboard/resumo` com 1.000 unidades teve p95 de 60 ms (3 mil eventos na trilha) e de 203 ms (100 mil eventos). O tempo cresce com a trilha; o cache (T2b) não parece necessário.
 - **CI:** o GitHub Actions segue bloqueado; os testes rodaram localmente.
 - **Proxy:** o ambiente completo com o proxy HTTPS não foi testado nesta máquina, porque as portas estavam ocupadas por outro ambiente, que preservamos. Banco, API, TLS e comandos foram testados num ambiente isolado.
 - **Rate limit:** o limite de login vale por processo da API.
@@ -63,7 +63,7 @@
 1. **Tarefas abertas das specs aprovadas:** 009/T2b e T3 (cache e desempenho), 010/T3 (conversor, quando o cliente enviar a planilha).
 2. **Grupo:** levar ao professor a decisão das 30 tuplas nos domínios fechados.
 3. **Front:** integrar o HTML seguindo `docs/frontend-integracao.md`.
-4. **Publicação:** criar o repositório novo no GitHub e enviar a `main` (os comandos estão no fim do relatório técnico). Isso depende de autorização.
-5. **Depois das entregas:** specs 004 (LDAP/OIDC), 005 (S3) e 007 (validação).
+4. **Aprovação das specs 004, 005 e 007:** revisadas em 09/11/2026 com as perguntas para o dono e o cliente; ver [relatorios/PENDENCIAS_EXTERNAS.md](relatorios/PENDENCIAS_EXTERNAS.md).
+5. **Depois da aprovação:** specs 004 (LDAP/OIDC), 005 (S3) e 007 (validação).
 
-> ⚠️ Push, publicação e exclusão de branches **ainda dependem de autorização**. Os secrets de desenvolvimento ficam fora do Git.
+> ⚠️ Exclusão de branches **depende de autorização**. Os secrets de desenvolvimento ficam fora do Git.
