@@ -382,3 +382,126 @@ def test_sem_rolagem_horizontal(gestor: tuple[Page, str], largura: int) -> None:
         pagina.goto(f"/#/historico?aba={aba}")
         expect(pagina.locator("#h-corpo [data-ref=total]")).to_be_visible()
         assert pagina.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), aba
+
+
+# --- Spec 013, T14: detalhe do evento, resultado, horário e verificação com âncora
+
+
+def _abrir_trilha(pagina: Page) -> dict[str, Any]:
+    pagina.goto("/#/sem-acesso")
+    with pagina.expect_response("**/api/v1/auditoria/eventos?*") as lista:
+        pagina.goto("/#/historico")
+    dados: dict[str, Any] = lista.value.json()
+    return dados
+
+
+def _abrir_detalhe(pagina: Page, evento: int) -> dict[str, Any]:
+    with pagina.expect_response(f"**/api/v1/auditoria/eventos/{evento}") as resposta:
+        pagina.locator(f"[data-detalhe='{evento}']").click()
+    expect(pagina.locator("[role=dialog] [data-ref=detalhe-evento]")).to_be_visible()
+    dados: dict[str, Any] = resposta.value.json()
+    return dados
+
+
+def test_detalhe_do_evento_auditor(sessao_de: Sessao) -> None:
+    """013/R8.1, R8.2, R2.2: o Auditor abre o evento e vê o instante ISO, o resultado, o hash e a
+    origem como a API devolveu."""
+    pagina = sessao_de("AUDITOR")
+    [primeiro, *_] = _abrir_trilha(pagina)["itens"]
+
+    evento = _abrir_detalhe(pagina, primeiro["id"])
+
+    caixa = pagina.locator("[role=dialog]")
+    assert evento["origem_restrita"] is False
+    expect(caixa.locator("[data-ref=detalhe-evento]")).to_have_attribute(
+        "data-origem-restrita", "false"
+    )
+    expect(caixa.locator("[data-ref=instante]")).to_have_text(evento["quando"])
+    expect(caixa.locator("[data-ref=hash]")).to_have_text(evento["hash"])
+    expect(caixa.locator("[data-ref=ip]")).to_have_text(evento["ip"] or "não registrado")
+    expect(caixa.locator("[data-ref=restrito]")).to_have_count(0)
+
+
+def test_detalhe_restrito_gestor_dados(gestor: tuple[Page, str]) -> None:
+    """013/R8.2: para o Gestor de Dados, a API não manda IP, User-Agent nem sessão, e a tela diz
+    que são restritos ao Auditor."""
+    pagina, _ = gestor
+    [primeiro, *_] = _abrir_trilha(pagina)["itens"]
+
+    evento = _abrir_detalhe(pagina, primeiro["id"])
+
+    caixa = pagina.locator("[role=dialog]")
+    assert (evento["ip"], evento["user_agent"], evento["sessao_id"]) == (None, None, None)
+    assert evento["origem_restrita"] is True
+    for campo in ("ip", "user-agent", "sessao"):
+        expect(caixa.locator(f"[data-ref={campo}]")).to_have_text("restrito ao Auditor")
+
+
+def test_evento_antigo_mostra_nao_registrado(gestor: tuple[Page, str]) -> None:
+    """013/R1.5: um evento anterior à 013 vem sem tipo, origem e resultado; a tela mostra "não
+    registrado". O banco do E2E nasce já no head das migrações, então a resposta da lista é
+    alterada aqui para simular o evento antigo."""
+    pagina, _ = gestor
+
+    def antigo(rota: Route) -> None:
+        resposta = rota.fetch()
+        dados = resposta.json()
+        for item in dados["itens"][:1]:
+            item.update({"origem": None, "resultado": None, "resultado_categoria": None})
+            item["autor"]["tipo"] = None
+        rota.fulfill(response=resposta, json=dados)
+
+    pagina.route("**/api/v1/auditoria/eventos?*", antigo)
+    try:
+        _abrir_trilha(pagina)
+        chip = pagina.locator("tbody tr").first.locator("[data-ref=resultado]")
+        expect(chip).to_have_text("não registrado")
+        expect(chip).to_have_attribute("data-resultado", "")
+    finally:
+        pagina.unroute("**/api/v1/auditoria/eventos?*")
+
+
+def test_horario_com_segundos_e_fuso(gestor: tuple[Page, str]) -> None:
+    """013/R2.1: trilha e log do banco com segundos e o fuso explícito."""
+    pagina, _ = gestor
+    # O sinal do fuso é o MENOS (U+2212) do rótulo da tela (`ROTULO_DO_FUSO`, ui/format.js).
+    formato = re.compile(r"\d{2}/\d{2}/\d{4},? \d{2}:\d{2}:\d{2} \(UTC" + "\u2212" + r"03:00\)")
+    _abrir_trilha(pagina)
+    expect(pagina.locator("tbody tr").first.locator("td").first).to_have_text(formato)
+
+    with pagina.expect_response("**/api/v1/auditoria/banco?*"):
+        pagina.goto("/#/historico?aba=banco")
+    expect(pagina.locator("tbody tr").first.locator("td").first).to_have_text(formato)
+
+
+def test_cadeia_mostra_cabeca_cadeia_e_ancora(sessao_de: Sessao) -> None:
+    """013/R8.3: a verificação mostra o fim conferido com a cabeça; com a âncora (o primeiro
+    evento e o último verificado), a cadeia e a âncora conferem; com um hash errado, não."""
+    pagina = sessao_de("AUDITOR")
+    token = _token(pagina)
+    total = _api(pagina, token, "/auditoria/eventos?tamanho=1")["total"]
+    [primeiro] = _api(pagina, token, f"/auditoria/eventos?tamanho=1&pagina={total}")["itens"]
+    cadeia_id = _api(pagina, token, f"/auditoria/eventos/{primeiro['id']}")["hash"]
+    pagina.goto("/#/cadeia")
+
+    with pagina.expect_response("**/api/v1/auditoria/verificar") as sem_ancora:
+        pagina.click("#verificar")
+    r = sem_ancora.value.json()
+    expect(pagina.locator("[data-ref=cabeca-confere]")).to_have_attribute("data-valor", "true")
+    expect(pagina.locator("[data-ref=ancora-confere]")).to_have_attribute("data-valor", "null")
+    expect(pagina.locator("[data-ref=ultimo-id]")).to_have_text(str(r["ultimo_id"]))
+
+    pagina.fill("#ancora-cadeia", cadeia_id)
+    pagina.fill("#ancora-id", str(r["ultimo_id"]))
+    pagina.fill("#ancora-hash", r["hash_final"])
+    with pagina.expect_response("**/api/v1/auditoria/verificar"):
+        pagina.click("#verificar")
+    expect(pagina.locator("[data-ref=resultado-cadeia]")).to_have_attribute("data-integra", "true")
+    expect(pagina.locator("[data-ref=cadeia-confere]")).to_have_attribute("data-valor", "true")
+    expect(pagina.locator("[data-ref=ancora-confere]")).to_have_attribute("data-valor", "true")
+
+    pagina.fill("#ancora-hash", "0" * 64)
+    with pagina.expect_response("**/api/v1/auditoria/verificar"):
+        pagina.click("#verificar")
+    expect(pagina.locator("[data-ref=resultado-cadeia]")).to_have_attribute("data-integra", "false")
+    expect(pagina.locator("[data-ref=ancora-confere]")).to_have_attribute("data-valor", "false")
