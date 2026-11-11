@@ -34,4 +34,12 @@ RBAC com escopo, deny by default, permissões resolvidas no servidor a cada requ
 Não há dado de paciente no escopo. Dados de profissionais (gestor da unidade) são pessoais: exibir só a quem precisa, registrar acesso, não exportar além do necessário.
 
 ## Auditoria
-`audit_log` append-only (trigger), hash encadeado, retenção de 2 anos, eventos de acesso e de alteração.
+`audit_log` append-only (trigger), hash encadeado, retenção de 2 anos, eventos de acesso e de alteração. Desde a spec 013:
+- **Quem e de onde.** Todo evento tem tipo de ator (`usuario`, `anonimo`, `sistema`, `servico`, `seed`, `cli_admin`), origem e resultado (`success`, `failure`, `denied`).
+- **IP.** Vem de `request.client`, e a API só aceita `X-Forwarded-For` do IP fixo do Caddy (`/32`). `X-Real-IP` e `Forwarded` são ignorados. O IP é dado de rede e não basta para identificar a pessoa. Um proxy ou balanceador antes do Caddy fica fora do escopo.
+- **User-Agent.** É declaração do cliente: cortado em 200 caracteres e limpo de caracteres de controle.
+- **Falhas.** `operacao.falhou` registra só 409, 412, 428, 422 de domínio e 500 em rotas de escrita, numa transação própria e com metadata em lista fechada (sem valores enviados).
+- **Leitura auditada.** Só o detalhe de evento (`auditoria.evento_consultado`, tratado como evento de acesso) e a verificação (`auditoria.verificada`).
+- **Privacidade.** IP, User-Agent e sessão só aparecem no detalhe, para quem tem `auditoria:read_acessos`.
+- **Modelo de confiança.** Contra o dono e o superusuário, a garantia é só de detecção, até a última âncora guardada fora do banco (ADR-0012). Triggers `ENABLE ALWAYS` não impedem `DISABLE TRIGGER`, DETACH nem DROP feitos por eles.
+- **Retenção, backup e restauração.** ADR-0013, `docs/operacao/`.

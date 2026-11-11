@@ -1,6 +1,6 @@
 # Dicionário de dados
 
-Gerado do `metadata` do SQLAlchemy (`src/modules/*/infrastructure/tables.py`), que o teste `tests/integration/test_migracoes_sincronizadas.py` mantém igual às migrações (cadeia até a `0011_09`). Tipos do PostgreSQL 17.
+Gerado do `metadata` do SQLAlchemy (`src/modules/*/infrastructure/tables.py`), que o teste `tests/integration/test_migracoes_sincronizadas.py` mantém igual às migrações (cadeia até a `0013_04`). Tipos do PostgreSQL 17.
 
 ## `districts`
 
@@ -281,8 +281,18 @@ Gerado do `metadata` do SQLAlchemy (`src/modules/*/infrastructure/tables.py`), q
 | `metadata` | JSONB | não | '{}'::jsonb |  |
 | `prev_hash` | CHAR(64) | não |  |  |
 | `hash` | CHAR(64) | não |  |  |
+| `actor_type` | VARCHAR(20) | sim |  |  |
+| `origin` | VARCHAR(100) | sim |  |  |
+| `user_agent` | VARCHAR(200) | sim |  |  |
+| `result` | VARCHAR(10) | sim |  |  |
+| `result_reason` | VARCHAR(20) | sim |  |  |
 
 - Índice `ix_audit_log_entity` (entity_type, entity_id, audit_log.occurred_at DESC)
+- CHECK `ck_audit_log_actor_type_valido`: `actor_type IS NULL OR actor_type IN ('usuario', 'anonimo', 'sistema', 'servico', 'seed', 'cli_admin')`
+- CHECK `ck_audit_log_result_valido`: `result IS NULL OR result IN ('success', 'failure', 'denied')`
+- CHECK `ck_audit_log_result_reason_valido`: categoria da lista fixa, obrigatória em `failure` e `denied` e proibida em `success`
+- CHECK `ck_audit_log_usuario_tem_id`: `actor_type IS DISTINCT FROM 'usuario' OR actor_user_id IS NOT NULL`
+- CHECK `ck_audit_log_origem_obrigatoria` (**NOT VALID**, 0013_02): `actor_type IS NOT NULL AND result IS NOT NULL` nos eventos novos; as linhas anteriores à 013 ficam fora
 
 ## `audit_chain_head`
 
