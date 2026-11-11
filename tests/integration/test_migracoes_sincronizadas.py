@@ -5,6 +5,7 @@ Se divergirem, `make migrate` (autogenerate) proporia mudanças indevidas, até 
 
 from typing import Any
 
+import pytest
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from sqlalchemy import CheckConstraint, Connection, text
@@ -25,6 +26,11 @@ def _diferencas(conexao: Connection) -> list[Any]:
     return list(compare_metadata(contexto, metadata))
 
 
+# A reflexão do SQLAlchemy 2.1 repassa `dialect_options` de uma CHECK `NOT VALID` (a
+# `ck_audit_log_origem_obrigatoria`, 013/T7) como argumento do `CheckConstraint` e avisa que não
+# reconhece o dialeto "dialect" (`engine/reflection.py`, `_reflect_check_constraints`). Não é
+# divergência: o autogenerate não compara CHECKs, e o nome é conferido no teste seguinte.
+@pytest.mark.filterwarnings("ignore:Can't validate argument 'dialect_options'")
 async def test_migracoes_e_tabelas_do_codigo_nao_divergem(banco: BancoDeTeste) -> None:
     engine = motor(banco.url_dono)
     async with engine.connect() as conexao:

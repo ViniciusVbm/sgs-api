@@ -1,0 +1,127 @@
+{
+  "ensaio": "restauração da trilha em servidor PostgreSQL 17 novo (descartável)",
+  "spec": "013/T15 (R9.4, R9.6, R9.7)",
+  "data": "2026-11-11",
+  "executado_por": "proprietário do projeto (único responsável; P1, P6)",
+  "conferido_por": "o mesmo responsável (sem segregação de funções; risco aceito, P6)",
+  "passos": [
+    {
+      "instante": "2026-11-11T17:21:52+00:00",
+      "passo": "origem migrada (0011_09, eventos antigos, head, eventos novos) e âncora gerada"
+    },
+    {
+      "instante": "2026-11-11T17:21:52+00:00",
+      "passo": "pg_dumpall --roles-only --no-role-passwords; pg_dump -Fc; sha256sum do arquivo"
+    },
+    {
+      "instante": "2026-11-11T17:21:52+00:00",
+      "passo": "papéis recriados; createdb; pg_restore --exit-on-error --single-transaction"
+    },
+    {
+      "instante": "2026-11-11T17:21:52+00:00",
+      "passo": "catálogo conferido; cadeia, cabeça e âncora verificadas; INSERT sem tipo recusado"
+    }
+  ],
+  "backup": {
+    "formato": "pg_dump -Fc",
+    "sha256": "87442b22cb56781192abb285b7897bc8dc22673e5e09e36b6832ce0e7dea4dc4",
+    "bytes": 137832
+  },
+  "ancora_usada": {
+    "versao": 1,
+    "cadeia_id": "55bc230f76e4c6c163ef34fb75fb40841fdecf5f7ad6af1fe6e4231b8ed4ec57",
+    "id": 5,
+    "hash": "dfedf98865bbe0440634d23026d543075177759f34a3897227215fbdd7c962ea",
+    "total": 5
+  },
+  "verificacao_restaurado": {
+    "integra": true,
+    "verificados": 5,
+    "cabeca_confere": true,
+    "cadeia_confere": true,
+    "ancora_confere": true
+  },
+  "catalogo_restaurado": {
+    "constraint_not_valid": [
+      false
+    ],
+    "triggers": [
+      "audit_log:audit_log_bloqueia_truncate:A",
+      "audit_log:audit_log_bloqueia_update_delete:A",
+      "db_change_log:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log:trg_db_change_log_somente_insercao:A",
+      "db_change_log_default:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_default:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2026m11:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2026m11:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2026m12:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2026m12:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2027m01:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2027m01:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2027m02:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2027m02:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2027m03:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2027m03:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2027m04:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2027m04:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2027m05:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2027m05:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2027m06:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2027m06:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2027m07:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2027m07:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2027m08:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2027m08:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2027m09:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2027m09:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2027m10:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2027m10:trg_db_change_log_somente_insercao:A",
+      "db_change_log_y2027m11:trg_db_change_log_bloqueia_truncate:A",
+      "db_change_log_y2027m11:trg_db_change_log_somente_insercao:A",
+      "equipments:trg_registry_change_log:A",
+      "health_units:trg_registry_change_log:A",
+      "services:trg_registry_change_log:A"
+    ],
+    "funcoes_definer": [
+      "audit_log_somente_insercao:false:",
+      "db_change_log_somente_insercao:false:search_path=pg_catalog, public",
+      "sp_ensure_monthly_partitions:true:search_path=pg_catalog, public",
+      "trg_registry_change_log:true:search_path=pg_catalog, public"
+    ],
+    "privilegios_sgs_app": [
+      "audit_log:DELETE:false",
+      "audit_log:INSERT:true",
+      "audit_log:SELECT:true",
+      "audit_log:TRUNCATE:false",
+      "audit_log:UPDATE:false",
+      "db_change_log:DELETE:false",
+      "db_change_log:INSERT:false",
+      "db_change_log:SELECT:true",
+      "db_change_log:TRUNCATE:false",
+      "db_change_log:UPDATE:false"
+    ],
+    "particoes": [
+      "db_change_log_default",
+      "db_change_log_y2026m11",
+      "db_change_log_y2026m12",
+      "db_change_log_y2027m01",
+      "db_change_log_y2027m02",
+      "db_change_log_y2027m03",
+      "db_change_log_y2027m04",
+      "db_change_log_y2027m05",
+      "db_change_log_y2027m06",
+      "db_change_log_y2027m07",
+      "db_change_log_y2027m08",
+      "db_change_log_y2027m09",
+      "db_change_log_y2027m10",
+      "db_change_log_y2027m11"
+    ],
+    "alembic": [
+      "0013_04"
+    ]
+  },
+  "catalogo_igual_ao_da_origem": true,
+  "insert_sem_tipo_recusado": true,
+  "duracao_segundos": 0.8,
+  "rto_meta_horas": 4
+}

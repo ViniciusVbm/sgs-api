@@ -3,6 +3,12 @@
 # LDAP, Keycloak e S3 local entram nas specs 004 e 005.
 # Subir: docker compose -f docker/compose.yml up -d --build --wait (ver README).
 # As senhas abaixo são de desenvolvimento; a API recusa iniciar com elas em prod (001/R2.3).
+#
+# Redes (spec 013, T4; R3.1, R3.7, R3.8): `borda` liga só o proxy e a API; `dados` liga a API ao
+# banco. O proxy tem IP fixo na `borda`, e a API confia em X-Forwarded-For só desse IP (/32): nem
+# a subnet inteira nem o gateway da bridge são confiáveis. SGS_BORDA_SUBNET e SGS_BORDA_PROXY_IP
+# são obrigatórias (o compose não sobe sem elas) e cada stack no mesmo host usa uma subnet
+# própria; valores de desenvolvimento em docker/.env (ver .env.example e README).
 name: sgs-api
 
 services:
@@ -11,6 +17,7 @@ services:
   db-certs:
     image: alpine:3.23
     command: ["sh", "/gerar-certificados.sh"]
+    networks: [dados]
     volumes:
       - db-certs:/certs
       - ./postgres/gerar-certificados.sh:/gerar-certificados.sh:ro
@@ -30,6 +37,7 @@ services:
       - ssl_key_file=/certs/server.key
       - -c
       - hba_file=/etc/postgresql/pg_hba.conf
+    networks: [dados]
     environment:
       POSTGRES_DB: sgs
       POSTGRES_USER: sgs # dono do banco, usado só pelas migrações
@@ -59,8 +67,11 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    networks: [borda, dados]
     environment:
       APP_ENV: dev
+      # Só o IP fixo do proxy pode informar o IP do cliente (013/R3.1; lido pelo uvicorn).
+      FORWARDED_ALLOW_IPS: ${SGS_BORDA_PROXY_IP:?defina SGS_BORDA_PROXY_IP (ver README)}/32
       LOG_LEVEL: INFO
       # A API conecta como sgs_api (membro de sgs_app); as migrações, como o dono.
       DATABASE_URL: postgresql+asyncpg://sgs_api:sgs_api@db:5432/sgs
@@ -112,6 +123,9 @@ services:
 
   proxy:
     image: caddy:2
+    networks:
+      borda:
+        ipv4_address: ${SGS_BORDA_PROXY_IP:?defina SGS_BORDA_PROXY_IP (ver README)}
     ports:
       # Portas do host trocáveis (padrão 80 e 443), para testes e2e em máquinas com elas ocupadas.
       - "${SGS_HTTP_PORT:-80}:80"
@@ -126,6 +140,13 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+
+networks:
+  borda:
+    ipam:
+      config:
+        - subnet: ${SGS_BORDA_SUBNET:?defina SGS_BORDA_SUBNET (ver README)}
+  dados: {}
 
 secrets:
   jwt_keys:

@@ -2,7 +2,7 @@ import { html, montar } from '../html.js';
 import { chamar } from '../api.js';
 import { ic } from '../ui/icone.js';
 import { carregando, erro, vazio, emDesenvolvimento } from '../ui/estado.js';
-import { fmtDataHora, fmtCep } from '../ui/format.js';
+import { fmtDataHora, fmtDataHoraSegundos, fmtAuditoria, fmtCep, resultadoDoEvento } from '../ui/format.js';
 import { carregarReferencia, ROTULO_DO_STATUS } from '../referencias.js';
 import { inicioDoDia, fimDoDia, mudanca, paginacao } from './historico.js';
 import { abrirModal, fecharModal } from '../ui/modal.js';
@@ -27,6 +27,13 @@ const ACOES = {
   'unidade.equipamento_adicionado': 'Equipamento incluído',
   'unidade.equipamento_alterado': 'Equipamento alterado',
   'unidade.equipamento_removido': 'Equipamento removido',
+  'operacao.falhou': 'Tentativa sem sucesso',
+};
+
+// Resultado do evento no histórico (spec 013, R8.4); os anteriores à 013 saem "não registrado".
+const chipDeResultado = (e) => {
+  const r = resultadoDoEvento(e.resultado, e.resultado_categoria);
+  return html`<span class="chip ${r.classe}" data-ref="resultado" data-resultado="${r.valor}">${r.rotulo}</span>`;
 };
 
 // Campos de referência da auditoria (nomes do banco) e a tabela que traduz o id para o nome.
@@ -293,10 +300,7 @@ function abaDados(corpo, u, { tipo, area, distrito }) {
 }
 
 // Data e hora com segundos: a mudança de `updated_at` pelo trigger fica visível mesmo no mesmo minuto.
-const DATA_HORA_SEGUNDOS = new Intl.DateTimeFormat('pt-BR', {
-  timeZone: 'America/Recife', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit',
-});
-const comSegundos = (iso) => (iso ? DATA_HORA_SEGUNDOS.format(new Date(iso)) : '');
+const comSegundos = fmtDataHoraSegundos;
 const SITUACAO_DO_SERVICO = { ativo: 'Ativo', inativo: 'Inativo' };
 
 // Serviços da unidade (R8.1, R8.2). Só o escopo global de servico:write vê os controles (R7.4,
@@ -472,7 +476,7 @@ async function abaHistorico(corpo, u) {
     montar(resultado, dados.itens.length ? html`<ol class="timeline" data-ref="historico">${dados.itens.map((e) => html`<li data-evento="${e.id}">
         <span class="act-ic brand">${ic('history')}</span>
         <div><div class="what">${ACOES[e.acao] || e.acao}</div>
-          <div class="when">${fmtDataHora(e.quando)} · ${e.autor.id
+          <div class="when">${fmtAuditoria(e.quando)} · ${chipDeResultado(e)} · ${e.autor.id
     ? html`<button class="btn btn-quiet btn-sm" type="button" data-autor="${e.autor.id}" data-autor-nome="${e.autor.nome || ''}" title="Filtrar por este autor">${e.autor.nome || e.autor.id}</button>`
     : 'sistema'}${e.autor.papeis.length ? ` (${e.autor.papeis.join(', ')})` : ''}</div>
           ${e.metadados && e.metadados.motivo ? html`<p class="motivo" data-ref="motivo">Motivo: ${e.metadados.motivo}</p>` : ''}

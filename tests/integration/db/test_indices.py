@@ -38,10 +38,12 @@ _VOLUME = (
     FROM health_units AS u, generate_series(1, :por) AS s
     """,
     """
-    INSERT INTO audit_log (occurred_at, action, entity_type, entity_id, prev_hash, hash)
+    INSERT INTO audit_log (occurred_at, action, entity_type, entity_id, prev_hash, hash,
+                           actor_type, result)
     SELECT now() - make_interval(mins => e), 'unidade.atualizada', 'unidade', u.id::text,
            encode(sha256(convert_to('p' || u.id || e, 'UTF8')), 'hex'),
-           encode(sha256(convert_to('h' || u.id || e, 'UTF8')), 'hex')
+           encode(sha256(convert_to('h' || u.id || e, 'UTF8')), 'hex'),
+           'sistema', 'success' -- obrigatórios nos eventos novos (013/R1.6)
     FROM health_units AS u, generate_series(1, 3) AS e
     """,
 )

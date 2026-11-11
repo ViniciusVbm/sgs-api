@@ -5,13 +5,14 @@ O refresh token vai num cookie `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/
 nunca no corpo; o access token vai no corpo, para o front guardar em memória.
 """
 
-import ipaddress
 from typing import Annotated, Any, NoReturn
+from uuid import UUID
 
 from fastapi import APIRouter, Cookie, Header, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.core.errors import Forbidden, Unauthorized
+from src.core.origem import origem_da_requisicao
 from src.core.problem import PROBLEM_JSON
 from src.modules.identity.api.deps import CurrentUser
 from src.modules.identity.application import login as casos
@@ -63,15 +64,10 @@ _401 = {"description": "Credenciais, código ou token inválidos", "content": {P
 _429 = {"description": "Limite de 10 tentativas por minuto por IP", "content": {PROBLEM_JSON: {}}}
 
 
-def _origem(request: Request, user_agent: str | None) -> Origem:
-    host = request.client.host if request.client else None
-    try:
-        ip = str(ipaddress.ip_address(host)) if host else None
-    except ValueError:
-        ip = None
-    return Origem(
-        ip=ip, user_agent=user_agent, request_id=getattr(request.state, "request_id", None)
-    )
+def _origem(request: Request) -> Origem:
+    """IP, User-Agent e request id pelo helper comum (013/T3), o mesmo das rotas de negócio."""
+    origem = origem_da_requisicao(request)
+    return Origem(ip=origem.ip, user_agent=origem.user_agent, request_id=origem.request_id)
 
 
 def _deps(request: Request, sessao: Any) -> Identidade:
@@ -90,7 +86,22 @@ def _deps(request: Request, sessao: Any) -> Identidade:
         cifra=estado.cifra_de_campo,
         gerar_id=estado.gerar_id,
         mfa_obrigatorio=estado.settings.mfa_obrigatorio,
+        papeis=_PapeisPeloResolvedor(estado, sessao),
     )
+
+
+class _PapeisPeloResolvedor:
+    """`PapeisDoUsuario` (013/R1.4) sobre o resolvedor de permissões que a raiz de composição põe
+    em `app.state` (o mesmo de `require`), na sessão da própria rota de login."""
+
+    def __init__(self, estado: Any, sessao: Any) -> None:
+        self._estado = estado
+        self._sessao = sessao
+
+    async def de(self, usuario_id: UUID) -> tuple[str, ...]:
+        repositorio = self._estado.repositorio_de_permissoes(self._sessao)
+        _, papeis = await self._estado.resolvedor_de_permissoes.resolver(repositorio, usuario_id)
+        return tuple(papeis)
 
 
 def _com_cookie(response: Response, tokens: TokensEmitidos) -> TokenOut:
@@ -118,10 +129,9 @@ async def entrar(
     request: Request,
     response: Response,
     corpo: LoginIn,
-    user_agent: Annotated[str | None, Header()] = None,
 ) -> LoginOut:
     """R1: responde o desafio do 2FA (`mfa_required` ou `mfa_enrollment_required`)."""
-    origem = _origem(request, user_agent)
+    origem = _origem(request)
     request.app.state.limite_de_login.conferir(origem.ip or "desconhecido")
     async with request.app.state.sessoes() as sessao, sessao.begin():
         resultado = await casos.entrar(
@@ -159,14 +169,13 @@ async def confirmar(
     request: Request,
     response: Response,
     corpo: CodigoIn,
-    user_agent: Annotated[str | None, Header()] = None,
 ) -> TokenOut:
     """R2.2: ativa o 2FA e emite access token e refresh (cookie)."""
     async with request.app.state.sessoes() as sessao, sessao.begin():
         resultado = await casos.confirmar_mfa(
             corpo.mfa_token,
             corpo.code,
-            origem=_origem(request, user_agent),
+            origem=_origem(request),
             deps=_deps(request, sessao),
         )
     if isinstance(resultado, Falha):
@@ -179,14 +188,13 @@ async def verificar(
     request: Request,
     response: Response,
     corpo: CodigoIn,
-    user_agent: Annotated[str | None, Header()] = None,
 ) -> TokenOut:
     """R2.3 a R2.6."""
     async with request.app.state.sessoes() as sessao, sessao.begin():
         resultado = await casos.verificar_mfa(
             corpo.mfa_token,
             corpo.code,
-            origem=_origem(request, user_agent),
+            origem=_origem(request),
             deps=_deps(request, sessao),
         )
     if isinstance(resultado, Falha):
@@ -208,7 +216,6 @@ async def renovar(
     sgs_refresh: Annotated[str | None, Cookie()] = None,
     x_requested_with: Annotated[str | None, Header()] = None,
     origin: Annotated[str | None, Header()] = None,
-    user_agent: Annotated[str | None, Header()] = None,
 ) -> TokenOut:
     """R3.4 a R3.6: exige `X-Requested-With: sgs` e `Origin` permitida (anti-CSRF)."""
     permitidas = request.app.state.settings.cors_origins
@@ -218,7 +225,7 @@ async def renovar(
         raise Unauthorized("Sessão expirada.")
     async with request.app.state.sessoes() as sessao, sessao.begin():
         resultado = await casos.renovar(
-            sgs_refresh, origem=_origem(request, user_agent), deps=_deps(request, sessao)
+            sgs_refresh, origem=_origem(request), deps=_deps(request, sessao)
         )
     if isinstance(resultado, Falha):
         response.delete_cookie(COOKIE, path=CAMINHO_DO_COOKIE)
@@ -230,14 +237,13 @@ async def renovar(
 async def sair(
     request: Request,
     usuario: CurrentUser,
-    user_agent: Annotated[str | None, Header()] = None,
 ) -> Response:
     """R3.7: revoga a sessão e apaga o cookie."""
     async with request.app.state.sessoes() as sessao, sessao.begin():
         await casos.sair(
             usuario.id,
             usuario.sessao_id,
-            origem=_origem(request, user_agent),
+            origem=_origem(request),
             deps=_deps(request, sessao),
         )
     resposta = Response(status_code=204)

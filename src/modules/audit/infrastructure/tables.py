@@ -1,4 +1,5 @@
-"""Tabelas da auditoria: as da migração 0001_base, o índice da 0011_03 e o log da 0011_07."""
+"""Tabelas da auditoria: as da migração 0001_base, o índice da 0011_03, o log da 0011_07 e as
+colunas de origem e resultado da 0013_01."""
 
 from sqlalchemy import (
     CHAR,
@@ -38,8 +39,41 @@ audit_log = Table(
     Column("metadata", JSONB, nullable=False, server_default=text("'{}'::jsonb")),
     Column("prev_hash", CHAR(64), nullable=False),
     Column("hash", CHAR(64), nullable=False),
+    # Spec 013 (migração 0013_01): nuláveis; as linhas anteriores à 013 ficam sem elas.
+    Column("actor_type", String(20), nullable=True),
+    Column("origin", String(100), nullable=True),
+    Column("user_agent", String(200), nullable=True),
+    Column("result", String(10), nullable=True),
+    Column("result_reason", String(20), nullable=True),
     UniqueConstraint("hash"),
     UniqueConstraint("prev_hash"),
+    CheckConstraint(
+        "actor_type IS NULL OR actor_type IN "
+        "('usuario', 'anonimo', 'sistema', 'servico', 'seed', 'cli_admin')",
+        name="actor_type_valido",
+    ),
+    CheckConstraint(
+        "result IS NULL OR result IN ('success', 'failure', 'denied')", name="result_valido"
+    ),
+    CheckConstraint(
+        "(result_reason IS NULL OR result_reason IN ('autenticacao', 'autorizacao', 'validacao',"
+        " 'conflito', 'precondicao', 'erro_interno'))"
+        " AND (result IS DISTINCT FROM 'failure' OR result_reason IS NOT NULL)"
+        " AND (result IS DISTINCT FROM 'denied' OR result_reason IS NOT NULL)"
+        " AND (result_reason IS NULL OR result IN ('failure', 'denied'))",
+        name="result_reason_valido",
+    ),
+    CheckConstraint(
+        "actor_type IS DISTINCT FROM 'usuario' OR actor_user_id IS NOT NULL",
+        name="usuario_tem_id",
+    ),
+    # Migração 0013_02: criada como NOT VALID (não confere as linhas anteriores à 013) e nunca
+    # validada. Fica aqui pelo nome, que o teste de migrações sincronizadas compara.
+    CheckConstraint(
+        "actor_type IS NOT NULL AND result IS NOT NULL",
+        name="origem_obrigatoria",
+        postgresql_not_valid=True,
+    ),
 )
 
 # Histórico de uma entidade, mais recente primeiro (migração 0011_03, spec 011 R1.1).

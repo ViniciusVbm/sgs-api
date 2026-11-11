@@ -19,20 +19,49 @@ subcomando de primeiro nível.
   papel, e grava `usuario.criado` e `papel.atribuido` na mesma transação (AGENTS.md, regra 5). A
   senha vem de `SGS_SENHA_INICIAL` ou é pedida no terminal (duas vezes); nunca vai para o log.
   Conecta com DATABASE_URL (o login da API).
+
+    uv run sgs-admin auditoria ancorar
+    uv run sgs-admin auditoria verificar [--ancora arquivo.json]
+
+- `auditoria ancorar` (spec 013, T9; R5.4): verifica a cadeia inteira e, se estiver íntegra,
+  imprime a âncora em JSON (versão, `cadeia_id`, id e hash do último evento, total, instante em
+  UTC e nome do banco) para guardar fora do banco. Cadeia vazia: código 2; divergente: código 1.
+- `auditoria verificar` (013/R5.12): a mesma verificação da API, direto no banco, sem a API,
+  e com a âncora, se dada. Imprime o resultado em JSON. Código 0 se íntegra, 1 se não, 2 se a
+  âncora é ilegível ou de outro formato.
+
+Os dois são só de leitura (REPEATABLE READ, READ ONLY) e não gravam evento nenhum, nem
+`auditoria.verificada`: dá para usá-los numa cópia restaurada em outro servidor sem alterá-la.
+Conectam com DATABASE_URL.
 """
 
 import argparse
 import asyncio
+import dataclasses
 import getpass
+import json
 import os
+import re
 import sys
 from collections.abc import Callable, Sequence
+from datetime import UTC, datetime
+from pathlib import Path
+from uuid import UUID
 
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import Settings, load_settings
 from src.core.db import create_engine
+from src.modules.access.application.autorizacao import UsuarioAtual
+from src.modules.access.domain.authorization import Global
+from src.modules.audit.application.consultar import (
+    Ancora,
+    gerar_ancora,
+    verificar_cadeia,
+)
+from src.modules.audit.infrastructure.consultas import SqlConsultasDeAuditoria
 
 # O mesmo horizonte da migração 0011_08 (011/R6.7).
 MESES_A_FRENTE = 12
@@ -106,6 +135,28 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     demo.set_defaults(comando=_seed_demo)
+
+    auditoria = comandos.add_parser("auditoria", help="âncora e verificação da trilha (spec 013)")
+    da_auditoria = auditoria.add_subparsers(title="comandos", required=True, metavar="COMANDO")
+    ancorar = da_auditoria.add_parser(
+        "ancorar",
+        help="verifica a cadeia e imprime a âncora em JSON (só leitura)",
+        description=(
+            "Verifica a trilha inteira e, se ela estiver íntegra, imprime a âncora em JSON para"
+            " guardar fora do banco. Não grava nada. Conecta com DATABASE_URL."
+        ),
+    )
+    ancorar.set_defaults(comando=_auditoria_ancorar)
+    verificar = da_auditoria.add_parser(
+        "verificar",
+        help="verifica a cadeia direto no banco, sem a API (só leitura)",
+        description=(
+            "Verifica a trilha direto no banco, com a âncora se dada, e imprime o resultado em"
+            " JSON. Código 0: íntegra; 1: divergente; 2: âncora inválida. Não grava nada."
+        ),
+    )
+    verificar.add_argument("--ancora", type=Path, default=None, metavar="ARQUIVO")
+    verificar.set_defaults(comando=_auditoria_verificar)
     return parser
 
 
@@ -222,7 +273,6 @@ async def criar_usuario(
 ) -> str:
     """Cria o usuário e a atribuição numa transação, com auditoria. Levanta `ValueError` com uma
     mensagem para o terminal se o usuário já existe, o papel não existe ou o escopo não confere."""
-    from sqlalchemy.ext.asyncio import AsyncSession
 
     from src.core.ids import uuid7
     from src.modules.access.domain.atribuicoes import Atribuicao
@@ -272,7 +322,8 @@ async def criar_usuario(
                 )
             )
             loja = SqlAuditStore(sessao)
-            sistema = Ator()
+            # 013/R1.1, R1.2: comando administrativo, sem usuário humano atribuído.
+            sistema = Ator(tipo="cli_admin", origem="sgs-admin create-user")
             entidade = Entidade(tipo="usuario", id=str(usuario.id))
             await registrar(
                 loja,
@@ -325,3 +376,115 @@ def _seed_demo(args: argparse.Namespace) -> int:
             f" {contagem.senha_gerada}\n"
         )
     return 0
+
+
+# --------------------------------------------------------------- auditoria (spec 013, T9)
+
+VERSAO_DA_ANCORA = 1
+_HASH = re.compile(r"[0-9a-f]{64}")
+CADEIA_VAZIA = 2
+DIVERGENTE = 1
+ANCORA_INVALIDA = 2
+
+
+class AncoraInvalidaError(ValueError):
+    pass
+
+
+def _auditor_do_sistema() -> UsuarioAtual:
+    """O comando lê a trilha como o Auditor, em escopo global; não é uma pessoa e não grava."""
+    return UsuarioAtual(
+        id=UUID(int=0), sessao_id=UUID(int=0), permissoes={"auditoria:read": (Global(),)}
+    )
+
+
+async def ancorar_cadeia(url: str, settings: Settings) -> tuple[int, str]:
+    """(código de saída, texto). Com a cadeia íntegra, o texto é a âncora em JSON."""
+    engine = create_engine(url, settings, pooled=False)
+    try:
+        async with AsyncSession(engine) as sessao:
+            resultado, ancora = await gerar_ancora(
+                _auditor_do_sistema(), consultas=SqlConsultasDeAuditoria(sessao)
+            )
+    finally:
+        await engine.dispose()
+    if ancora is None and resultado.integra:
+        return CADEIA_VAZIA, "cadeia vazia: nada a ancorar"
+    if ancora is None:
+        return DIVERGENTE, f"cadeia divergente, sem âncora: {resultado.motivo}"
+    documento = {
+        "versao": ancora.versao,
+        "cadeia_id": ancora.cadeia_id,
+        "id": ancora.id,
+        "hash": ancora.hash,
+        "total": ancora.total,
+        "instante": datetime.now(UTC).isoformat(timespec="microseconds").replace("+00:00", "Z"),
+        "banco": ancora.banco,
+    }
+    return 0, json.dumps(documento, ensure_ascii=False)
+
+
+def ler_ancora(arquivo: Path) -> Ancora:
+    """A âncora de um arquivo JSON gerado por `ancorar`; formato, versão e campos conferidos."""
+    try:
+        dados = json.loads(arquivo.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as erro:
+        raise AncoraInvalidaError(
+            f"não foi possível ler a âncora: {erro.__class__.__name__}"
+        ) from None
+    if not isinstance(dados, dict) or dados.get("versao") != VERSAO_DA_ANCORA:
+        raise AncoraInvalidaError(
+            f"âncora de formato desconhecido (esperada versão {VERSAO_DA_ANCORA})"
+        )
+    cadeia_id, id_, hash_ = dados.get("cadeia_id"), dados.get("id"), dados.get("hash")
+    if not (isinstance(cadeia_id, str) and _HASH.fullmatch(cadeia_id)):
+        raise AncoraInvalidaError("cadeia_id inválido")
+    if not (isinstance(hash_, str) and _HASH.fullmatch(hash_)):
+        raise AncoraInvalidaError("hash inválido")
+    if not isinstance(id_, int) or isinstance(id_, bool) or id_ < 1:
+        raise AncoraInvalidaError("id inválido")
+    return Ancora(cadeia_id=cadeia_id, id=id_, hash=hash_)
+
+
+async def verificar_offline(url: str, settings: Settings, ancora: Ancora | None) -> tuple[int, str]:
+    """(código de saída, resultado em JSON). A mesma `verificar_cadeia` da API, sem
+    `registrar_execucao`: nada é gravado."""
+    engine = create_engine(url, settings, pooled=False)
+    try:
+        async with AsyncSession(engine) as sessao:
+            resultado = await verificar_cadeia(
+                _auditor_do_sistema(),
+                None,
+                None,
+                consultas=SqlConsultasDeAuditoria(sessao),
+                ancora=ancora,
+            )
+    finally:
+        await engine.dispose()
+    codigo = 0 if resultado.integra else DIVERGENTE
+    return codigo, json.dumps(dataclasses.asdict(resultado), ensure_ascii=False)
+
+
+def _auditoria_ancorar(_args: argparse.Namespace) -> int:
+    settings = load_settings()
+    codigo, texto = asyncio.run(ancorar_cadeia(settings.database_url.get_secret_value(), settings))
+    (sys.stdout if codigo == 0 else sys.stderr).write(
+        f"{texto}\n" if codigo == 0 else f"sgs-admin: {texto}\n"
+    )
+    return codigo
+
+
+def _auditoria_verificar(args: argparse.Namespace) -> int:
+    ancora = None
+    if args.ancora is not None:
+        try:
+            ancora = ler_ancora(args.ancora)
+        except AncoraInvalidaError as erro:
+            sys.stderr.write(f"sgs-admin: {erro}\n")
+            return ANCORA_INVALIDA
+    settings = load_settings()
+    codigo, texto = asyncio.run(
+        verificar_offline(settings.database_url.get_secret_value(), settings, ancora)
+    )
+    sys.stdout.write(f"{texto}\n")
+    return codigo

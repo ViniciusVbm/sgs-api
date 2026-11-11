@@ -79,6 +79,7 @@ Downgrade: remove na ordem inversa (o `sgs_owner` fica, como o `sgs_app` na 0001
 
 ### `vw_unit_history`
 `audit_log l JOIN health_units u ON l.entity_type = 'unidade' AND l.entity_id = u.id::text JOIN unit_types t ON t.id = u.unit_type_id JOIN districts d ON d.id = u.district_id LEFT JOIN users usr ON usr.id = l.actor_user_id`. Colunas: `audit_id`, `occurred_at`, `action`, `changes`, `metadata`, `actor_user_id`, `actor_name` (`usr.display_name`), `actor_roles`, `unit_id`, `unit_name`, `district_id`, `district_name`, `unit_type_name`, `technical_area_id`. A 006 grava `entity_type = 'unidade'` e `entity_id` da unidade também nos eventos de equipamento e serviço (006/R5.3), então eles aparecem aqui (R4.4).
+- *Referência (11/11/2026):* a spec 013, ainda em Rascunho, propõe recriar esta view com `actor_type`, `origin`, `result` e `result_reason` no fim das colunas e sem os eventos `auth.*`, `acesso.negado` e `auditoria.*`. A proposta está em `specs/013-trilha-auditoria-reforco/design.md` § `0013_04` e § Histórico da unidade e só vale depois que a 013 for aprovada. Esta nota não muda o status nem o texto normativo desta spec.
 
 ### `sp_deactivate_unit`
 `SELECT status INTO o_previous_status FROM health_units WHERE id = p_unit_id FOR UPDATE`; se não achar, `RAISE EXCEPTION USING ERRCODE = 'SGS01'`. Se já `inativa`, devolve a versão atual sem `UPDATE` (R6.4). Senão, `UPDATE health_units SET status = 'inativa' WHERE id = p_unit_id RETURNING version INTO o_version` (o trigger de versão incrementa). Sem COMMIT: roda na transação da requisição.

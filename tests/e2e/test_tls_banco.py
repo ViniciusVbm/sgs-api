@@ -5,6 +5,7 @@ volumes do ambiente de desenvolvimento, e derruba tudo, com os volumes, no fim. 
 `make check`; rodar à parte com `uv run pytest tests/e2e/test_tls_banco.py -m slow`.
 """
 
+import os
 import shutil
 import subprocess
 from collections.abc import Iterator
@@ -13,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from src.tools import crypto_keys, jwt_keys
+from tests.e2e.redes import Borda, SubnetOcupadaError, borda_da_suite
 
 pytestmark = pytest.mark.slow
 
@@ -67,10 +69,21 @@ except Exception as erro:
 type Resultado = subprocess.CompletedProcess[str]
 
 
+_BORDA: list[Borda] = []
+"""Subnet de borda da suíte (spec 013, T4), escolhida antes do `up`."""
+
+
 def _rodar(*comando: str, check: bool = True, timeout: int = 120) -> Resultado:
     # Comandos fixos deste arquivo, sem entrada externa.
+    ambiente = os.environ | (_BORDA[0].ambiente() if _BORDA else {})
     return subprocess.run(  # noqa: S603
-        comando, capture_output=True, text=True, check=check, timeout=timeout, cwd=RAIZ
+        comando,
+        capture_output=True,
+        text=True,
+        check=check,
+        timeout=timeout,
+        cwd=RAIZ,
+        env=ambiente,
     )
 
 
@@ -101,6 +114,10 @@ def _psql_tcp(sslmode: str) -> Resultado:
 def ambiente() -> Iterator[None]:
     if DOCKER is None:
         pytest.skip("Docker não encontrado")
+    try:
+        _BORDA[:] = [borda_da_suite("TLS", DOCKER, projeto=PROJETO)]
+    except SubnetOcupadaError as erro:
+        pytest.skip(str(erro))
     # A API não sobe sem a chave JWT (spec 002); se ela não existe, o teste cria e apaga no fim.
     criou_pasta = not CHAVES_JWT.parent.exists()
     criou_chave = not CHAVES_JWT.exists()

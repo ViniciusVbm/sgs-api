@@ -221,3 +221,31 @@ async def test_login_da_api_so_le_o_catalogo(banco: BancoDeTeste, comando: str) 
 
     assert getattr(erro.value.orig, "sqlstate", None) == SEM_PRIVILEGIO
     assert await _papeis_de_sistema(banco) == set(MATRIZ)
+
+
+async def test_read_acessos_so_para_auditor_e_admin_ti(banco: BancoDeTeste) -> None:
+    """013/R8.9: IP, User-Agent e sessão da trilha dependem de `auditoria:read_acessos`. Dar essa
+    permissão a outro papel (o DF9 da 012, por exemplo) reexporia esses dados: exige emendar a
+    013. O ADMIN_TI a tem, mas sem `auditoria:read` não chega às rotas da trilha."""
+    engine = motor(banco.url_dono)
+    async with engine.connect() as conexao:
+        papeis = set(
+            await conexao.scalars(
+                text(
+                    "SELECT r.code FROM role_permissions rp JOIN roles r ON r.id = rp.role_id"
+                    " JOIN permissions p ON p.id = rp.permission_id"
+                    " WHERE p.code = 'auditoria:read_acessos'"
+                )
+            )
+        )
+        admin_le_a_trilha = await conexao.scalar(
+            text(
+                "SELECT count(*) FROM role_permissions rp JOIN roles r ON r.id = rp.role_id"
+                " JOIN permissions p ON p.id = rp.permission_id"
+                " WHERE p.code = 'auditoria:read' AND r.code = 'ADMIN_TI'"
+            )
+        )
+    await engine.dispose()
+
+    assert papeis == {"AUDITOR", "ADMIN_TI"}
+    assert admin_le_a_trilha == 0

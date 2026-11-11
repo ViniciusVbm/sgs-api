@@ -2,7 +2,8 @@ import { html, montar } from '../html.js';
 import { chamar } from '../api.js';
 import { ic } from '../ui/icone.js';
 import { carregando, erro, vazio } from '../ui/estado.js';
-import { fmtDataHora } from '../ui/format.js';
+import { fmtAuditoria, fmtInstante, resultadoDoEvento, NAO_REGISTRADO } from '../ui/format.js';
+import { abrirModal, fecharModal } from '../ui/modal.js';
 import { numero } from '../ui/grafico.js';
 
 // Histórico geral para quem tem auditoria:read global (spec 012, R12.2, R12.4, R12.5;
@@ -14,6 +15,15 @@ const ABAS = { trilha: 'Trilha de auditoria', banco: 'Log do banco', particoes: 
 const TABELAS = { health_units: 'Unidades', equipments: 'Equipamentos', services: 'Serviços' };
 const OPERACOES = { INSERT: 'Inclusão', UPDATE: 'Alteração', DELETE: 'Exclusão' };
 const ENTIDADES = { unidade: 'Unidade', equipamento: 'Equipamento', servico: 'Serviço', referencia: 'Referência', usuario: 'Usuário' };
+const TIPOS_DE_ATOR = { usuario: 'usuário', anonimo: 'anônimo', sistema: 'sistema', servico: 'serviço', seed: 'seed', cli_admin: 'comando administrativo' };
+const RESTRITO = 'restrito ao Auditor';
+
+// Resultado do evento (spec 013, R8.4).
+export const chipDeResultado = (e) => {
+  const r = resultadoDoEvento(e.resultado, e.resultado_categoria);
+  return html`<span class="chip ${r.classe}" data-ref="resultado" data-resultado="${r.valor}">${r.rotulo}</span>`;
+};
+const ouNaoRegistrado = (v) => (v === null || v === undefined || v === '' ? html`<span class="muted">${NAO_REGISTRADO}</span>` : v);
 
 // Datas do filtro em dias de Recife (UTC−3 o ano todo): `de` inclusivo, `ate` exclusivo (dia seguinte).
 export const inicioDoDia = (dia) => (dia ? new Date(`${dia}T00:00:00-03:00`).toISOString() : '');
@@ -94,20 +104,58 @@ async function abaTrilha(corpo, consulta) {
       return;
     }
     montar(resultado, dados.itens.length ? html`<div class="tbl-wrap"><table>
-      <thead><tr><th>Quando</th><th>Ação</th><th>Entidade</th><th>Autor</th><th>Mudanças</th></tr></thead>
+      <thead><tr><th>Quando</th><th>Ação</th><th>Resultado</th><th>Entidade</th><th>Autor</th><th>Mudanças</th><th>Detalhe</th></tr></thead>
       <tbody>${dados.itens.map((e) => html`<tr data-evento="${e.id}">
-        <td>${fmtDataHora(e.quando)}</td><td><code>${e.acao}</code></td>
+        <td>${fmtAuditoria(e.quando)}</td><td><code>${e.acao}</code></td><td>${chipDeResultado(e)}</td>
         <td>${ENTIDADES[e.entidade_tipo] || e.entidade_tipo || '—'}${e.entidade_id ? html`<div class="t-sub">${e.entidade_id}</div>` : ''}</td>
         <td>${e.autor.id ? html`<button class="btn btn-quiet btn-sm" type="button" data-autor="${e.autor.id}" data-autor-nome="${e.autor.nome || ''}" title="Filtrar por este autor">${e.autor.nome || e.autor.id}</button>` : 'sistema'}
           ${e.autor.papeis.length ? html`<div class="t-sub">${e.autor.papeis.join(', ')}</div>` : ''}</td>
-        <td>${e.mudancas.length ? html`<ul class="changes">${e.mudancas.map((m) => mudanca(m.rotulo || m.campo, m.de, m.para))}</ul>` : '—'}</td></tr>`)}</tbody></table></div>
+        <td>${e.mudancas.length ? html`<ul class="changes">${e.mudancas.map((m) => mudanca(m.rotulo || m.campo, m.de, m.para))}</ul>` : '—'}</td>
+        <td><button class="btn btn-line btn-sm" type="button" data-detalhe="${e.id}">Detalhe</button></td></tr>`)}</tbody></table></div>
       ${paginacao(pagina, dados.total)}` : html`${vazio('Nenhum evento com estes filtros.')}${paginacao(pagina, dados.total)}`);
     resultado.querySelectorAll('[data-pagina]').forEach((b) => b.addEventListener('click', () => carregar(Number(b.dataset.pagina))));
     resultado.querySelectorAll('[data-autor]').forEach((b) => b.addEventListener('click', () => { f.autor = b.dataset.autor; f.autor_nome = b.dataset.autorNome; carregar(1); }));
+    resultado.querySelectorAll('[data-detalhe]').forEach((b) => b.addEventListener('click', () => detalharEvento(b.dataset.detalhe)));
   };
   document.getElementById('ft').addEventListener('submit', (e) => { e.preventDefault(); carregar(1); });
   document.getElementById('ft-entidade').addEventListener('change', () => carregar(1));
   await carregar(1);
+}
+
+// Detalhe do evento (spec 013, R8.1, R8.2, R2.2): tudo o que a API devolve. IP, User-Agent e
+// sessão só chegam a quem tem `auditoria:read_acessos`; para os demais a API os manda nulos com
+// `origem_restrita`, e a tela diz que são restritos (a regra é do backend, não daqui).
+async function detalharEvento(id) {
+  const caixa = abrirModal(html`<div class="modal-h"><h2>Evento ${id}</h2></div><div class="modal-b" id="ev-corpo">${carregando('Lendo o evento…')}</div>
+    <div class="modal-f"><button class="btn btn-line" type="button" id="ev-fechar">Fechar</button></div>`, { rotulo: `Detalhe do evento ${id}` });
+  caixa.querySelector('#ev-fechar').addEventListener('click', fecharModal);
+  const destino = caixa.querySelector('#ev-corpo');
+  let e;
+  try {
+    ({ dados: e } = await chamar('GET', `/auditoria/eventos/${encodeURIComponent(id)}`));
+  } catch (falha) {
+    montar(destino, erro(falha));
+    return;
+  }
+  const origem = (v) => (e.origem_restrita ? html`<span class="muted" data-ref="restrito">${RESTRITO}</span>` : ouNaoRegistrado(v));
+  const campo = (rotulo, valor, ref) => html`<div><dt>${rotulo}</dt><dd data-ref="${ref}">${valor}</dd></div>`;
+  montar(destino, html`<dl class="kv" data-ref="detalhe-evento" data-origem-restrita="${e.origem_restrita ? 'true' : 'false'}">
+    ${campo('Ação', html`<code>${e.acao}</code>`, 'acao')}
+    ${campo('Instante', html`<code>${fmtInstante(e.quando)}</code>`, 'instante')}
+    ${campo('Resultado', chipDeResultado(e), 'resultado')}
+    ${campo('Autor', e.autor.nome || e.autor.id || '—', 'autor')}
+    ${campo('Tipo de ator', ouNaoRegistrado(TIPOS_DE_ATOR[e.autor.tipo] || e.autor.tipo), 'tipo-ator')}
+    ${campo('Origem', ouNaoRegistrado(e.origem), 'origem')}
+    ${campo('Entidade', e.entidade_tipo ? `${ENTIDADES[e.entidade_tipo] || e.entidade_tipo} ${e.entidade_id || ''}` : '—', 'entidade')}
+    ${campo('IP', origem(e.ip), 'ip')}
+    ${campo('User-Agent', origem(e.user_agent), 'user-agent')}
+    ${campo('Sessão', origem(e.sessao_id), 'sessao')}
+    ${campo('Request id', ouNaoRegistrado(e.request_id), 'request-id')}
+    ${campo('Hash anterior', html`<code class="hash">${e.prev_hash || '—'}</code>`, 'prev-hash')}
+    ${campo('Hash', html`<code class="hash">${e.hash || '—'}</code>`, 'hash')}
+  </dl>
+  ${e.mudancas.length ? html`<table><thead><tr><th>Campo</th><th>De</th><th>Para</th></tr></thead><tbody>${e.mudancas.map((m) => html`<tr><td>${m.rotulo || m.campo}</td><td>${valorLegivel(m.de)}</td><td>${valorLegivel(m.para)}</td></tr>`)}</tbody></table>` : ''}
+  ${Object.keys(e.metadados || {}).length ? html`<p class="hint">Metadados</p><pre class="metadados">${JSON.stringify(e.metadados, null, 2)}</pre>` : ''}`);
 }
 
 async function abaBanco(corpo, consulta) {
@@ -148,7 +196,7 @@ async function abaBanco(corpo, consulta) {
     montar(resultado, dados.itens.length ? html`<div class="tbl-wrap"><table>
       <thead><tr><th>Quando</th><th>Tabela</th><th>Operação</th><th>Linha</th><th>Colunas alteradas</th><th>Usuário do banco</th><th>Origem</th></tr></thead>
       <tbody>${dados.itens.map((r) => html`<tr data-registro="${r.id}" data-linha="${r.linha_id}">
-        <td>${fmtDataHora(r.quando)}</td><td>${TABELAS[r.tabela] || r.tabela}</td><td>${OPERACOES[r.operacao] || r.operacao}</td>
+        <td>${fmtAuditoria(r.quando)}</td><td>${TABELAS[r.tabela] || r.tabela}</td><td>${OPERACOES[r.operacao] || r.operacao}</td>
         <td>${r.tabela === 'health_units' ? html`<a href="#/unidade/${encodeURIComponent(r.linha_id)}"><code>${r.linha_id.slice(0, 8)}</code></a>` : html`<code title="${r.linha_id}">${r.linha_id.slice(0, 8)}</code>`}</td>
         <td><ul class="changes">${Object.entries(r.colunas).map(([c, v]) => mudanca(c, v && v.de, v && v.para))}</ul></td>
         <td><code>${r.usuario_do_banco}</code></td>
@@ -179,26 +227,54 @@ async function abaParticoes(corpo) {
       <tbody>${particoes.map((p) => html`<tr data-particao="${p.nome}"><td><code>${p.nome}</code></td><td>${p.limite}</td><td>${p.linhas}</td></tr>`)}</tbody></table></div>` : vazio('Nenhuma partição encontrada.')}`);
 }
 
-// Verificação da cadeia de hash da trilha (R12.4): só leitura no banco.
+// Verificação da cadeia de hash da trilha (R12.4; spec 013, R8.3): só leitura no banco. Mostra o
+// fim da cadeia conferido com a cabeça e, com uma âncora guardada fora do banco (gerada por
+// `sgs-admin auditoria ancorar`), se a cadeia e o evento ancorado conferem.
+const HEX = '^[0-9a-f]{64}$';
+const confere = (valor) => (valor === null || valor === undefined ? '—' : valor ? 'sim' : html`<b>não</b>`);
 export async function telaCadeia(alvo) {
   document.title = 'Verificação da cadeia — SGS Recife';
   montar(alvo, html`
     <div class="page-head"><div><h1>Verificação da cadeia</h1>
-      <p>Recalcula o encadeamento por hash de toda a trilha. Os registros não podem ser alterados nem apagados: triggers do banco bloqueiam UPDATE, DELETE e TRUNCATE.</p></div>
-      <button class="btn btn-primary" type="button" id="verificar">${ic('shield')}Verificar agora</button></div>
-    <section class="panel"><div class="panel-b" id="cadeia-resultado">${vazio('Clique em "Verificar agora".')}</div></section>`);
+      <p>Recalcula o encadeamento por hash de toda a trilha e confere o fim com a cabeça da cadeia. Os registros não podem ser alterados nem apagados pela aplicação: triggers do banco bloqueiam UPDATE, DELETE e TRUNCATE.</p></div></div>
+    <section class="panel"><form class="filters" id="cadeia-form" aria-label="Âncora externa (opcional)">
+      <div class="fld"><label for="ancora-cadeia">Âncora: cadeia_id</label><input id="ancora-cadeia" pattern="${HEX}" maxlength="64" placeholder="opcional"></div>
+      <div class="fld"><label for="ancora-id">Âncora: id</label><input id="ancora-id" type="number" min="1" placeholder="opcional"></div>
+      <div class="fld"><label for="ancora-hash">Âncora: hash</label><input id="ancora-hash" pattern="${HEX}" maxlength="64" placeholder="opcional"></div>
+      <button class="btn btn-primary" type="submit" id="verificar">${ic('shield')}Verificar agora</button>
+    </form>
+    <div class="panel-b" id="cadeia-resultado">${vazio('Clique em "Verificar agora". A âncora é opcional; informe os três campos ou nenhum.')}</div></section>`);
   const destino = document.getElementById('cadeia-resultado');
-  document.getElementById('verificar').addEventListener('click', async () => {
+  document.getElementById('cadeia-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const ancora = {
+      cadeia_id: document.getElementById('ancora-cadeia').value.trim(),
+      id: document.getElementById('ancora-id').value.trim(),
+      hash: document.getElementById('ancora-hash').value.trim(),
+    };
+    const preenchidos = Object.values(ancora).filter(Boolean).length;
+    if (preenchidos !== 0 && preenchidos !== 3) {
+      montar(destino, html`<div class="err-summary" role="alert" data-ref="ancora-incompleta"><b>${ic('alert')}Âncora incompleta.</b><p>Informe cadeia_id, id e hash, ou deixe os três em branco.</p></div>`);
+      return;
+    }
+    const corpo = preenchidos ? { ancora: { ...ancora, id: Number(ancora.id) } } : {};
     montar(destino, carregando('Verificando a cadeia…'));
     let r;
     try {
-      ({ dados: r } = await chamar('POST', '/auditoria/verificar', { corpo: {} }));
+      ({ dados: r } = await chamar('POST', '/auditoria/verificar', { corpo }));
     } catch (falha) {
       montar(destino, erro(falha));
       return;
     }
+    const detalhes = html`<dl class="kv" data-ref="detalhes-cadeia">
+      <div><dt>Eventos verificados</dt><dd data-ref="verificados">${r.verificados}</dd></div>
+      <div><dt>Último evento</dt><dd data-ref="ultimo-id">${r.ultimo_id ?? '—'}</dd></div>
+      <div><dt>Hash final</dt><dd><code class="hash" data-ref="hash-final">${r.hash_final || '—'}</code></dd></div>
+      <div><dt>Cabeça confere</dt><dd data-ref="cabeca-confere" data-valor="${String(r.cabeca_confere)}">${confere(r.cabeca_confere)}</dd></div>
+      <div><dt>Cadeia da âncora</dt><dd data-ref="cadeia-confere" data-valor="${String(r.cadeia_confere)}">${confere(r.cadeia_confere)}</dd></div>
+      <div><dt>Âncora confere</dt><dd data-ref="ancora-confere" data-valor="${String(r.ancora_confere)}">${confere(r.ancora_confere)}</dd></div></dl>`;
     montar(destino, r.integra
-      ? html`<div class="banner ok" data-ref="resultado-cadeia" data-integra="true">${ic('check')}<p><b>Cadeia íntegra.</b> ${r.verificados} eventos verificados.</p></div>`
-      : html`<div class="err-summary" role="alert" data-ref="resultado-cadeia" data-integra="false"><b>${ic('alert')}Cadeia divergente no evento ${r.primeiro_evento_divergente}.</b><p>${r.motivo || ''} (${r.verificados} eventos verificados)</p></div>`);
+      ? html`<div class="banner ok" data-ref="resultado-cadeia" data-integra="true">${ic('check')}<p><b>Cadeia íntegra.</b> ${r.verificados} eventos verificados.</p></div>${detalhes}`
+      : html`<div class="err-summary" role="alert" data-ref="resultado-cadeia" data-integra="false"><b>${ic('alert')}${r.primeiro_evento_divergente ? `Cadeia divergente no evento ${r.primeiro_evento_divergente}.` : 'Cadeia divergente.'}</b><p>${r.motivo || ''} (${r.verificados} eventos verificados)</p></div>${detalhes}`);
   });
 }

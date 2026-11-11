@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.core.fuso import em_recife
 from src.modules.audit.application.consultar import (
+    Ancora,
     Evento,
     Particao,
     RegistroDoBanco,
@@ -21,6 +22,9 @@ class AutorOut(BaseModel):
     id: UUID | None
     nome: str | None
     papeis: list[str]
+    tipo: str | None = Field(
+        description="usuario, anonimo, sistema, servico, seed ou cli_admin; null antes da 013."
+    )
 
 
 class MudancaOut(BaseModel):
@@ -53,6 +57,9 @@ class EventoOut(BaseModel):
     entidade_id: str | None
     mudancas: list[MudancaOut]
     metadados: dict[str, Any]
+    origem: str | None = Field(description="Rótulo de origem (api, seed...); null antes da 013.")
+    resultado: str | None = Field(description="success, failure ou denied; null antes da 013.")
+    resultado_categoria: str | None
 
     @classmethod
     def de(cls, evento: Evento) -> Self:
@@ -61,20 +68,29 @@ class EventoOut(BaseModel):
             quando=em_recife(evento.occurred_at),
             acao=evento.action,
             autor=AutorOut(
-                id=evento.actor_user_id, nome=evento.actor_name, papeis=list(evento.actor_roles)
+                id=evento.actor_user_id,
+                nome=evento.actor_name,
+                papeis=list(evento.actor_roles),
+                tipo=evento.actor_type,
             ),
             entidade_tipo=evento.entity_type,
             entidade_id=evento.entity_id,
             mudancas=_mudancas(evento.changes),
             metadados=dict(evento.metadata),
+            origem=evento.origin,
+            resultado=evento.result,
+            resultado_categoria=evento.result_reason,
         )
 
 
 class EventoDetalheOut(EventoOut):
-    """008/R3.2: com a cadeia de hash e a origem."""
+    """008/R3.2: com a cadeia de hash e a origem. 013/R8.2: IP, User-Agent e sessão só com
+    `auditoria:read_acessos`; sem ela vêm nulos e `origem_restrita` é verdadeiro."""
 
     sessao_id: UUID | None
     ip: str | None
+    user_agent: str | None
+    origem_restrita: bool
     request_id: str | None
     prev_hash: str | None
     hash: str | None
@@ -85,10 +101,28 @@ class EventoDetalheOut(EventoOut):
             **EventoOut.de(evento).model_dump(),
             sessao_id=evento.session_id,
             ip=evento.ip,
+            user_agent=evento.user_agent,
+            origem_restrita=evento.origem_restrita,
             request_id=evento.request_id,
             prev_hash=evento.prev_hash,
             hash=evento.hash,
         )
+
+
+_HASH = r"^[0-9a-f]{64}$"
+
+
+class AncoraIn(BaseModel):
+    """013/R5.3: a âncora guardada fora do banco (gerada por `sgs-admin auditoria ancorar`)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    cadeia_id: str = Field(pattern=_HASH, description="Hash do primeiro evento da cadeia.")
+    id: int = Field(ge=1, description="Evento ancorado.")
+    hash: str = Field(pattern=_HASH, description="Hash que o evento ancorado tinha.")
+
+    def para_dominio(self) -> Ancora:
+        return Ancora(cadeia_id=self.cadeia_id, id=self.id, hash=self.hash)
 
 
 class VerificacaoIn(BaseModel):
@@ -96,6 +130,7 @@ class VerificacaoIn(BaseModel):
 
     de: datetime | None = Field(default=None, description="Início do período (inclusive).")
     ate: datetime | None = Field(default=None, description="Fim do período (exclusivo).")
+    ancora: AncoraIn | None = Field(default=None, description="Âncora externa (013/R5.3).")
 
 
 class VerificacaoOut(BaseModel):
@@ -103,6 +138,17 @@ class VerificacaoOut(BaseModel):
     verificados: int
     primeiro_evento_divergente: int | None
     motivo: str | None
+    ultimo_id: int | None = Field(description="Último evento conferido (013/R5.5).")
+    hash_final: str | None = Field(description="Hash do último evento conferido (013/R5.5).")
+    cabeca_confere: bool | None = Field(
+        description="Se o fim da cadeia bate com `audit_chain_head`; `null` com período (013/R5.1)."
+    )
+    cadeia_confere: bool | None = Field(
+        description="Se a cadeia é a da âncora; `null` sem âncora (013/R5.3)."
+    )
+    ancora_confere: bool | None = Field(
+        description="Se o evento ancorado ainda tem o hash da âncora; `null` sem âncora (013/R5.3)."
+    )
 
     @classmethod
     def de(cls, resultado: ResultadoDaVerificacao) -> Self:
@@ -111,6 +157,11 @@ class VerificacaoOut(BaseModel):
             verificados=resultado.verificados,
             primeiro_evento_divergente=resultado.primeiro_evento_divergente,
             motivo=resultado.motivo,
+            ultimo_id=resultado.ultimo_id,
+            hash_final=resultado.hash_final,
+            cabeca_confere=resultado.cabeca_confere,
+            cadeia_confere=resultado.cadeia_confere,
+            ancora_confere=resultado.ancora_confere,
         )
 
 

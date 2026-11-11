@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 
 from src.core.paginacao import TAMANHO_PADRAO, NumeroDaPagina, PaginaOut, TamanhoDaPagina
 from src.core.problem import PROBLEM_JSON
-from src.modules.access.api.deps import ResourceRef, UsuarioAtual, require
+from src.modules.access.api.deps import ResourceRef, UsuarioAtual, ator_da_requisicao, require
 from src.modules.audit.api.schemas import (
     EventoDetalheOut,
     EventoOut,
@@ -24,7 +24,9 @@ from src.modules.audit.application.consultar import (
     FiltrosDeHistorico,
     FiltrosDoLogDoBanco,
     Pagina,
+    ResultadoDaVerificacao,
 )
+from src.modules.audit.application.registrar import Entidade, registrar
 
 _ERROS: dict[int | str, dict[str, Any]] = {
     401: {"description": "Sem access token válido", "content": {PROBLEM_JSON: {}}},
@@ -122,19 +124,57 @@ async def eventos(
 async def evento(
     request: Request, id_: Annotated[int, Path(ge=1)], usuario: Auditor
 ) -> EventoDetalheOut:
-    """008/R3.2."""
-    async with request.app.state.sessoes() as sessao:
-        item = await consultar.detalhar_evento(usuario, id_, consultas=_porta(request, sessao))
+    """008/R3.2; 013/R7.4, R8.2: IP, User-Agent e sessão só com `auditoria:read_acessos`; a
+    consulta grava `auditoria.evento_consultado`, na mesma transação."""
+    estado = request.app.state
+    async with estado.sessoes() as sessao, sessao.begin():
+
+        async def registrar_consulta(consultado: int) -> None:
+            await registrar(
+                estado.auditoria(sessao),
+                acao=consultar.EVENTO_CONSULTADO,
+                ator=ator_da_requisicao(request, usuario),
+                entidade=Entidade(tipo="evento_auditoria", id=str(consultado)),
+            )
+
+        item = await consultar.detalhar_evento(
+            usuario, id_, consultas=_porta(request, sessao), registrar_consulta=registrar_consulta
+        )
     return EventoDetalheOut.do_evento(item)
 
 
 @router.post("/auditoria/verificar", summary="Verificar a integridade da cadeia de hash")
 async def verificar(request: Request, corpo: VerificacaoIn, usuario: Auditor) -> VerificacaoOut:
-    """008/R3.1: recalcula a cadeia (só leitura) e responde `integra` ou o primeiro evento que
-    quebra."""
+    """008/R3.1; 013/R5.1, R5.5, R5.11, R7.3: recalcula a cadeia numa transação REPEATABLE READ,
+    READ ONLY, compara o fim com a cabeça e responde `integra` ou o primeiro evento que quebra. O
+    `auditoria.verificada` vai numa sessão e transação próprias, fora da de leitura."""
+
+    async def registrar_execucao(resultado: ResultadoDaVerificacao) -> None:
+        estado = request.app.state
+        async with estado.sessoes() as sessao, sessao.begin():
+            await registrar(
+                estado.auditoria(sessao),
+                acao="auditoria.verificada",
+                ator=ator_da_requisicao(request, usuario),
+                metadados={
+                    "integra": resultado.integra,
+                    "verificados": resultado.verificados,
+                    "ultimo_id": resultado.ultimo_id,
+                    "cabeca_confere": resultado.cabeca_confere,
+                    "cadeia_confere": resultado.cadeia_confere,
+                    "ancora_confere": resultado.ancora_confere,
+                    "primeiro_evento_divergente": resultado.primeiro_evento_divergente,
+                },
+            )
+
     async with request.app.state.sessoes() as sessao:
         resultado = await consultar.verificar_cadeia(
-            usuario, corpo.de, corpo.ate, consultas=_porta(request, sessao)
+            usuario,
+            corpo.de,
+            corpo.ate,
+            consultas=_porta(request, sessao),
+            registrar_execucao=registrar_execucao,
+            ancora=corpo.ancora.para_dominio() if corpo.ancora else None,
         )
     return VerificacaoOut.de(resultado)
 

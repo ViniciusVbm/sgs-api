@@ -23,6 +23,7 @@ from src.modules.identity.domain.login import (
 from src.modules.identity.domain.passwords import PasswordHasher
 from src.modules.identity.domain.ports import (
     LoginStateRepository,
+    PapeisDoUsuario,
     RefreshTokenRepository,
     RefreshTokenWriter,
     SessionRepository,
@@ -49,6 +50,14 @@ __all__ = [
 ]
 
 
+ORIGEM_API = "api"
+"""Rótulo de origem dos eventos de autenticação, gravados pelas rotas da API (013/R1.1)."""
+
+_FALHAS_DE_AUTENTICACAO = frozenset({"auth.login_failed", "auth.mfa_failed"})
+"""013/R4.2: resultado `failure`, categoria `autenticacao`. Os demais eventos `auth.*` (login,
+logout, 2FA cadastrado, bloqueio, reuso de refresh) registram uma ação que aconteceu: `success`."""
+
+
 def _agora() -> datetime:
     return datetime.now(UTC)
 
@@ -72,6 +81,8 @@ class Identidade:
     """UUID v7 (`src.core.ids.uuid7`, que a application não importa; ver o import-linter)."""
     mfa_obrigatorio: bool = True
     relogio: Callable[[], datetime] = field(default=_agora)
+    papeis: PapeisDoUsuario | None = None
+    """Papéis efetivos para o `auth.login` (013/R1.4); sem a porta, o evento sai sem papéis."""
 
 
 @dataclass(frozen=True)
@@ -134,7 +145,7 @@ async def entrar(
         depois = await deps.estados.registrar_falha(usuario.id, agora)
         await _auditar(deps, "auth.login_failed", origem, usuario.id, {"motivo": "credenciais"})
         if depois.bloqueado(agora):
-            await _auditar(deps, "auth.locked", origem, usuario.id, {})
+            await _auditar(deps, "auth.locked", origem, usuario.id, {}, tipo="sistema")
         return Falha()
     if not usuario.is_active:
         await _auditar(deps, "auth.login_failed", origem, usuario.id, {"motivo": "desativado"})
@@ -290,7 +301,16 @@ async def _abrir_sessao(
     )
     await deps.sessoes.add(sessao)
     tokens = await _emitir(deps, sessao, deps.gerar_id(), agora)
-    await _auditar(deps, "auth.login", origem, usuario.id, {"amr": amr}, sessao_id=sessao.id)
+    papeis = await deps.papeis.de(usuario.id) if deps.papeis is not None else ()
+    await _auditar(
+        deps,
+        "auth.login",
+        origem,
+        usuario.id,
+        {"amr": amr},
+        sessao_id=sessao.id,
+        papeis=papeis,
+    )
     return tokens
 
 
@@ -325,14 +345,32 @@ async def _auditar(
     detalhes: Mapping[str, Any],
     *,
     sessao_id: UUID | None = None,
+    papeis: tuple[str, ...] = (),
+    tipo: str | None = None,
 ) -> None:
-    """R4.1: evento de acesso com IP e user agent (nunca senha nem token)."""
+    """R4.1: evento de acesso com IP e user agent (nunca senha nem token).
+
+    013/R1.1 a R1.3: sem usuário identificado, o ator é `anonimo`; um ato do próprio sistema
+    (`auth.locked`) é `sistema`, sem usuário no ator e com a conta na entidade; o resto é o
+    `usuario` da conta. O tipo é decidido aqui, nunca pelo que o cliente envia."""
+    tipo = tipo or ("anonimo" if usuario_id is None else "usuario")
+    falhou = acao in _FALHAS_DE_AUTENTICACAO
     await registrar(
         deps.auditoria,
         acao=acao,
         ator=Ator(
-            user_id=usuario_id, session_id=sessao_id, ip=origem.ip, request_id=origem.request_id
+            tipo=tipo,
+            origem=ORIGEM_API,
+            user_id=usuario_id if tipo == "usuario" else None,
+            papeis=papeis,
+            session_id=sessao_id,
+            ip=origem.ip,
+            user_agent=origem.user_agent,
+            request_id=origem.request_id,
         ),
         entidade=None if usuario_id is None else Entidade(tipo="usuario", id=str(usuario_id)),
-        metadados={"user_agent": (origem.user_agent or "")[:200], **detalhes},
+        # 013/R3.4: o User-Agent vai na coluna (antes da 013 ia em `metadata.user_agent`).
+        metadados=detalhes,
+        resultado="failure" if falhou else "success",
+        categoria="autenticacao" if falhou else None,
     )

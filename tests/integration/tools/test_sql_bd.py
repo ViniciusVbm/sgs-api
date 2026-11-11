@@ -1,8 +1,10 @@
 """`make sql-bd` (011/T20): o arquivo SQL único instala a estrutura num banco vazio e o script de
 inserção carrega 30 linhas ou mais nas tabelas de negócio."""
 
+from alembic.script import ScriptDirectory
 from sqlalchemy import text
 
+from src.core.db import alembic_config
 from src.tools.sql_bd import arquivos_de_consulta, insercao, sql_unico
 from tests.integration.postgres import BancoDeTeste, motor
 
@@ -52,6 +54,7 @@ async def test_sql_unico_instala_tudo_num_banco_vazio(banco_vazio: BancoDeTeste)
 
     assert objetos == {nome: minimo for nome, (_, minimo) in OBJETOS.items()}
     assert all(quantidade >= 30 for quantidade in contagens.values()), contagens
-    assert versao == "0011_09"
+    # O head do Alembic, e não uma revisão fixa: cada migração nova entra no SQL único (011/R11.3).
+    assert versao == ScriptDirectory.from_config(alembic_config()).get_current_head()
     for arquivo in arquivos_de_consulta():
         assert arquivo.name in script

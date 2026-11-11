@@ -9,6 +9,7 @@ from src.modules.audit.domain.consultas import (
     FiltrosDeEventos,
     FiltrosDeHistorico,
     FiltrosDoLogDoBanco,
+    IdentidadeDaCadeia,
     Pagina,
     Particao,
     RegistroDoBanco,
@@ -49,6 +50,23 @@ class ConsultasDeAuditoria(Protocol):
         ...
 
     async def hash_anterior(self, id_: int) -> str | None: ...
+
+    async def fixar_foto_consistente(self) -> None:
+        """013/R5.11: a partir daqui, todas as leituras veem a mesma foto do banco (REPEATABLE
+        READ, READ ONLY). Precisa ser a primeira leitura da transação."""
+        ...
+
+    async def cabeca_da_cadeia(self) -> str:
+        """013/R5.1: o `last_hash` de `audit_chain_head`."""
+        ...
+
+    async def identidade_da_cadeia(self) -> IdentidadeDaCadeia:
+        """013/R5.3, R5.4: `cadeia_id`, total de eventos e nome do banco."""
+        ...
+
+    async def hash_do_evento(self, id_: int) -> str | None:
+        """013/R5.3: o hash gravado do evento `id_`, ou `None` se ele não existe."""
+        ...
 
     async def log_do_banco(
         self, filtros: FiltrosDoLogDoBanco, pagina: Pagina

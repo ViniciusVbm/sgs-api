@@ -212,3 +212,26 @@ def test_sem_rolagem_horizontal(gestor: tuple[Page, str], largura: int) -> None:
         conteudo = pagina.locator("#u-corpo dl, #u-corpo ol, #u-corpo .empty, #u-corpo table")
         expect(conteudo.first).to_be_visible()
         assert pagina.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), aba
+
+
+def test_historico_mostra_tentativa_sem_sucesso(gestor: tuple[Page, str]) -> None:
+    """013/R8.4, R8.7: a tentativa recusada (PATCH sem If-Match, 428) aparece no histórico da
+    ficha como "Tentativa sem sucesso", com o chip de falha; as alterações têm o chip de sucesso."""
+    pagina, token_ = gestor
+    unidade = nova_unidade(pagina, token_)
+    recusada = requisicao(
+        pagina, token_, "PATCH", f"/unidades/{unidade['id']}", {"bairro": "Derby"}
+    )
+    assert recusada.status == 428
+
+    with pagina.expect_response("**/historico?*"):
+        pagina.goto(f"/#/unidade/{unidade['id']}/historico")
+
+    itens = pagina.locator("[data-ref=historico] > li")
+    expect(itens.first.locator(".what")).to_have_text("Tentativa sem sucesso")
+    expect(itens.first.locator("[data-ref=resultado]")).to_have_attribute(
+        "data-resultado", "failure"
+    )
+    expect(itens.nth(1).locator("[data-ref=resultado]")).to_have_attribute(
+        "data-resultado", "success"
+    )

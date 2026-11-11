@@ -23,7 +23,13 @@ from src.modules.access.domain.authorization import (
     tem_escopo_global,
 )
 from src.modules.access.domain.ports import RepositorioDePermissoes, ResolvedorDeAlvo
-from src.modules.audit.application.registrar import Ator, AuditStore, Entidade, registrar
+from src.modules.audit.application.registrar import (
+    Ator,
+    AuditStore,
+    Entidade,
+    registrar,
+    registrar_falha,
+)
 
 # Tamanho de `audit_log.entity_id`: o id vem do caminho, sem validação, e não pode derrubar o
 # registro da negação.
@@ -35,6 +41,7 @@ __all__ = [
     "Alvo",
     "Ator",
     "AuditStore",
+    "Entidade",
     "EscopoLeitura",
     "Recurso",
     "RepositorioDePermissoes",
@@ -46,6 +53,7 @@ __all__ = [
     "exigir_escopo_amplo",
     "exigir_escopo_global",
     "exigir_no_escopo",
+    "registrar_falha",
     "verificar",
 ]
 
@@ -159,6 +167,8 @@ async def auditar_negacao(
         store,
         acao="acesso.negado",
         ator=ator,
+        resultado="denied",  # 013/R4.2
+        categoria="autorizacao",
         entidade=(
             None
             if recurso is None

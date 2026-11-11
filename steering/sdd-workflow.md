@@ -46,6 +46,12 @@ Os designs revistos na regularização das specs 008, 009, 010 e 011 (itens V1 a
   - as T2 a T23 seguem a regra geral (requisitos, design e tarefas `Aprovado`).
 - **Alcance:** vale só para a T1 da 012 e não se estende a outras tarefas nem a outras specs.
 
+## Exceção pontual: spec 013, aprovação só do proprietário (Vinicius, 11/11/2026)
+- **O que permite:** que os três portões da spec 013 (G1, G2 e G3) sejam aprovados só pelo dono, Vinicius (ViniciusVbm), sem o segundo integrante que a tabela exige no G2.
+- **Quem decidiu:** o próprio Vinicius, proprietário e único responsável pelo projeto, na sessão de trabalho de 11/11/2026. A aprovação foi registrada pelo agente por autorização expressa dada nessa sessão. O agente não aprova nada em nome de ninguém.
+- **Motivo:** não há segundo integrante disponível para a revisão do design da 013. A falta da revisão independente fica registrada como limitação no `Status:` do `design.md` da 013.
+- **Alcance:** vale só para a 013. A regra geral da tabela não muda para as demais specs.
+
 ## Dono da spec: atribuição e transferência
 - O dono fica numa linha do cabeçalho do `requirements.md`: `- Dono humano: <nome> (<login>)`. Design e tarefas seguem o dono dos requisitos.
 - Spec sem dono registrado fica com o responsável pelo projeto até alguém assumir. Responsável pelo projeto desde 09/11/2026: Vinicius (ViniciusVbm).

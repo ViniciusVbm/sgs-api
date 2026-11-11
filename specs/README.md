@@ -23,7 +23,8 @@ As specs 008, 009 e 010 e a emenda T21–T22 da 011 foram implementadas antes do
 | [009-dashboard](009-dashboard/) | Agregados da rede e da qualidade dos dados | MVP: dashboard básico | Aprovado (Vinicius, 09/11); faltam T2b (cache) e T3 (desempenho) |
 | [010-dados-demonstracao](010-dados-demonstracao/) | Seed de Saúde Mental, usuários por papel, conversor da planilha | pendência 6 (massa de dados) | Aprovado (Vinicius, 09/11); falta T3 (planilha do cliente) |
 | [011-recursos-banco-dados](011-recursos-banco-dados/) | Índices, consultas avançadas, views, funções, procedimentos, triggers, log do banco, segurança no SGBD | disciplina de Banco de Dados (Segunda Parte, 13/11) | Aprovado (Rafael, T1–T20); emenda T21–T22 aprovada (Vinicius, 09/11); dono: Vinicius |
-| [012-frontend](012-frontend/) | Interface real a partir do protótipo HTML: autenticação, perfis, unidades, serviços, qualidade, histórico | Entrega 11 (21/11) | Requisitos aprovados (Vinicius, 09/11; emenda documental 1 aguarda o dono); design e tarefas em Rascunho (G2 e G3 pendentes) |
+| [012-frontend](012-frontend/) | Interface real a partir do protótipo HTML: autenticação, perfis, unidades, serviços, qualidade, histórico | Entrega 11 (21/11) | Aprovado: requisitos (Vinicius, 09/11), design (Vinicius, Igor Fugagnoli e Erick Sanches, 10/11) e tarefas (Vinicius, 10/11); emenda funcional 1 (R5.5) aguarda o G1 do dono; emenda funcional 2 aprovada na sessão de 10/11, com a confirmação no PR pendente com o dono |
+| [013-trilha-auditoria-reforco](013-trilha-auditoria-reforco/) | Origem, resultado, IP/UA confiável, verificação consistente com cabeça e âncora, `db_change_log` imutável, cobertura, detalhe e histórico com RBAC, retenção e backup | lacunas A–I da auditoria técnica da trilha (11/11) | Aprovado (Vinicius, proprietário, 11/11; G1, G2 e G3 só do dono, pela exceção pontual de `steering/sdd-workflow.md`); implementação na branch `feat/013-trilha-auditoria`; emendas com nota de referência no design da 001 (canonicalização) e no da 011 (`vw_unit_history`) |
 
 ## Rastreabilidade requisito → spec
 
@@ -36,15 +37,15 @@ As specs 008, 009 e 010 e a emenda T21–T22 da 011 foram implementadas antes do
 | RF-05 CNES | fora do MVP |
 | RF-06 Dashboards | 009 |
 | RF-07 Relatórios | 005 (parcial) |
-| RF-08 Histórico | 001 (gravação), 008 (consulta) |
+| RF-08 Histórico | 001 (gravação), 008 (consulta), 013 (reforço) |
 | RF-09 Busca/filtros | 006 |
 | RF-10 Notificações | fora do MVP |
 | RS-01 Autenticação | 002, 004 |
 | RS-02 RBAC | 003 (aplicado em 005 a 009) |
 | RS-03 / RS-04 Criptografia | 001, 002, 004, 005 |
-| RS-05 Auditoria | 001, 002, 008 |
+| RS-05 Auditoria | 001, 002, 008, 013 |
 | RS-08 Validação de entrada | 001, 007 |
-| RS-09 Monitoramento | 002, 008 |
+| RS-09 Monitoramento | 002, 008, 013 |
 | Disciplina de Banco de Dados (Segunda Parte e Etapa 06) | 011 (CRUD de 4 tabelas pela 006) |
 | Critérios 6.1 da Entrega Final | 002, 003, 006, 007, 008, 009, 001 (compose) |
 

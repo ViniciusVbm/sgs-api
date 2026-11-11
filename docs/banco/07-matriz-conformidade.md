@@ -39,7 +39,8 @@ As telas abrem em `https://<host>/` (ver [08-roteiro-demonstracao.md](08-roteiro
 | Trigger que grava log | `trg_registry_change_log` → `db_change_log` | `/auditoria/banco` | `#/historico?aba=banco` | `test_log_do_banco_mostra_alteracao_feita_fora_da_api`; `test_log_banco.py` |
 | Trigger 2 | `trg_health_units_version` (versão e `updated_at` da unidade) | `ETag` de `/unidades/{id}` | ficha (versão, data, 412) | `test_edicao.py::test_edicao_com_diff_if_match_versao_e_updated_at`, `test_dois_navegadores_…412…`; `test_versao_trigger.py` |
 | Trigger 3 | `trg_set_updated_at`: `updated_at` em 7 tabelas: `services`, `equipments` e as 5 de referência (`districts`, `technical_areas`, `unit_types`, `equipment_types`, `service_types`); não está em `health_units` | `PATCH /unidades/{id}/servicos/{sid}` | ficha › Serviços | `test_servicos.py::test_patch_muda_o_updated_at_pelo_trigger`; `test_ajustes_0011_09.py` |
-| Triggers da auditoria | `audit_log_somente_insercao`, `trg_roles_protect_system` | `POST /auditoria/verificar` | `#/cadeia` | `test_auditor_ve_a_cadeia_integra`; `test_audit_immutable.py`, `test_seed_matriz.py` |
+| Triggers da auditoria | `audit_log_somente_insercao`, `trg_roles_protect_system`; `db_change_log_somente_insercao` e `ENABLE ALWAYS` (0013_03) | `POST /auditoria/verificar` (cabeça e âncora, spec 013) | `#/cadeia` | `test_auditor_ve_a_cadeia_integra`, `test_cadeia_mostra_cabeca_cadeia_e_ancora`; `test_audit_immutable.py`, `test_log_banco_privilegios.py`, `test_adulteracao.py` |
+| Restauração preservando constraints e triggers | `pg_dump -Fc` / `pg_restore`; `ck_audit_log_origem_obrigatoria` NOT VALID; triggers `ENABLE ALWAYS` | `sgs-admin auditoria verificar --ancora` | — | `test_backup_restauracao.py` (evidência em `docs/operacao/evidencias/`) |
 
 ## Etapa 06 · Integração final
 | Requisito | Objeto no banco | Rota | Tela | Teste |

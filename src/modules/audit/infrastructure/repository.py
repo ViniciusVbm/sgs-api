@@ -39,6 +39,11 @@ class SqlAuditStore:
                 metadata=content["metadata"],
                 prev_hash=entry.prev_hash,
                 hash=entry.hash,
+                actor_type=entry.actor.tipo,
+                origin=entry.actor.origem,
+                user_agent=entry.actor.user_agent,
+                result=entry.result,
+                result_reason=entry.result_reason,
             )
         )
         await self._session.execute(

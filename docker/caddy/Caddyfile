@@ -1,5 +1,8 @@
 # Proxy TLS local (spec 001, R1.1): HTTPS com certificado da CA interna do Caddy.
 # A porta 80 só redireciona para HTTPS. O Caddy repassa X-Forwarded-For e X-Forwarded-Proto.
+# Sem `trusted_proxies`, o Caddy descarta o X-Forwarded-For vindo do cliente e escreve o IP da
+# conexão; a API só aceita esse cabeçalho do IP fixo do Caddy (spec 013, T4). Um balanceador
+# antes do Caddy fica fora do escopo acadêmico: se houver, ele entra em `trusted_proxies`.
 #
 # Spec 012 (T1, R1.1 e R15.2): o front estático é servido no mesmo domínio da API.
 # /api/*, /health/* e /.well-known/* vão para a API; o resto vem de /srv/frontend, com CSP.

@@ -109,7 +109,8 @@ async def _carregar(sessao: AsyncSession, senha: str, pasta: Path, contagem: Con
     unidades = SqlRepositorioDeUnidades(sessao)
     vinculos = SqlRepositorioDeVinculos(sessao)
     auditoria = SqlAuditStore(sessao)
-    sistema = Ator()
+    # 013/R1.1, R1.2: o seed não é uma pessoa; nenhum usuário é atribuído aos eventos.
+    sistema = Ator(tipo="seed", origem=ORIGEM)
 
     ids = await _ids_das_referencias(sessao)
     # Referências reais da rede usadas pelas unidades reaproveitadas da feat/003.

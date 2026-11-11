@@ -3,7 +3,7 @@
 --   (`alteracoes_recentes`), reescrita sobre a `vw_unit_history` (011/R4.4): a view já traz o
 --   nome do autor (JOIN com `users`) e o distrito, sem expor dado pessoal da unidade.
 -- Uso: GET /api/v1/dashboard/consultas/alteracoes-recentes e GET /api/v1/dashboard/resumo.
--- Requisitos: 009/R1.4, 009/R2.4, 009/R2.5
+-- Requisitos: 009/R1.4, 009/R2.4, 009/R2.5, 013/R8.8
 SELECT
     audit_id,
     occurred_at,
@@ -13,7 +13,10 @@ SELECT
     district_name,
     actor_name
 FROM vw_unit_history
-WHERE (:scope_global OR technical_area_id = ANY(CAST(:scope_areas AS smallint[]))
+-- 013/R8.8: só alterações efetivas; uma falha (`operacao.falhou`) não é alteração. Os eventos
+-- anteriores à 013 têm `result` nulo e eram todos alterações.
+WHERE (result IS NULL OR result = 'success')
+  AND (:scope_global OR technical_area_id = ANY(CAST(:scope_areas AS smallint[]))
        OR district_id = ANY(CAST(:scope_districts AS smallint[]))
        OR unit_id = ANY(CAST(:scope_units AS uuid[])))
   AND (CAST(:district_id AS smallint) IS NULL OR district_id = CAST(:district_id AS smallint))

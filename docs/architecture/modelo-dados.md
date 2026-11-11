@@ -71,7 +71,13 @@ Como o vínculo do serviço guarda `unit_id` (e não o nome da unidade), o probl
 
 - **Imutabilidade:** trigger `BEFORE UPDATE OR DELETE` que lança exceção; o usuário de banco da aplicação só tem `INSERT` e `SELECT` nessa tabela.
 - **Encadeamento:** `hash = SHA-256(prev_hash || conteúdo canônico)`. Um endpoint de verificação recalcula a cadeia e aponta adulteração (o protótipo já mostra o hash por evento).
-- **Retenção:** 2 anos (RS-05). Sem particionamento: ele exigiria incluir `occurred_at` nas unicidades de `hash`/`prev_hash` e enfraqueceria a cadeia (spec 008, design § Retenção).
+- **Retenção:** 2 anos (RS-05). Sem particionamento: ele exigiria incluir `occurred_at` nas unicidades de `hash`/`prev_hash` e enfraqueceria a cadeia (spec 008, design § Retenção). Backup, restauração e arquivamento: ADR-0013 e `docs/operacao/backup-restauracao.md`.
+- **Spec 013:**
+  - **Colunas novas.** `actor_type`, `origin`, `user_agent`, `result` e `result_reason` (0013_01), nulas nos eventos anteriores. Entram no conteúdo canônico só quando não são nulas, então os hashes antigos não mudam.
+  - **Obrigatoriedade.** `ck_audit_log_origem_obrigatoria` (`actor_type` e `result` obrigatórios) é `NOT VALID` e nunca é validada (0013_02).
+  - **Imutabilidade.** Os triggers de imutabilidade do `audit_log` e do `db_change_log` (mãe e cada partição) e o `trg_registry_change_log` ficam `ENABLE ALWAYS` (0013_03).
+  - **Histórico da unidade.** A `vw_unit_history` expõe tipo de ator, origem e resultado e exclui `auth.*`, `acesso.negado` e `auditoria.*` (0013_04).
+  - **Verificação.** Usa `REPEATABLE READ, READ ONLY` e confere a cabeça (`audit_chain_head`) e, opcionalmente, uma âncora externa (ADR-0012).
 - **Dados sensíveis:** `changes` nunca guarda senha, hash ou segredo; campos marcados como sensíveis aparecem como `"***"`.
 
 ## 4. Relatórios

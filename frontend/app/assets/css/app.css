@@ -525,3 +525,11 @@ td.acoes .btn + .btn{margin-left:6px}
 @media (max-width:560px){
   .unit-head .acoes-ficha{justify-content:flex-start}
 }
+
+/* Spec 013, T14: detalhe do evento e verificação da cadeia. */
+.kv{display:grid;grid-template-columns:minmax(9rem,max-content) 1fr;gap:.35rem 1rem;margin:0 0 1rem}
+.kv>div{display:contents}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;min-width:0}
+code.hash{word-break:break-all;font-size:.85em}
+pre.metadados{white-space:pre-wrap;word-break:break-word;font-size:.85em;margin:0}

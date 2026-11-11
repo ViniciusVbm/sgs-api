@@ -14,6 +14,7 @@ from src.modules.audit.domain.consultas import (
     FiltrosDeEventos,
     FiltrosDeHistorico,
     FiltrosDoLogDoBanco,
+    IdentidadeDaCadeia,
     Pagina,
     Particao,
     RegistroDoBanco,
@@ -28,6 +29,10 @@ _EVENTOS = consulta(_SQL / "audit_events.sql")
 _EVENTO = consulta(_SQL / "audit_event_by_id.sql")
 _LOTE = consulta(_SQL / "audit_chain_batch.sql")
 _HASH_ANTERIOR = consulta(_SQL / "audit_hash_before.sql")
+_CABECA = consulta(_SQL / "audit_chain_head.sql")
+_FOTO_CONSISTENTE = consulta(_SQL / "audit_snapshot_consistente.sql")
+_IDENTIDADE = consulta(_SQL / "audit_chain_identity.sql")
+_HASH_DO_EVENTO = consulta(_SQL / "audit_event_hash.sql")
 _LOG_DO_BANCO = consulta(_SQL / "db_change_log_list.sql")
 _PARTICOES = consulta(_SQL / "db_change_log_partitions.sql")
 
@@ -90,6 +95,22 @@ class SqlConsultasDeAuditoria:
         valor: str | None = await self._session.scalar(_HASH_ANTERIOR, {"id": id_})
         return valor
 
+    async def fixar_foto_consistente(self) -> None:
+        await self._session.execute(_FOTO_CONSISTENTE)
+
+    async def cabeca_da_cadeia(self) -> str:
+        return str(await self._session.scalar(_CABECA))
+
+    async def identidade_da_cadeia(self) -> IdentidadeDaCadeia:
+        linha = (await self._session.execute(_IDENTIDADE)).mappings().one()
+        return IdentidadeDaCadeia(
+            cadeia_id=linha["cadeia_id"], total=int(linha["total"]), banco=str(linha["banco"])
+        )
+
+    async def hash_do_evento(self, id_: int) -> str | None:
+        valor: str | None = await self._session.scalar(_HASH_DO_EVENTO, {"id": id_})
+        return valor
+
     async def log_do_banco(
         self, filtros: FiltrosDoLogDoBanco, pagina: Pagina
     ) -> Resultado[RegistroDoBanco]:
@@ -149,6 +170,11 @@ def _evento(
         request_id=linha.get("request_id"),
         prev_hash=linha.get("prev_hash"),
         hash=linha.get("hash"),
+        actor_type=linha.get("actor_type"),
+        origin=linha.get("origin"),
+        user_agent=linha.get("user_agent"),
+        result=linha.get("result"),
+        result_reason=linha.get("result_reason"),
     )
 
 
@@ -168,6 +194,9 @@ def _entrada(linha: RowMapping) -> AuditEntry:
             session_id=linha["session_id"],
             ip=linha["ip"],
             request_id=linha["request_id"],
+            tipo=linha["actor_type"],
+            origem=linha["origin"],
+            user_agent=linha["user_agent"],
         ),
         entity=entidade,
         changes=tuple(
@@ -177,4 +206,6 @@ def _entrada(linha: RowMapping) -> AuditEntry:
         metadata=dict(linha["metadata"] or {}),
         prev_hash=linha["prev_hash"],
         hash=linha["hash"],
+        result=linha["result"],
+        result_reason=linha["result_reason"],
     )
