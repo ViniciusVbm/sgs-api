@@ -2,10 +2,10 @@
 
 **Situação (atualizada em 10/11/2026):**
 - **Onde está o front:** a integração é especificada na **spec 012** (`specs/012-frontend/`).
-  - Os requisitos foram aprovados por Vinicius em 09/11/2026. O design e as tarefas estão em Rascunho, aguardando o G2 e o G3.
+  - Requisitos aprovados em 09/11/2026 (G1); design e tarefas, em 10/11/2026 (G2 e G3). A **emenda funcional 2** (entrega final de Projeto de Banco de Dados, 13/11/2026) foi aprovada na sessão de trabalho de 10/11/2026.
   - Pelo ADR-0010 (Proposto), o front fica neste repositório, em `frontend/app/`, servido pelo Caddy no mesmo domínio da API.
   - O protótipo de referência é `frontend/prototipo/Prototipo_SGS_Recife_v2.html` (25/09/2026, 145 KB). Ele fica **fora do Git**, e cópias também existem nas máquinas dos integrantes.
-  - **Entrega pronta (T1, 10/11/2026, por exceção pontual do dono):** o Caddy serve `frontend/app/` em `https://localhost/`, com CSP, e mantém `/api/*`, `/health/*` e `/.well-known/*` na API. Por enquanto é só um `index.html` mínimo, que diz que a interface está em implantação.
+  - **Entrega pronta (T1, 10/11/2026, por exceção pontual do dono):** o Caddy serve `frontend/app/` em `https://localhost/`, com CSP, e mantém `/api/*`, `/health/*` e `/.well-known/*` na API.
     - **Rodar:** `docker compose -f docker/compose.yml up -d`.
     - **Com 80 e 443 ocupadas:** `SGS_HTTP_PORT=18080 SGS_HTTPS_PORT=18443 docker compose -f docker/compose.yml up -d` e abrir `https://localhost:18443/`.
     - **Teste:** `uv run pytest tests/e2e/test_frontend_entrega.py -m slow`.
@@ -15,10 +15,20 @@
     - aparência, fonte e ícones locais do protótipo (T2);
     - base de escape, modal, avisos e estados de carregando, vazio e erro (T3);
     - Início com os indicadores de `/dashboard/resumo` (T6);
-    - lista de unidades com busca, filtros, ordenação, paginação e filtros na URL (T7).
+    - lista de unidades com busca (sem acento, pela `fn_normalize_name`), filtros, ordenação, paginação e filtros na URL (T7).
+  - **Desde 10/11/2026, com a emenda funcional 2 (corte acadêmico):**
+    - **Qualidade dos dados** (`#/qualidade`, T11 parte A): indicadores (totais, médias, percentuais, tendência), gráficos em SVG (barras, pizza, linha do período) e as consultas e views do catálogo, com filtros de distrito, tipo e área;
+    - **Histórico geral** (`#/historico`): trilha de auditoria, log do banco (trigger, pela API ou fora dela) e partições (procedimento com cursor); **Verificação da cadeia** (`#/cadeia`) para o Auditor;
+    - **Tabelas de referência** (`#/referencias`, T24): incluir, alterar, desativar e reativar tipos de unidade, de equipamento e de serviço, com o `ON UPDATE CASCADE` do código conferido na tela;
+    - **Ficha da unidade** (`#/unidade/{id}`, T8 parte A): dados, versão e "Atualizado em", serviços e histórico (`vw_unit_history`);
+    - **Serviços** da ficha (T10): incluir, alterar, desativar, reativar e remover;
+    - **Desativação** pela procedure `sp_deactivate_unit` (T25);
+    - **Cadastro** (`#/nova`) e **edição** da unidade com diff e `If-Match`, tratando o conflito de versão (412) (T9).
     
-    A ficha, a edição, os serviços, a qualidade e o histórico aparecem como "Tela em implantação", sem dados, até as tarefas T8 a T11. As funcionalidades sem backend aparecem como "em desenvolvimento" (R13.1).
-    - **Testes do front:** `uv run pytest tests/e2e_front -m slow` (Playwright em Python; usa o Chromium do Playwright ou o Chrome do sistema) e `tests/architecture/test_frontend_estatico.py`, que roda no `make check`.
+    A tela e a rota de cada objeto de banco, e a matriz de conformidade, estão em [`docs/banco/05-objetos-e-justificativas.md`](banco/05-objetos-e-justificativas.md) § Etapa 6 e [`docs/banco/07-matriz-conformidade.md`](banco/07-matriz-conformidade.md).
+
+    Continuam "em desenvolvimento" (R13.1), sem chamar a API: as 8 verificações de qualidade (T8 e T11, parte B, prazo de 21/11), aparelhos (DF1), solicitações e validações, notificações, exportação, importação e usuários. "Papéis e atribuições" segue "em implantação".
+    - **Testes do front:** `uv run pytest tests/e2e_front -m slow` (Playwright em Python; usa o Chromium do Playwright ou o Chrome do sistema; sobe o compose num projeto próprio, `sgs-api-e2e-front-ui`, com portas alternativas, e o derruba no fim) e `tests/architecture/test_frontend_estatico.py`, que roda no `make check`.
     - **Com portas alternativas,** a origem precisa estar em `CORS_ORIGINS` para o refresh: `SGS_CORS_ORIGINS=https://localhost:18443`, junto com `SGS_HTTPS_PORT=18443`.
 - **Como o protótipo funciona:** é uma página única que **guarda os dados no `localStorage`** e não chama nenhuma API. Integrá-lo é trocar esse armazenamento por chamadas à API.
 - **Divergências:** as da seção 3 estão ligadas às decisões da spec 012 (DF1 a DF15 e as decisões e premissas do Grupo 01, em `specs/012-frontend/requirements.md` § Decisões). A matriz completa de tela, endpoint e estado está em `specs/012-frontend/design.md` § Matriz de integração.
