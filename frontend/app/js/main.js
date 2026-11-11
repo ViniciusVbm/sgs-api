@@ -12,6 +12,11 @@ import { mostrarLogin } from './views/login.js';
 import { semAcesso, naoEncontrada, telaEmDesenvolvimento, telaEmImplantacao } from './views/basicas.js';
 import { telaInicio } from './views/inicio.js';
 import { telaUnidades } from './views/unidades.js';
+import { telaQualidade } from './views/qualidade.js';
+import { telaHistorico, telaCadeia } from './views/historico.js';
+import { telaTabelas } from './views/tabelas.js';
+import { telaUnidade } from './views/unidade.js';
+import { telaNovaUnidade } from './views/nova.js';
 
 // Abertura (spec 012, design § Fluxo): refresh silencioso → /me → menu → rota.
 let perfil = null;
@@ -59,20 +64,21 @@ const sempre = () => true;
 function registrarRotas() {
   rota('inicio', tela('inicio', (p) => p.tem('dashboard:read'), (a) => telaInicio(a, perfil)));
   rota('unidades', tela('unidades', (p) => p.tem('unidade:read'), (a, _p, consulta) => telaUnidades(a, perfil, consulta)));
-  rota('unidade/:id', tela('unidade', (p) => p.tem('unidade:read'), (a) => telaEmImplantacao(a, 'Ficha da unidade', 'T8')));
-  rota('unidade/:id/:aba', tela('historico-unidade', (p) => p.tem('unidade:read'), (a) => telaEmImplantacao(a, 'Ficha da unidade', 'T8')));
+  rota('unidade/:id', tela('unidade', (p) => p.tem('unidade:read'), (a, params) => telaUnidade(a, perfil, params)));
+  rota('unidade/:id/:aba', tela('historico-unidade', (p) => p.tem('unidade:read'), (a, params) => telaUnidade(a, perfil, params)));
   rota('nova', tela('nova', (p) => p.global('unidade:create') || p.tem('alteracao:propor'), (a) => {
-    if (perfil.global('unidade:create')) telaEmImplantacao(a, 'Cadastrar unidade', 'T9');
+    if (perfil.global('unidade:create')) telaNovaUnidade(a);
     else telaEmDesenvolvimento(a, 'Solicitar cadastro', 'O cadastro por solicitação depende da spec de solicitações e da ratificação das premissas pelo cliente (PF-01, PF-07).');
   }));
   rota('solicitacoes', tela('solicitacoes', (p) => p.tem('alteracao:propor') || p.tem('alteracao:validar'), (a) =>
     telaEmDesenvolvimento(a, perfil.tem('alteracao:validar') ? 'Validações' : 'Solicitações', 'Ainda não há API de solicitações; propor, aprovar e devolver dependem da spec de solicitações (PF-01, PF-02).')));
-  rota('qualidade', tela('qualidade', (p) => p.tem('dashboard:read'), (a) => telaEmImplantacao(a, 'Qualidade dos dados', 'T11')));
-  rota('historico', tela('historico', (p) => p.tem('auditoria:read'), (a) => {
-    if (perfil.global('auditoria:read')) telaEmImplantacao(a, 'Histórico', 'T11');
+  rota('qualidade', tela('qualidade', (p) => p.tem('dashboard:read'), (a, _p, consulta) => telaQualidade(a, perfil, consulta)));
+  rota('historico', tela('historico', (p) => p.tem('auditoria:read'), (a, _p, consulta) => {
+    if (perfil.global('auditoria:read')) telaHistorico(a, perfil, consulta);
     else telaEmDesenvolvimento(a, 'Histórico de alterações', 'A trilha geral no escopo do distrito ou da área ainda não existe na API (emenda da 008). O histórico de cada unidade continua na ficha.');
   }));
-  rota('cadeia', tela('cadeia', (p) => p.global('auditoria:read'), (a) => telaEmImplantacao(a, 'Verificação da cadeia', 'T11')));
+  rota('cadeia', tela('cadeia', (p) => p.global('auditoria:read'), (a) => telaCadeia(a)));
+  rota('referencias', tela('referencias', (p) => p.global('regra_validacao:manage'), (a, _p, consulta) => telaTabelas(a, consulta)));
   rota('importar', tela('importar', (p) => p.global('unidade:create'), (a) =>
     telaEmDesenvolvimento(a, 'Importar planilha', 'Ainda não há API de importação (spec de CSV do backend).')));
   rota('papeis', tela('papeis', (p) => p.tem('papel:assign'), (a) => telaEmImplantacao(a, 'Papéis e atribuições', 'T5 (complemento)')));

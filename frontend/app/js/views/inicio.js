@@ -22,7 +22,9 @@ export async function telaInicio(alvo, perfil) {
   document.title = 'Início — SGS Recife';
   const cabecalho = html`<div class="page-head"><div><h1>${saudacao()}, ${String(perfil.me.nome).split(' ')[0]}.</h1>
     <p>Indicadores calculados pela API no seu escopo de acesso.</p></div>
-    ${perfil.global('unidade:create') ? html`<a class="btn btn-primary" href="#/nova">${ic('plus')}Cadastrar unidade</a>` : ''}</div>`;
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn btn-line" href="#/qualidade" data-ref="painel-completo">${ic('shield')}Painel completo: gráficos e consultas</a>
+      ${perfil.global('unidade:create') ? html`<a class="btn btn-primary" href="#/nova">${ic('plus')}Cadastrar unidade</a>` : ''}</div></div>`;
   montar(alvo, html`${cabecalho}${carregando()}`);
   let resumo;
   try {

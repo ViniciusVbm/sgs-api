@@ -1,7 +1,7 @@
 # 012 · Frontend SGS Recife · Requisitos
 
-- Status: Aprovado (Vinicius, 09/11/2026). Emenda documental 1 (10/11/2026: responsáveis, decisões do Grupo 01 e análise de P1 a P5, **sem mudança funcional**) **aprovada (Vinicius, 10/11/2026)**: autorização expressa do dono, dada na sessão de trabalho para as alterações puramente documentais e de responsabilidade, e registrada pelo agente. Emenda funcional 1 (R5.5 [C], **proposta**) **aguarda o G1 do dono**. Ver § Emendas
-- Rastreia: RF-01, RF-02, RF-03, RF-04, RF-06, RF-07, RF-08, RF-09, RF-10, RS-01, RS-02; critério 6.1 "login leva a tela coerente com o perfil"; Entrega 11 de Projetos (21/11/2026); ADR-0010, ADR-0011
+- Status: Aprovado (Vinicius, 09/11/2026). Emenda documental 1 (10/11/2026: responsáveis, decisões do Grupo 01 e análise de P1 a P5, **sem mudança funcional**) **aprovada (Vinicius, 10/11/2026)**: autorização expressa do dono, dada na sessão de trabalho para as alterações puramente documentais e de responsabilidade, e registrada pelo agente. Emenda funcional 1 (R5.5 [C], **proposta**) **aguarda o G1 do dono**. **Emenda funcional 2** (acadêmica: R7.7, R8.2, R12.5, R12.6, R16.1 e o prazo de 13/11/2026) **aprovada na sessão de trabalho de 10/11/2026 (registro do agente, por instrução expressa na sessão; o agente não registra aprovação em nome de ninguém, e a confirmação no PR fica com o dono, Vinicius)**. Ver § Emendas
+- Rastreia: RF-01, RF-02, RF-03, RF-04, RF-06, RF-07, RF-08, RF-09, RF-10, RS-01, RS-02; critério 6.1 "login leva a tela coerente com o perfil"; Entrega 11 de Projetos (21/11/2026); **entrega final de Projeto de Banco de Dados, Etapas 03 a 06 (13/11/2026; emenda funcional 2)**; ADR-0010, ADR-0011
 - Dono humano: Vinicius (ViniciusVbm)
 - Origem: `docs/PLANO_INTEGRACAO_FRONTEND.md` (versão 2, 09/11/2026)
 
@@ -11,6 +11,7 @@ O grupo tem um protótipo navegável em HTML (`frontend/prototipo/Prototipo_SGS_
 ## Escopo
 - **Escopo mínimo (21/11/2026):** os requisitos marcados **[M]**. Usam só endpoints que já existem, sem mudar spec aprovada nem a matriz RBAC.
 - **Escopo completo:** os requisitos marcados **[C]**. Dependem de decisões (DF, ver § Decisões) ou de backend que ainda não existe. Até lá, a funcionalidade **continua visível**, desabilitada, com a indicação "em desenvolvimento" (R13).
+- **Corte acadêmico (13/11/2026; emenda funcional 2):** parte do [M] é antecipada para a entrega final de Projeto de Banco de Dados, que pede na interface o CRUD de 4 tabelas ou mais, o uso de funções e procedimentos, o efeito dos triggers, as consultas e views, filtros, gráficos, médias, percentuais e tendências. Entram no corte: R6.1, R6.2, R7.7, R8.1, R8.2, R12.1 (exceto as 8 verificações), R12.2, R12.4, R12.5, R12.6 e R16.1 (nível A); R7.1 a R7.3 (nível B). O resto do [M] continua com o prazo de 21/11/2026. Os requisitos novos usam só rotas que já existem, sem mudar backend, contrato nem a matriz RBAC.
 
 ## Fora do escopo
 - Mudanças no backend, na matriz RBAC ou em specs aprovadas: cada uma tem a sua spec ou emenda (§ Decisões).
@@ -78,9 +79,18 @@ Como usuário, quero ver o menu e as telas do meu papel.
 - R7.4 [M] Enquanto a DF2 (e a DF14, para o Coordenador) não for decidida, a interface NÃO DEVE oferecer edição nem cadastro direto ao Técnico Distrital, ao Gestor de Unidade nem ao Coordenador Técnico, embora a matriz atual lhes dê `unidade:update` (e ao Coordenador, `unidade:create`) no próprio escopo. Isso restringe a interface, não a API, e não muda permissões. A regra do protótipo é só propor; o botão "Propor alteração" aparece desabilitado com a indicação "em desenvolvimento".
 - R7.5 [C] QUANDO a DF2 (e a DF14) e a spec de solicitações estiverem aprovadas, o distrito DEVE poder "solicitar cadastro" (F16) pela solicitação.
 - R7.6 [C] O campo de observação do modal de confirmação (protótipo) DEVE ser enviado quando a API aceitar. Hoje o `PATCH` recusa campos extras (`extra="forbid"`) e não grava observação, então o campo aparece desabilitado com a indicação "em desenvolvimento". Depende de: emenda da 006.
+- R7.7 [M] (emenda funcional 2) QUANDO um usuário com `unidade:deactivate` de escopo **global** (hoje, só o Gestor de Dados) desativa uma unidade pela ficha, a interface DEVE pedir o motivo, com 3 a 500 caracteres como a API (`DesativacaoIn`), pedir confirmação e chamar `POST /api/v1/unidades/{id}/desativar` com `{motivo}`. A API executa o procedimento `sp_deactivate_unit` (011/R6.2 a R6.4).
+  - Com a resposta, a ficha DEVE mostrar o status "Inativa" e guardar o novo `ETag`.
+  - SE a unidade já está inativa, ENTÃO o botão NÃO DEVE aparecer.
+  - 404, 422 e 403 seguem o design (§ Fluxo).
+  - A interface NÃO DEVE oferecer exclusão física de unidade (006/R4.2). Para os demais papéis, o botão não aparece, pela regra de R7.4.
 
 ### R8. Serviços (F10)
 - R8.1 [M] A aba de serviços DEVE listar os serviços da unidade (`GET /api/v1/unidades/{id}/servicos`). QUANDO o usuário tem `servico:write` de escopo **global** (hoje, só o Gestor de Dados), DEVE permitir incluir (`POST`) e remover (`DELETE`) serviços, com os tipos de `GET /api/v1/referencias/tipos-servico` (DF5). Para os demais papéis com `servico:write` no próprio escopo, a aba é só leitura até a DF2/DF14, pela mesma regra de R7.4.
+- R8.2 [M] (emenda funcional 2) QUANDO o usuário com `servico:write` de escopo **global** altera um serviço da unidade, a interface DEVE enviar `PATCH /api/v1/unidades/{id}/servicos/{sid}` só com os campos alterados: `nome`, `tipo_servico_id`, `no_cnes` e `status`.
+  - O vínculo com equipamento (`equipamento_id`) NÃO DEVE ser editável na interface enquanto a DF1 estiver pendente.
+  - Vale a mesma regra de escopo de R8.1.
+  - Motivo: sem a alteração, a tabela `services` tem inclusão, leitura e exclusão, mas não atualização.
 
 ### R9. Equipamentos e infraestrutura (F11)
 - R9.1 [M] A aba "Equipamentos" DEVE aparecer. Enquanto a DF1 não for decidida, DEVE mostrar "em desenvolvimento" e NÃO DEVE gravar aparelhos em `equipments`, que guarda equipamento de saúde.
@@ -99,6 +109,30 @@ Como usuário, quero ver o menu e as telas do meu papel.
 - R12.2 [M] O histórico geral DEVE usar `GET /api/v1/auditoria/eventos` para quem tem `auditoria:read` global (Gestor de Dados e Auditor). Para os papéis com `auditoria:read` de escopo menor (Coordenador, Técnico Distrital, Gestor de Unidade), DEVE mostrar a indicação "em desenvolvimento". Para quem não tem `auditoria:read` (Diretoria, Administrador de TI), NÃO DEVE aparecer.
 - R12.3 [C] O histórico geral DEVE funcionar no escopo do distrito quando a API permitir. O filtro "Acessos ao sistema" DEVE seguir a DF9. Depende de: emenda da 008 e DF9 (Vinicius, dono da 003 e da 008). A consulta do histórico no escopo hierárquico é também a Grupo-DF9 (§ Decisões do Grupo 01).
 - R12.4 [M] Para o Auditor, a interface DEVE oferecer a verificação da cadeia de auditoria (`POST /api/v1/auditoria/verificar`) e mostrar `integra` ou o primeiro evento divergente.
+- R12.5 [M] (emenda funcional 2) Para quem tem `auditoria:read` de escopo **global** (Gestor de Dados e Auditor), o histórico geral DEVE ter duas visões além da trilha:
+  - aba **"Log do banco"**, com `GET /api/v1/auditoria/banco`: data (fuso de Recife), tabela, operação, id da linha, colunas alteradas como `{de, para}`, usuário do banco e a origem ("pela API" ou "fora da API", campo `pela_api`). Tem filtros `tabela`, `de`, `ate` e `fora_da_api` e paginação. O nome do gestor chega mascarado pelo banco e DEVE ser exibido como veio;
+  - painel **"Partições do log"**, com `GET /api/v1/auditoria/banco/particoes`: nome, limite e número de linhas de cada partição.
+
+  A tela DEVE identificar a origem: os registros vêm do trigger `trg_registry_change_log` e as partições, do procedimento com cursor `sp_ensure_monthly_partitions`. A interface NÃO DEVE executar esse procedimento, que roda pelo `sgs-admin banco particoes`. Para quem tem `auditoria:read` de escopo menor, vale R12.2 ("em desenvolvimento").
+- R12.6 [M] (emenda funcional 2) O painel de qualidade (R12.1) DEVE mostrar:
+  - **as consultas do catálogo** `GET /api/v1/dashboard/consultas`: para cada uma, `titulo`, `justificativa` e `tecnica_sql`, como vêm da API; o resultado paginado da rota da consulta; e os filtros que ela aceita (`parametros`: distrito, tipo de unidade, área técnica). Os filtros são enviados à API e mantidos na URL;
+  - **gráficos em SVG gerado pelo próprio front**, sem biblioteca nem domínio externo (R1.3, R15.2). Cada gráfico tem título, rótulos e a tabela com os mesmos dados (acessibilidade, R1.5). São três, no mínimo:
+    - percentual de unidades sem CNES dos distritos acima da rede, com a linha do percentual da rede (`distritos-sem-cnes-acima-da-rede`: `percent_without_cnes`, `network_percent_without_cnes`);
+    - equipamentos por tipo e distrito (`equipamentos-por-tipo-e-distrito`);
+    - alterações em 7 e em 30 dias por distrito (`alteracoes-por-periodo`);
+  - **percentuais** calculados pelo banco, como a API os devolve;
+  - **tendência**: o ritmo diário dos últimos 7 dias ao lado do ritmo dos últimos 30, isto é, as contagens da API divididas por 7 e por 30;
+  - **gráfico de pizza** (rosca) da situação cadastral (`registration_status`, de `fn_registration_status`), contado sobre as linhas do inventário. Cada fatia DEVE ser igual ao `total` de `GET /api/v1/dashboard/inventario?situacao=…` nos mesmos filtros;
+  - **gráfico de linha das alterações no período**, para quem tem `auditoria:read` de escopo **global**:
+    - **períodos:** 7 dias, 30 dias e intervalo personalizado (`de` inclusivo, `ate` exclusivo);
+    - **fonte:** contagem das linhas reais de `GET /api/v1/auditoria/banco?de&ate`, somando **todas as páginas**;
+    - **agrupamento:** por hora em períodos de até 2 dias, e por dia nos demais;
+    - **lacunas:** intervalos sem registro aparecem com zero; nenhum registro é inventado;
+    - **dados insuficientes:** SE o período tem menos de 2 intervalos com registro, ENTÃO a interface DEVE avisar que não há histórico suficiente para mostrar tendência, além de mostrar o gráfico;
+    - **sem permissão:** quem não tem `auditoria:read` global não vê o gráfico, sem chamar a rota;
+  - **médias** de equipamentos e de serviços por unidade, calculadas sobre **todas** as linhas de `GET /api/v1/dashboard/inventario` no escopo e nos filtros da tela (todas as páginas, sem amostragem), com o número de unidades usado no cálculo.
+
+  A interface NÃO DEVE exibir número que não venha da API ou de conta declarada sobre ela. Sem linhas, mostra o estado vazio (R1.6).
 
 ### R13. Funcionalidades ainda sem backend
 - R13.1 [M] Toda funcionalidade [C] ainda não disponível DEVE continuar visível, desabilitada, com a indicação "em desenvolvimento", e NÃO DEVE chamar a API. Nenhuma das 24 funcionalidades do protótipo DEVE ser removida sem registro nesta spec.
@@ -113,6 +147,17 @@ Como usuário, quero ver o menu e as telas do meu papel.
 - R15.3 [M] O `localStorage` só PODE guardar o tema; nenhum dado de negócio nem token.
 - R15.4 [M] A interface NÃO DEVE usar `eval`, `new Function` nem inserir HTML a partir de dado não escapado.
 
+### R16. Tabelas de referência (F25; emenda funcional 2)
+Como Gestor de Dados, quero manter os tipos de unidade, de equipamento e de serviço pela interface, para corrigir o catálogo sem acesso ao banco.
+- R16.1 [M] QUANDO um usuário com `regra_validacao:manage` de escopo **global** (hoje, só o Gestor de Dados) abre "Tabelas de referência", a interface DEVE listar os **tipos de unidade, de equipamento e de serviço** (`GET /api/v1/referencias/{tipo}`, com `tipos-unidade`, `tipos-equipamento` e `tipos-servico`) e permitir:
+  - **incluir** (`POST /api/v1/referencias/{tipo}`) com `codigo` e `nome`. No tipo de unidade, `area_tecnica_id` é obrigatório, escolhido entre as áreas de `GET /api/v1/referencias/areas-tecnicas`;
+  - **alterar** (`PATCH /api/v1/referencias/{tipo}/{id}`) o código, o nome e, no tipo de unidade, a área técnica, enviando só os campos alterados;
+  - **desativar e reativar** (`PATCH {ativo}`). É a exclusão lógica: a API não apaga referência, e a interface NÃO DEVE oferecer exclusão física;
+  - **cascata:** QUANDO o código de um tipo de equipamento muda, a interface DEVE mostrar quantos equipamentos receberam o novo código pela FK `ON UPDATE CASCADE`. O número vem de `equipamentos_afetados`, no evento `referencia.atualizada` de `GET /api/v1/auditoria/eventos?entidade_tipo=referencia&entidade_id=tipos-equipamento:{id}`. SE o usuário não tem `auditoria:read` global, ENTÃO a contagem é omitida, sem estimativa;
+  - **erros:** 409 (código repetido) marca o campo `codigo`; 422 marca os campos com as mensagens da API; 403 mostra "sem permissão" (R3.4).
+
+  Distritos e áreas técnicas DEVEM aparecer **só para leitura**, porque são domínio fechado (os 8 distritos sanitários e as 4 áreas técnicas; `docs/banco/06-trinta-tuplas.md`). O item de menu aparece só com `regra_validacao:manage` global. Para os demais papéis, a rota mostra "sem acesso" (R3.3). Nenhuma permissão nova é criada (R3.2).
+
 ## Inventário das 24 funcionalidades × requisitos
 | F | Funcionalidade | Requisitos | Escopo |
 |---|---|---|---|
@@ -124,8 +169,8 @@ Como usuário, quero ver o menu e as telas do meu papel.
 | F06 | Início | R4.1, R4.2 | M + C |
 | F07 | Lista, busca do topo e filtros | R5.1 a R5.3, R3.5 | M + C |
 | F08 | Exportar CSV | R5.4 | C |
-| F09 | Ficha: dados | R6.1, R6.4, R1.6 | M + C |
-| F10 | Serviços | R8.1 | M |
+| F09 | Ficha: dados e desativação | R6.1, R6.4, R1.6, R7.7 | M + C |
+| F10 | Serviços | R8.1, R8.2 | M |
 | F11 | Equipamentos (aparelhos) | R9 | M (visível) + C |
 | F12 | Histórico da ficha | R6.2 | M |
 | F13 | Verificações na ficha | R6.3 | M (exibição) |
@@ -135,11 +180,12 @@ Como usuário, quero ver o menu e as telas do meu papel.
 | F17 | Propor alteração | R7.4, R10 | M (visível) + C |
 | F18 | Aprovar e devolver | R10 | M (visível) + C |
 | F19 | Notificações | R11 | M (visível) + C |
-| F20 | Painel de qualidade | R12.1 | M |
-| F21 | Histórico geral e verificação da cadeia | R12.2, R12.3, R12.4 | M + C |
+| F20 | Painel de qualidade | R12.1, R12.6 | M |
+| F21 | Histórico geral, log do banco e verificação da cadeia | R12.2, R12.3, R12.4, R12.5 | M + C |
 | F22 | Importar CSV | R14 | M (visível) + C |
 | F23 | Restaurar demonstração | R2.10 | M (sai da UI; fica no `sgs-admin`) |
 | F24 | Tema, responsividade, acessibilidade | R1 | M |
+| F25 | Tabelas de referência (não existe no protótipo; emenda funcional 2) | R16.1 | M |
 
 ## Decisões (DF1 a DF12 e novas pendências)
 
@@ -354,3 +400,28 @@ Revisão integral contra o código atual (rotas, schemas e matriz efetiva da 003
 **Efeito:**
 - aprovada, a contagem passa a 58 requisitos (44 [M], 14 [C]), e o R5.5 entra no inventário (F08) e na T21;
 - enquanto não for aprovada, o botão de exportar segue o R5.4 e o R13.1: visível, desabilitado, sem chamar a API.
+
+### Emenda funcional 2: entrega acadêmica (proposta e aprovada na sessão de trabalho de 10/11/2026 (registro do agente, por instrução expressa na sessão; o agente não registra aprovação em nome de ninguém, e a confirmação no PR fica com o dono, Vinicius))
+**Origem:** a auditoria do banco de 10/11/2026 contra as Etapas 01 a 06 de Projeto de Banco de Dados. O backend já oferece CRUD de 6 tabelas, o procedimento de desativação, as 8 consultas, as 2 views e o log do trigger. A interface, porém, só lia `/me`, `/dashboard/resumo` e `/unidades`: com as tarefas aprovadas (T8 a T11), ela faria CRUD de só 2 tabelas e não mostraria o efeito dos triggers. A entrega final da disciplina é em **13/11/2026**, antes do prazo desta spec (21/11/2026).
+
+**Direção aprovada na sessão de trabalho de 10/11/2026** (registro do agente, que não registra aprovação em nome de ninguém): incluir R7.7, R12.5, R12.6 e R16.1 e registrar o prazo acadêmico. Depois, na mesma sessão, foram aprovados: o R8.2; a pizza, a linha e o filtro de período no R12.6 (agregação no front sobre `/auditoria/banco`, sem rota nova nem mudança na spec 011); e os critérios de versão e de atualização na ficha e nos serviços.
+
+| Requisito | Classe | Etapa da disciplina | Rotas (todas já existem) |
+|---|---|---|---|
+| R7.7 | novo [M] | 05 e 06: procedimento chamado pela interface | `POST /unidades/{id}/desativar` |
+| R8.2 | novo [M] | 03 e 06: atualização em `services` | `PATCH /unidades/{id}/servicos/{sid}` |
+| R12.5 | novo [M] | 05 e 06: efeito do trigger de log e resultado do procedimento com cursor | `GET /auditoria/banco`, `/auditoria/banco/particoes` |
+| R12.6 | novo [M] | 03, 04 e 06: consultas, views, filtros, gráficos, médias, percentuais, tendência | `GET /dashboard/consultas`, `/dashboard/consultas/*`, `/dashboard/inventario` |
+| R16.1 | novo [M] | 02 e 06: CRUD de 3 tabelas; `ON UPDATE CASCADE` visível | `GET/POST/PATCH /referencias/{tipo}[/{id}]`, `GET /auditoria/eventos` |
+
+**O que não muda:**
+- **integridade referencial:** a "exclusão" das tabelas de referência é **desativação** (`ativo = false`), não exclusão física. Nenhuma FK muda, e nenhuma exclusão incompatível com o modelo é forçada. `unit_types` e `service_types` são referenciadas por FK sem cascata. A exclusão física pela interface existe só em `services`, que o modelo permite;
+- nenhum texto de requisito aprovado; o corte de 13/11 só antecipa o prazo de parte do [M] (§ Escopo);
+- nenhuma rota, contrato, permissão nem migração (§ Fora do escopo continua valendo);
+- DF1 a DF15 e PF-01 a PF-07 seguem pendentes como estão. R7.7, R8.2 e R16.1 usam só o escopo global, pela mesma regra de R7.4, e a cascata de R16.1 é lida na auditoria, não na aba de aparelhos (R9.1, DF1).
+
+**Separação dentro de R12.1:** as 8 verificações calculadas no front dependem do cálculo de R6.3 e ficam no prazo de 21/11/2026 (T8 parte B e T11 parte B). As consultas e o inventário entram no corte de 13/11.
+
+**Efeito:**
+- **62 requisitos** (49 [M], 13 [C]), ou 63 com o R5.5 da emenda funcional 1, ainda proposto;
+- tarefas novas: T24 (R16.1) e T25 (R7.7). A T8 e a T11 ganham partes A (13/11) e B (21/11), e a T10 cobre o R8.2 (`tasks.md`).

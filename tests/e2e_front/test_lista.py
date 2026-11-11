@@ -1,6 +1,7 @@
 """Lista de unidades (spec 012, T7: R5.1, R5.2; vazio do R1.6, que fecha a T3; recorte do R3.5)."""
 
 import re
+import unicodedata
 from collections.abc import Callable
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -72,6 +73,28 @@ def test_busca_e_busca_do_topo(sessao_de: Callable[[str], Page]) -> None:
     pagina.fill("#topQ", "CAPS")
     pagina.press("#topQ", "Enter")
     expect(pagina).to_have_url(re.compile(r"#/unidades\?q=CAPS$"))
+
+
+def test_busca_sem_acento_caixa_nem_espacos_pela_fn_normalize_name(
+    sessao_de: Callable[[str], Page],
+) -> None:
+    """T26: a busca usa `name_normalized`, coluna gerada por `fn_normalize_name` (unaccent, caixa
+    e espaços), e o índice trigram dela: "SAUDE   casa" acha "Centro de Saúde Casa Amarela"."""
+    pagina = sessao_de("GESTOR_DADOS")
+    todas = _abrir(pagina, "#/unidades?tamanho=100")["itens"]
+    alvo = next(
+        u
+        for u in todas
+        if u["nome"] != unicodedata.normalize("NFKD", u["nome"]).encode("ascii", "ignore").decode()
+    )
+    sem_acento = unicodedata.normalize("NFKD", alvo["nome"]).encode("ascii", "ignore").decode()
+    palavras = sem_acento.split()
+    busca = "   ".join(p.upper() if i % 2 == 0 else p.lower() for i, p in enumerate(palavras[-2:]))
+    assert busca not in alvo["nome"]  # nem acento, nem caixa, nem espaços iguais aos do nome
+    with pagina.expect_response(re.compile(r".*/api/v1/unidades\?.*q=.*")) as resposta:
+        pagina.fill("#q", busca)
+    assert any(u["id"] == alvo["id"] for u in resposta.value.json()["itens"])
+    expect(pagina.locator(f"#resultado tr[data-id='{alvo['id']}']")).to_be_visible()
 
 
 def test_sem_resultado_mostra_o_estado_vazio(sessao_de: Callable[[str], Page]) -> None:

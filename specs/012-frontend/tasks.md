@@ -1,6 +1,6 @@
 # 012 · Frontend SGS Recife · Tarefas
 
-- Status: **Aprovado (Vinicius, 10/11/2026)**, depois do G2 aprovado no mesmo dia (design § Registro de aprovação). Revisão 5 (10/11/2026): consolidação do G3 com a infraestrutura comum dos E2E e a referência visual. Revisão 4: T1 a T4 detalhadas, PF-01 a PF-07 ligadas às tarefas bloqueadas, R5.5 proposto na T21.
+- Status: **Aprovado (Vinicius, 10/11/2026)**, depois do G2 aprovado no mesmo dia (design § Registro de aprovação). Revisão 5 (10/11/2026): consolidação do G3 com a infraestrutura comum dos E2E e a referência visual. Revisão 4: T1 a T4 detalhadas, PF-01 a PF-07 ligadas às tarefas bloqueadas, R5.5 proposto na T21. **Revisão 6 (10/11/2026, emenda funcional 2; aprovada na sessão de trabalho de 10/11/2026 (registro do agente, por instrução expressa na sessão; a confirmação no PR fica com o dono, Vinicius)):** corte acadêmico de 13/11/2026 (§ Corte acadêmico), T8 e T11 divididas em partes A e B, T10 com o R8.2, tarefas novas T24, T25 e T26.
 - Depende de:
   - 002, 003, 006, 008, 009 (APIs existentes, conferidas em `novo/main` `9c37029`);
   - ADR-0010 e ADR-0011 (Propostos).
@@ -174,26 +174,140 @@ Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protó
     - **Sensibilidade:** não enviar o filtro de distrito derruba 3 casos.
 - [ ] T8. Ficha: dados, histórico, verificações de qualidade só para exibição
   - Requisitos: R6.1 a R6.3
-  - Pronto quando: `tests/e2e_front/test_ficha.py` passa:
-    - **a aba de histórico some quando nenhum escopo de `auditoria:read` do usuário cobre a unidade** (Diretoria; Técnico Distrital olhando unidade de outro DS);
-    - **as verificações cujo dado a API não tem (número do endereço, horário) aparecem como "não verificável ainda"**, e não como falha;
-    - os filtros de período e de autor do histórico funcionam.
-- [ ] T9. Edição e cadastro pelo escopo global (diff, If-Match, tratamento de 409, 412, 422 e 403 com `campos_estruturais`); edição oculta para distrito, unidade e coordenador (R7.4)
+  - **Parte A (corte acadêmico, 13/11/2026): R6.1 e R6.2.**
+    - Arquivos: `frontend/app/js/views/unidade.js` (novo) e `main.js` (as rotas `unidade/:id` e `unidade/:id/:aba` deixam o "em implantação").
+    - Abas: Dados, Serviços (só leitura até a T10), Histórico, Equipamentos ("em desenvolvimento", R9.1). Guarda o `ETag`. Os nomes vêm das referências.
+    - Dependências: T5 a T7 (feitas). Nenhuma de backend.
+    - Pronto quando: `tests/e2e_front/test_ficha.py` passa:
+      - os dados da tela batem com `GET /unidades/{id}` (nome, CNES, tipo, distrito, status);
+      - **efeito dos triggers** (G3): a ficha mostra "Versão N" (`versao`, a mesma do `ETag`) e "Atualizado em" (`atualizado_em`), iguais aos da API. Os dois são mantidos pelo `trg_health_units_version`, que atualiza a versão e o `updated_at` de `health_units`. O `trg_set_updated_at` atualiza o `updated_at` em 7 tabelas: `services`, `equipments` e as 5 de referência (`districts`, `technical_areas`, `unit_types`, `equipment_types`, `service_types`), não da unidade;
+      - **a aba de histórico some quando nenhum escopo de `auditoria:read` do usuário cobre a unidade** (Diretoria; Técnico Distrital olhando unidade de outro DS);
+      - os filtros de período e de autor do histórico funcionam;
+      - id inexistente mostra "não encontrado"; o 404 vem da API.
+    - Sensibilidade: mostrar o histórico sem checar o escopo derruba o caso da Diretoria.
+    - **Parte A concluída em 10/11/2026** (a T8 só ganha `[x]` com a parte B):
+      - **Prova:** `tests/e2e_front/test_ficha.py`, 11 aprovados, no projeto compose descartável `sgs-api-e2e-front-ui`:
+        - dados iguais aos de `GET /unidades/{id}`, com os nomes de tipo e distrito vindos das referências;
+        - "Versão N" igual a `versao` e ao `ETag` (guardado em `data-etag`); "Atualizado em" igual a `atualizado_em`;
+        - **trigger de versão:** numa unidade criada pelo teste, um `PATCH` com `If-Match` sobe a versão em 1 e atualiza a data, e a ficha e o histórico mostram isso;
+        - histórico da `vw_unit_history` do mais recente para o mais antigo, com filtros de autor e de período, e estado vazio quando nada casa com o filtro;
+        - a aba de histórico some para a Diretoria (sem nenhuma chamada a `/historico`) e para o Técnico Distrital fora do próprio DS, e aparece no DS dele;
+        - serviços só para leitura; aparelhos "em desenvolvimento" (R9.1);
+        - id inexistente: 404 da API e "Unidade não encontrada";
+        - a lista abre a ficha; o Gestor de Unidade abre o histórico pela entrada de menu;
+        - 1280 e 390 px sem rolagem horizontal.
+      - **Suíte E2E do front inteira:** 86 aprovados.
+      - **Sensibilidade:** mostrar o histórico sem checar o escopo derruba os casos da Diretoria e do Técnico Distrital; exibir uma versão fixa derruba o caso do trigger (3 de 3 falharam com as mutações e passaram sem elas).
+      - **`make check`:** 1019 aprovados, 3 pulados.
+      - **Arquivos:**
+        - novos: `frontend/app/js/views/unidade.js` e `tests/e2e_front/test_ficha.py`;
+        - alterados: `js/main.js` (rotas `unidade/:id` e `unidade/:id/:aba`); `js/perms.js` (`cobreUnidade`, a regra de escopo de R6.2); `js/views/historico.js` (só exporta `mudanca`, `paginacao`, `inicioDoDia` e `fimDoDia`, reaproveitados sem cópia); `assets/css/app.css` (bloco de versão); `tests/e2e_front/apoio.py` (cabeçalhos opcionais, para o `If-Match`).
+      - **No histórico da ficha:** os campos de referência mostram o nome e o id (ex.: "CAPS AD (2)"), e as mudanças sem valor nos dois lados (campos vazios no cadastro) não aparecem.
+  - **Parte B (21/11/2026): R6.3.** As 8 verificações; as que a API não sabe responder (número do endereço, horário) aparecem como "não verificável ainda", e não como falha. O caso entra em `test_ficha.py`.
+- [x] T9. **(Corte acadêmico, nível B: meta secundária de 13/11/2026; depende da T8 parte A e do `ui/form.js` da T24.)** Edição e cadastro pelo escopo global (diff, If-Match, tratamento de 409, 412, 422 e 403 com `campos_estruturais`); edição oculta para distrito, unidade e coordenador (R7.4)
   - Requisitos: R7.1 a R7.4
   - Pronto quando: `tests/e2e_front/test_edicao.py` passa:
     - dois navegadores provam o 412;
     - os botões de edição e cadastro estão ausentes para o Técnico Distrital, o Gestor de Unidade e o Coordenador Técnico.
-- [ ] T10. Serviços da unidade
-  - Requisitos: R8.1
+  - **Concluída em 10/11/2026.**
+    - **Prova:** `tests/e2e_front/test_edicao.py`, 14 aprovados, no projeto compose descartável, com unidades criadas pelo teste:
+      - **cadastro** pela lista: `POST /unidades` com opcionais vazios como nulo e coordenadas como texto; 201, versão 1; a ficha nova abre na aba de serviços (R7.3); volta à lista e a unidade aparece na busca;
+      - **obrigatórios** em branco: erro nos campos e nenhum `POST`;
+      - **dados inválidos** (CEP, CNES, telefone, latitude): 422 da API, com a mensagem de cada campo;
+      - **unidade repetida:** 409 com o link para `unidade_existente_id`;
+      - **edição:** "nada a alterar" não envia; o diff de antes e depois aparece para confirmação; o `PATCH` leva só os campos alterados, com `If-Match` igual ao `ETag` lido;
+      - **triggers:** versão +1, `atualizado_em` maior e `ETag` novo, gravados pelo `trg_health_units_version`, na ficha e no histórico;
+      - **412 com dois navegadores** (contextos e logins separados): a segunda gravação recebe 412, a tela avisa que nada foi sobrescrito e recarrega a ficha atual; o valor gravado é o do outro navegador;
+      - **unidade inativa:** a situação fica desabilitada e não é enviada; continua inativa depois de editar. Numa unidade ativa, o formulário não oferece "inativa", porque desativar é só pela procedure (T25);
+      - **papéis:** Técnico Distrital, Gestor de Unidade e Coordenador Técnico não têm "Editar ficha", veem "Propor alteração" desabilitado ("em desenvolvimento", R7.4) e `#/nova` mostra "em desenvolvimento". A Diretoria não vê nada disso, `#/nova` dá "sem acesso" e a API nega o `PATCH` (403);
+      - 1280 e 390 px sem rolagem horizontal, no cadastro, na ficha e no diff.
+    - **Suíte E2E do front inteira:** 117 aprovados (T11-A, T24, T8-A, T10 e T25 sem regressão). **`make check`:** 1029 aprovados, 3 pulados.
+    - **Sensibilidade**, 4 mutações:
+      - enviar o formulário inteiro e mostrar "Editar" a qualquer escopo derruba 5 casos;
+      - tirar o `If-Match` derruba 2;
+      - regravar por cima no 412 derruba o caso dos dois navegadores;
+      - todas falharam com a mutação e passaram sem ela.
+    - **Arquivos:**
+      - novos: `frontend/app/js/formUnidade.js` (campos, leitura no formato do contrato, diff), `js/views/nova.js` e `tests/e2e_front/test_edicao.py`;
+      - alterados: `js/views/unidade.js` (editar, propor, avisos de edição e conflito); `js/main.js` (rota `nova`); `assets/css/app.css` (botões da ficha e o modal com `<form>` rolando por dentro, para o rodapé ficar visível em formulários longos).
+    - **Limitações:**
+      - o 403 com `campos_estruturais` é tratado (os campos são marcados), mas não tem E2E: pelo R7.4, só o escopo global edita pela interface, e o escopo global nunca recebe esse 403;
+      - o 409 na edição usa o mesmo tratamento do cadastro, que tem E2E;
+      - a API aceita reativar pelo `PATCH`, mas a interface não oferece isso, porque não está especificado.
+- [x] T10. Serviços da unidade (corte acadêmico, 13/11/2026)
+  - Requisitos: R8.1, R8.2
+  - Arquivos: `frontend/app/js/views/unidade.js` (aba Serviços), `ui/form.js` (da T24).
+  - Dependências: T8 parte A e T24 (`ui/form.js`).
   - Pronto quando: `tests/e2e_front/test_servicos.py` passa:
     - incluir e remover pelo Gestor de Dados, e o histórico mostra `unidade.servico_*`;
+    - **alteração (R8.2):** alterar nome, tipo, "no CNES" e status de um serviço criado no próprio teste; a API devolve os valores novos; o corpo do `PATCH` só tem os campos alterados; o vínculo com equipamento não é editável;
+    - **efeito do trigger** (G3): depois da alteração, "Atualizado em" do serviço é igual ao `atualizado_em` da API e posterior ao valor anterior (`trg_set_updated_at`);
+    - a remoção física some da lista e de `GET /unidades/{id}/servicos`;
     - **só o escopo global vê os controles de incluir e remover**: o Técnico Distrital, o Gestor de Unidade e o Coordenador Técnico veem a aba só para leitura, mesmo tendo `servico:write` no próprio escopo.
+  - **Concluída em 10/11/2026.**
+    - **Prova:** `tests/e2e_front/test_servicos.py`, 9 aprovados, no projeto compose descartável `sgs-api-e2e-front-ui`, com unidades e serviços criados pelo teste:
+      - **incluir:** o `POST` leva `nome`, `tipo_servico_id`, `no_cnes` e `status`, sem `equipamento_id`;
+      - **alterar (R8.2):** o `PATCH` leva exatamente os 4 campos alterados, ou só o nome quando só ele muda; o vínculo com equipamento não aparece no formulário; a API devolve os valores novos;
+      - **desativar e reativar:** `PATCH {status}`;
+      - **remover:** `DELETE` 204; o serviço some da lista e da API;
+      - **histórico:** mostra `unidade.servico_adicionado`, 4 vezes `servico_alterado` e `servico_removido`;
+      - **trigger `trg_set_updated_at`:** o `PATCH` não envia data; `atualizado_em` volta posterior ao anterior; o painel mostra antes e depois, com segundos, iguais aos da API (ex.: 20:20:08 → 20:20:10 na verificação visual);
+      - **tipo desativado** com o formulário aberto: 422 da API no campo `tipo_servico_id`; nada é gravado;
+      - **controles por papel:** Técnico Distrital, Gestor de Unidade, Coordenador Técnico e Diretoria não veem incluir, editar, desativar nem remover;
+      - 1280 e 390 px sem rolagem horizontal da página, com a tabela e o modal.
+    - **Restrição só da interface, conferida:** o teste confirma que a API **aceita** (201) a inclusão pelo Técnico Distrital, pelo Gestor de Unidade e pelo Coordenador Técnico no próprio escopo, e devolve **403** à Diretoria, que não tem `servico:write`. É o que diz o R7.4 ("restringe a interface, não a API") até a DF2/DF14. O teste apaga o serviço que criou.
+    - **Suíte E2E do front inteira:** 94 aprovados, sem regressão. Em `test_ficha.py`, a asserção "a aba de serviços não tem botões", válida só até a T10, saiu; a regra de quem vê os controles passou para `test_servicos.py`.
+    - **Sensibilidade:** enviar o formulário inteiro no `PATCH` derruba o caso de CRUD; mostrar os controles a quem tem `servico:write` em qualquer escopo derruba os casos do Técnico Distrital e do Gestor de Unidade (3 de 3 falharam com as mutações e passaram sem elas).
+    - **`make check`:** 1019 aprovados, 3 pulados.
+    - **Arquivos:**
+      - `frontend/app/js/views/unidade.js` (aba Serviços);
+      - `tests/e2e_front/test_servicos.py` (novo);
+      - `tests/e2e_front/apoio.py` (`nova_unidade`, movida do `test_ficha.py` e usada pelos dois);
+      - `tests/e2e_front/test_ficha.py` (a asserção obsoleta e o uso de `nova_unidade`).
+    - **Concorrência:** a API de serviços não usa `If-Match` (só a da unidade usa), então a última gravação vale. A interface não simula trava, e a versão da unidade não é afetada por alterações em serviços.
 - [ ] T11. Histórico geral (escopo global), com filtros de período, autor, ação e entidade, e verificação da cadeia pelo Auditor
-  - Requisitos: R12.1, R12.2, **R12.4**
+  - Requisitos: R12.1, R12.2, **R12.4**; **R12.5 e R12.6 (emenda funcional 2)**
+  - **Parte A (corte acadêmico, 13/11/2026; a primeira da ordem):** R12.1 sem as 8 verificações, R12.2, R12.4, R12.5 e R12.6.
+    - Arquivos: `frontend/app/js/views/qualidade.js`, `views/historico.js` e `ui/grafico.js` (novos); `main.js` (as rotas `qualidade`, `historico` e `cadeia` deixam o "em implantação"); `assets/css/app.css` (classes do gráfico, só com os tokens existentes).
+    - Dependências: nenhuma tarefa pendente. Usa `GET /dashboard/consultas`, `/dashboard/consultas/*`, `/dashboard/inventario`, `/auditoria/eventos`, `/auditoria/banco`, `/auditoria/banco/particoes` e `POST /auditoria/verificar`, que já existem.
+    - Critérios de aceite, em `tests/e2e_front/test_qualidade_historico.py`:
+      - o Gestor de Dados vê **todas** as entradas do catálogo, com `titulo`, `justificativa` e `tecnica_sql` iguais aos da API;
+      - em cada consulta, o total da tela é igual ao `total` da rota com os mesmos filtros;
+      - filtrar pelo DS IV muda os totais, e a URL guarda o filtro;
+      - um filtro inválido mostra o erro da API;
+      - a média de serviços por unidade da tela é igual à calculada no teste sobre todas as páginas de `/dashboard/inventario`;
+      - o % da rede sem CNES é igual a `network_percent_without_cnes`;
+      - os 3 gráficos existem como `svg[role=img]` com `aria-label`, e "Ver dados" mostra as mesmas linhas da API;
+      - a tendência de 7 e 30 dias usa `last_7_days/7` e `last_30_days/30`;
+      - a aba "Log do banco" lista as linhas de `/auditoria/banco`, com a origem "pela API". O filtro "só fora da API" envia `fora_da_api=true`, e o resultado é igual ao da API;
+      - o painel de partições lista as mesmas partições de `/auditoria/banco/particoes`;
+      - **pizza** da situação cadastral: cada fatia é igual ao `total` de `/dashboard/inventario?situacao=…` nos mesmos filtros;
+      - **linha das alterações no período** (G1):
+        - 7 dias e 30 dias agrupam por dia, e um intervalo personalizado de até 2 dias agrupa por hora;
+        - a soma dos pontos é igual ao `total` de `/auditoria/banco` no período, contando todas as páginas, porque o teste força `tamanho` pequeno;
+        - intervalos vazios aparecem com zero;
+        - com menos de 2 intervalos com registro, aparece o aviso de histórico insuficiente;
+        - a Diretoria (sem `auditoria:read`) não vê o gráfico, e a rota não é chamada;
+      - **fora da API:** o teste faz um `UPDATE` direto em `health_units` **no PostgreSQL do compose descartável do E2E**, pelo `docker compose -p sgs-api-e2e-front-ui exec db psql`, nunca no `sgs-local` nem em banco persistente. A linha aparece no Log do banco como "fora da API", e o filtro "só fora da API" a mostra;
+      - o catálogo traz `historico-da-unidade`, com `{id}` na rota, como link para a ficha, e não como consulta executada no painel;
+      - o Início tem o link para o painel completo de qualidade;
+      - a cadeia mostra `integra` para o Auditor;
+      - quem tem `auditoria:read` de escopo menor (Técnico Distrital) vê "em desenvolvimento", e a Diretoria não vê o item;
+      - em 390 px, sem rolagem horizontal.
+    - Sensibilidade: trocar a origem da média para só a 1ª página, ou tirar o `fora_da_api`, derruba um caso cada.
+    - Testes fixos: `make check` (inclui `test_frontend_estatico.py`) e `test_perfis.py` sem regressão.
+    - **Parte A concluída em 10/11/2026** (a tarefa só ganha `[x]` com a parte B):
+      - **Prova:** `tests/e2e_front/test_qualidade_historico.py`, 15 aprovados, no projeto compose descartável `sgs-api-e2e-front-ui`. A suíte E2E do front inteira passou com 61 aprovados, sem regressão em `test_perfis.py` nem em `test_inicio.py`.
+      - **Sensibilidade:** parar a busca na 1ª página (`paginas.js`) derruba os testes das médias e da linha; trocar o `fora_da_api` do log derruba o teste do trigger fora da API (3 de 3 falharam com as mutações e passaram sem elas).
+      - **`make check`:** 1004 aprovados, 3 pulados.
+      - **Arquivos:** `frontend/app/js/views/{qualidade,historico}.js`, `js/ui/grafico.js`, `js/paginas.js`, `js/periodo.js` (novos); `js/main.js`, `js/views/inicio.js`, `assets/css/app.css`.
+      - **Paleta:** validada com o `validate_palette.js` contra `--surface` nos dois temas. No tema claro, 3 cores ficam abaixo de 3:1, compensadas pelos valores escritos e pela tabela "Ver dados".
+      - **Verificação visual:** 1280 e 390 px, temas claro e escuro.
+  - **Parte B (21/11/2026):** as 8 verificações de R12.1 no painel, reaproveitando o cálculo de R6.3 (T8 parte B).
   - Usa `GET /api/v1/auditoria/eventos`. A rota `/api/v1/historico` citada na Grupo-DF9 não existe (design § Histórico).
   - Os filtros `de` (inclusivo), `ate` (exclusivo), `autor`, `entidade_tipo` e `entidade_id` têm testes no backend que detectam regressão (008/T6, `tests/integration/audit/test_consulta_trilha.py::test_trilha_geral_filtra_por_periodo_entidade_e_autor` e `::test_historico_filtra_por_periodo_com_de_inclusivo_e_ate_exclusivo`). O teste do front confere a ligação da tela com a API, não a semântica do filtro.
-  - Pronto quando: `tests/e2e_front/test_qualidade_historico.py` passa:
-    - o painel de qualidade;
+  - Pronto quando (tarefa inteira; a parte A só ganha `[x]` parcial com os critérios dela, acima): `tests/e2e_front/test_qualidade_historico.py` passa:
+    - o painel de qualidade, com as 8 verificações (parte B);
     - a trilha com filtros de período e autor;
     - a "em desenvolvimento" para escopo menor;
     - a verificação da cadeia mostra `integra` para o Auditor.
@@ -208,6 +322,120 @@ Cada tarefa é pequena (até ~300 linhas de diff, sem contar o código do protó
   - Atualizar o README.
   - Requisitos: todos os [M]
   - Pronto quando: o workflow do GitHub Actions passa com os E2E (o CI rodou nos PRs #1 a #3 da `novo/main`).
+
+## Corte acadêmico (13/11/2026; emenda funcional 2)
+Tarefas novas da emenda. Ordem de execução: **T11 parte A → T24 → T8 parte A → T10 → T25 → T9 (nível B) → T26** (design § Ordem do corte acadêmico).
+
+| Nível | Tarefas | Tabelas com CRUD pela interface | Etapas atendidas |
+|---|---|---|---|
+| A (meta: 12/11) | T11-A, T24, T8-A, T10, T25 | `unit_types`, `equipment_types`, `service_types` (inclusão, leitura, alteração, desativação); `services` (inclusão, leitura, exclusão física; alteração com R8.2); `health_units` (leitura e desativação pelo procedimento) | 03, 04, 05 e 06 |
+| B (meta: 13/11) | T9 | `health_units` completa (inclusão e alteração com If-Match; o 412 mostra o trigger de versão) | 06 (reforço) |
+
+- [x] T24. Tabelas de referência: listar, incluir, alterar e desativar tipos de unidade, de equipamento e de serviço, com a cascata do código visível
+  - Requisitos: R16.1; R3.2 e R3.3 (menu e "sem acesso")
+  - Arquivos:
+    - `frontend/app/js/views/tabelas.js` (novo);
+    - `frontend/app/js/ui/form.js` (novo: campos rotulados, erros de `errors[{campo, mensagem}]`, envio só dos campos alterados). A T3 o citava, mas ele não foi criado;
+    - `perms.js` (item "Tabelas de referência" com `regra_validacao:manage` global);
+    - `main.js` (rota `referencias`);
+    - `referencias.js` (`limparReferencias()` depois de cada escrita, sem mudar a leitura).
+  - Dependências: nenhuma tarefa pendente; usa `GET/POST/PATCH /referencias/{tipo}[/{id}]` e `GET /auditoria/eventos`.
+  - Critérios de aceite, em `tests/e2e_front/test_referencias.py`:
+    - o Gestor de Dados inclui um tipo de serviço com código e nome únicos do teste, e ele aparece na lista e em `GET /referencias/tipos-servico`;
+    - o nome é alterado, e a API devolve o nome novo;
+    - desativar e reativar mudam `ativo` na API. A tela chama a operação de **desativação** (exclusão lógica) e não oferece exclusão física, porque as FKs das tabelas de referência não têm cascata e não são alteradas;
+    - um tipo de unidade novo exige área técnica: sem ela, a tela mostra o erro, e com ela, o tipo é criado;
+    - **cascata:** mudar o código do tipo de equipamento `UTI_MOVEL` faz o toast mostrar N igual a `equipamentos_afetados` do evento; `GET /equipamentos` traz o código novo em todos os equipamentos sem unidade; o teste restaura o código original;
+    - código repetido mostra o 409 no campo `codigo`;
+    - distritos e áreas técnicas não têm botão de escrita;
+    - o Técnico Distrital não vê o item de menu, e `#/referencias` mostra "sem acesso".
+  - Sensibilidade: enviar o objeto inteiro no `PATCH`, em vez de só os campos alterados, derruba o caso do nome (o teste confere o corpo enviado); esconder o toast da cascata derruba o caso da cascata.
+  - Regressão: `test_perfis.py` atualizado com o item novo do Gestor de Dados (design § Perfis).
+  - **Concluída em 10/11/2026.**
+    - **Prova:** `tests/e2e_front/test_referencias.py`, 14 aprovados (o registro original dizia 15 porque uma captura temporária rodou junto; corrigido na T26, pela contagem por arquivo), no projeto compose descartável `sgs-api-e2e-front-ui`:
+      - incluir, consultar, alterar (o `PATCH` leva só o campo alterado), desativar e reativar nas três tabelas (`unit_types`, `equipment_types`, `service_types`), conferidos na API, sem nenhuma requisição `DELETE`;
+      - tipo de unidade sem área: 422 no campo `area_tecnica_id`;
+      - código repetido: 409 no campo `codigo`;
+      - cascata, ida e volta pela tela;
+      - distritos e áreas técnicas só leitura;
+      - Técnico Distrital, Coordenador Técnico, Diretoria e Auditor: sem o item de menu, "sem acesso" na rota e **403 da API** no `POST`;
+      - 1280 e 390 px sem rolagem horizontal da página.
+    - **Suíte E2E do front inteira:** 74 aprovados, sem regressão em `test_perfis.py` (menu do Gestor com o item novo) nem em `test_qualidade_historico.py`.
+    - **Sensibilidade:** enviar o objeto inteiro no `PATCH` derruba os 3 casos de CRUD; tirar a conferência da cascata derruba o caso da cascata (4 de 4 falharam com as mutações e passaram sem elas).
+    - **`make check`:** 1014 aprovados, 3 pulados.
+    - **Arquivos:**
+      - novos: `frontend/app/js/views/tabelas.js`, `js/ui/form.js`, `tests/e2e_front/test_referencias.py` e `tests/e2e_front/apoio.py`, com os auxiliares de API que o `test_qualidade_historico.py` também passou a usar, sem mudar o comportamento;
+      - alterados: `js/perms.js`, `js/main.js`, `assets/css/app.css`, `tests/e2e_front/test_perfis.py`;
+      - o `referencias.js` não precisou mudar: a tela chama o `limparReferencias()` que já existia.
+    - **Diferenças em relação ao texto dos critérios** (efeito igual ou mais forte):
+      - a cascata usa o tipo com mais equipamentos no momento do teste, não fixamente `UTI_MOVEL`. Os 8 equipamentos `UTI_MOVEL` do seed estão todos sem unidade e não exercitariam a conferência nas unidades;
+      - o resultado da cascata fica num **painel fixo** (`data-ref=resultado-cascata`), não num toast que some. O painel mostra o número da auditoria (`equipamentos_afetados`) e a conferência nos registros: os que já têm o código novo, em unidades (`/dashboard/consultas/equipamentos-por-tipo-e-distrito`) e sem unidade (`GET /equipamentos`), e os que ainda têm o código antigo (zero).
+    - **Integridade:** nenhuma FK foi alterada, e não há exclusão física de referência. A "exclusão" é a desativação (`ativo = false`), explicada na própria tela.
+- [x] T25. Desativação da unidade pelo procedimento
+  - Requisitos: R7.7
+  - Arquivos: `frontend/app/js/views/unidade.js` (botão e modal com motivo), `ui/form.js`.
+  - Dependências: T8 parte A; T11 parte A, porque o critério confere o log do banco.
+  - Critérios de aceite, em `tests/e2e_front/test_desativar.py`:
+    - o Gestor de Dados desativa uma unidade **criada pelo próprio teste via API**;
+    - motivo com menos de 3 caracteres mostra o erro do campo, e nada é enviado;
+    - depois da confirmação, a ficha mostra "Inativa", o botão some, e `GET /unidades/{id}` dá `status=inativa` com `ETag` maior;
+    - o histórico da ficha mostra o evento de desativação com o motivo;
+    - o Log do banco (T11) tem uma linha UPDATE de `health_units` para a unidade;
+    - o Técnico Distrital e a Diretoria não veem o botão.
+  - Sensibilidade: mostrar o botão para unidade inativa derruba um caso.
+  - **Concluída em 10/11/2026.**
+    - **Prova:** `tests/e2e_front/test_desativar.py`, 9 aprovados, no projeto compose descartável, com unidades criadas pelo teste:
+      - motivo curto: erro no campo e nenhum `POST`;
+      - desativação: `POST {motivo}` → 200, status `inativa`, versão +1 (trigger de versão) e `atualizado_em` maior;
+      - a ficha recarregada mostra "Inativa", a nova versão (também no `ETag`) e a nova data, e o botão some;
+      - o painel mostra antes e depois e diz que a unidade não foi apagada; a unidade continua na API;
+      - histórico: "Unidade desativada" com o motivo e "status: ativa → inativa";
+      - log do banco: linha UPDATE de `health_units` com `status {de: ativa, para: inativa}`, pela API;
+      - **desativada por outra sessão com o modal aberto:** a tela relê a unidade, avisa e não envia; só 1 evento `unidade.desativada`;
+      - **contratos da API:** id inexistente → 404 (o SQLSTATE `SGS01`, que só a procedure levanta, prova a execução); motivo curto → 422; `PATCH status=inativa` → 422; segunda desativação sem mudar a versão;
+      - Técnico Distrital, Gestor de Unidade, Coordenador Técnico e Diretoria: sem o botão e com 403 da API;
+      - 1280 e 390 px sem rolagem horizontal.
+    - **Procedure:** os 8 testes de integração (`test_sp_deactivate_unit.py` e os 3 de desativação em `test_crud_unidades.py`) passaram em PostgreSQL descartável (testcontainers).
+    - **Suíte E2E do front inteira:** 104 aprovados. **`make check`:** 1019 aprovados, 3 pulados.
+    - **Sensibilidade:** mostrar o botão sem checar a permissão, não reler a unidade ou não validar o motivo derruba 6 casos (6 de 6 falharam e passaram sem as mutações).
+    - **Arquivos:** `frontend/app/js/views/unidade.js` (botão, modal, releitura, painel, motivo no histórico; "Atualizado em" com segundos); `assets/css/app.css` (2 regras); `tests/e2e_front/test_desativar.py` (novo).
+- [x] T26. Evidências da entrega acadêmica
+  - Requisitos: nenhum novo (documentação)
+  - Arquivos:
+    - `docs/banco/05-objetos-e-justificativas.md` § Etapa 6: tela e rota de cada objeto (consulta, view, função, procedimento, trigger) e tabelas com CRUD pela interface;
+    - `docs/frontend-integracao.md`: telas implementadas;
+    - `README.md`: como abrir cada tela na demonstração;
+    - roteiro de demonstração de 5 a 10 minutos, com os papéis do seed.
+  - Pronto quando:
+    - cada linha da matriz de conformidade das Etapas 03 a 06 aponta tela, rota e teste;
+    - um caso E2E de busca sem acento na lista mostra `fn_normalize_name` na interface;
+    - a desativação das referências está documentada como exclusão lógica, não física;
+    - `make check` verde;
+    - os E2E da emenda passaram e foram registrados com a contagem.
+  - **Concluída em 10/11/2026.**
+    - **Documentos:**
+      - `docs/banco/05-objetos-e-justificativas.md` § Etapa 6, reescrita: tabelas com CRUD pela interface, com a justificativa da exclusão lógica; tela, rota e teste de cada objeto da Etapa 5 e de cada consulta e view; o dashboard estatístico;
+      - `docs/banco/07-matriz-conformidade.md` (novo): cada requisito das Etapas 03 a 06 → objeto, rota, tela e teste, mais as limitações conhecidas;
+      - `docs/banco/08-roteiro-demonstracao.md` (novo): cerca de 8 minutos, com os usuários do seed (Gestor de Dados, Auditor, Técnico Distrital), sem senha;
+      - `docs/banco/README.md`: índice com os dois documentos novos;
+      - `docs/frontend-integracao.md`: telas implementadas;
+      - `README.md`: § Demonstração da interface, com o caminho de cada tela, e a pendência "integrar o front" atualizada.
+    - **Busca sem acento:** `tests/e2e_front/test_lista.py::test_busca_sem_acento_caixa_nem_espacos_pela_fn_normalize_name` busca a mesma palavra sem acento, em maiúsculas e com espaços extras (ex.: "Centro de Saúde Casa Amarela"), e a unidade aparece. A consulta aplica `fn_normalize_name` ao termo e compara com `name_normalized`.
+    - **Exclusão lógica documentada:** 05 § Etapa 6, 07 § Limitações e o banner da tela de referências.
+    - **Referências conferidas:** todos os arquivos e nomes de teste citados em 05 e 07 existem; os usuários do roteiro conferem com `seeds/demo/usuarios.json`.
+    - **E2E da emenda** (suíte do front inteira: **118 aprovados**). Por arquivo:
+      - `test_qualidade_historico` 15, `test_referencias` 14, `test_ficha` 11, `test_servicos` 9, `test_desativar` 9, `test_edicao` 14, `test_lista` 7;
+      - também `test_perfis` 18, `test_autenticacao` 11, `test_aparencia` 4, `test_inicio` 4, `test_estados` 2.
+    - **`make check`:** 1029 aprovados, 3 pulados.
+    - **Código da aplicação:** nenhuma mudança na T26. Só o caso novo em `test_lista.py`.
+    - **Auditoria final de consistência (10/11/2026, só documentação):**
+      - **coleta real** (`pytest --collect-only -m slow tests/e2e_front`): 118 testes em 12 arquivos, os mesmos números registrados acima;
+      - **cenário D das 30 tuplas** registrado como aprovado pelo professor, conforme comunicado pelo responsável pelo projeto, sem documento anexado (06, 07, 08 e README);
+      - descrições do `trg_set_updated_at` completadas no 05 e no 07, conferidas no catálogo do banco: 7 tabelas, sem `health_units`;
+      - composição das 13 entradas do catálogo de consultas explicitada no 07;
+      - seção "Se algum passo falhar" no roteiro (08);
+      - links, âncoras, rotas do front, rotas da API (contra `contracts/openapi.yaml`) e nomes de teste conferidos por script;
+      - `git diff --check` sem problemas.
 
 ## Escopo completo (bloqueado, depende de decisões ou specs de outros donos)
 Estas tarefas ficam listadas para não descartar funcionalidade. Cada uma só será detalhada quando a dependência sair.
@@ -269,6 +497,7 @@ Estas tarefas ficam listadas para não descartar funcionalidade. Cada uma só se
 - **Depois do G3, sem dependência de backend nem de decisão:** T1 → T2 e T3 → T4 → T5 → T6 a T8 → T9 e T10 → T11 → T12 → T13 → T14.
   - Nenhuma depende de PF-01 a PF-07: o [M] usa só o que a API já oferece.
 - **Bloqueadas:** T15 a T23, pelas dependências de cada uma.
+- **Corte acadêmico (emenda funcional 2), só depois da aprovação do texto dos três arquivos:** T11 parte A → T24 → T8 parte A → T10 → T25 → T9 → T26.
 
 ## Rastreabilidade (conferida em 10/11/2026)
 - Todos os 57 requisitos têm tarefa:
@@ -276,4 +505,11 @@ Estas tarefas ficam listadas para não descartar funcionalidade. Cada uma só se
   - R2.11 → T4;
   - R7.6 → T18;
   - R12.4 → T11.
+- Emenda funcional 2:
+  - R7.7 → T25;
+  - R8.2 → T10;
+  - R12.5 e R12.6 → T11 parte A;
+  - R16.1 → T24.
+
+  Com ela: 62 requisitos (63 com o R5.5 proposto), e todos têm tarefa.
 - Nenhuma tarefa cita requisito inexistente.
