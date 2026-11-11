@@ -37,24 +37,38 @@ que só se confere depois de ler o corpo ou o banco) é auditado depois do rollb
 transação própria, como o do `require`.
 """
 
-import ipaddress
+import contextlib
+import re
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Annotated, Any, Protocol
 from uuid import UUID
 
+import structlog
 from fastapi import Depends, Request
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from src.core.errors import (
+    AppError,
+    Conflict,
+    DomainValidationError,
+    PreconditionFailed,
+    PreconditionRequired,
+)
+from src.core.origem import origem_da_requisicao
 from src.modules.access.application.autorizacao import (
     AcessoNegado,
     Ator,
     AuditStore,
+    Entidade,
     Recurso,
     RepositorioDePermissoes,
     ResolvedorDeAlvo,
     ResolvedorDePermissoes,
     UsuarioAtual,
     auditar_negacao,
+    registrar_falha,
     verificar,
 )
 from src.modules.identity.api.deps import CurrentUser
@@ -151,6 +165,11 @@ Autenticado = Annotated[UsuarioAtual, Depends(autenticado)]
 
 
 async def _sessao_de_negocio(request: Request, usuario: CurrentUser) -> AsyncIterator[Any]:
+    """013/R4.3 a R4.8: as falhas selecionadas viram `operacao.falhou`, gravado depois do
+    rollback numa transação própria. A ordem dos `except` importa: `AcessoNegado` (um `Forbidden`)
+    primeiro; depois os selecionados; os demais erros HTTP e de aplicação (401, 403 comum, 404,
+    429, 422 de schema) passam sem registro; só o que sobra é erro interno (500). Em todos os
+    casos sai o mesmo erro original."""
     estado = request.app.state
     try:
         async with estado.sessoes() as sessao, sessao.begin():
@@ -159,6 +178,102 @@ async def _sessao_de_negocio(request: Request, usuario: CurrentUser) -> AsyncIte
         # Depois do rollback: a transação desfeita não segura trava que o registro precise.
         await _auditar_em_transacao_propria(request, usuario, negacao)
         raise
+    except _SELECIONADOS as erro:
+        await _registrar_falha_sem_mascarar(request, usuario, erro, codigo=_codigo(erro))
+        raise
+    except (AppError, StarletteHTTPException, RequestValidationError):
+        raise
+    except Exception as erro:
+        await _registrar_falha_sem_mascarar(request, usuario, erro, codigo="erro_interno")
+        raise
+
+
+_SELECIONADOS = (Conflict, PreconditionFailed, PreconditionRequired, DomainValidationError)
+_CODIGOS: tuple[tuple[type[AppError], str], ...] = (
+    (Conflict, "conflito"),
+    (PreconditionFailed, "precondicao_falhou"),
+    (PreconditionRequired, "precondicao_ausente"),
+    (DomainValidationError, "validacao_dominio"),
+)
+_log_de_erro = structlog.get_logger("sgs_api.erro")
+
+
+def _codigo(erro: AppError) -> str:
+    return next(codigo for classe, codigo in _CODIGOS if isinstance(erro, classe))
+
+
+async def _registrar_falha_sem_mascarar(
+    request: Request, usuario: "_Identificado", erro: Exception, *, codigo: str
+) -> None:
+    """Grava `operacao.falhou` (013/R4.3) numa sessão e transação próprias, depois do rollback
+    da operação. Só em escrita e uma vez por requisição (R4.7). Se a gravação falhar, fica só o
+    log técnico, sem valores, e quem sai é o erro original (R4.8)."""
+    if request.method not in _ESCRITA or getattr(erro, "auditada", False):
+        return
+    status = int(getattr(type(erro), "status", 500)) if codigo != "erro_interno" else 500
+    rota = _template(request)
+    try:
+        estado = request.app.state
+        async with estado.sessoes() as sessao, sessao.begin():
+            await registrar_falha(
+                estado.auditoria(sessao),
+                ator=ator_da_requisicao(request, usuario),
+                metodo=request.method,
+                rota=rota,
+                status=status,
+                codigo=codigo,
+                campos=[e.campo for e in getattr(erro, "errors", ())],
+                entidade=_entidade_do_caminho(request),
+            )
+    except Exception:
+        _log_de_erro.error(
+            "auditoria_falha_nao_registrada",
+            rota=rota,
+            status=status,
+            codigo=codigo,
+            request_id=getattr(request.state, "request_id", None),
+        )
+        return
+    with contextlib.suppress(AttributeError):  # exceção que não aceita atributo
+        erro.auditada = True  # type: ignore[attr-defined]
+
+
+_ESCRITA = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+_UUID = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+_TIPO_DE_REFERENCIA = re.compile(r"[a-z_]{1,40}")
+
+
+def _template(request: Request) -> str:
+    caminho = getattr(request.scope.get("route"), "path", None)
+    return caminho if isinstance(caminho, str) else "/"
+
+
+def _entidade_do_caminho(request: Request) -> Entidade | None:
+    """A entidade da falha (013/R4.4), só quando o caminho a identifica sem ambiguidade: o tipo
+    vem do template da rota, e o id precisa ter o formato certo. Sem id no caminho (por exemplo,
+    `POST /unidades`), nenhuma entidade."""
+    rota = _template(request)
+    parametros = request.path_params
+
+    def uuid_de(nome: str) -> str | None:
+        valor = str(parametros.get(nome, ""))
+        return valor.lower() if _UUID.fullmatch(valor) else None
+
+    if rota.startswith("/api/v1/unidades/{id}") and (id_ := uuid_de("id")):
+        return Entidade(tipo="unidade", id=id_)
+    if rota.startswith("/api/v1/equipamentos/{equipamento_id}") and (
+        id_ := uuid_de("equipamento_id")
+    ):
+        return Entidade(tipo="equipamento", id=id_)
+    if rota.startswith("/api/v1/servicos/{servico_id}") and (id_ := uuid_de("servico_id")):
+        return Entidade(tipo="servico", id=id_)
+    if rota == "/api/v1/admin/atribuicoes/{id_}" and (id_ := uuid_de("id_")):
+        return Entidade(tipo="atribuicao", id=id_)
+    if rota == "/api/v1/referencias/{tipo}/{id_}":
+        tipo, ident = str(parametros.get("tipo", "")), str(parametros.get("id_", ""))
+        if _TIPO_DE_REFERENCIA.fullmatch(tipo) and ident.isdigit():
+            return Entidade(tipo="referencia", id=f"{tipo}:{ident}")
+    return None
 
 
 SessaoDeNegocio = Annotated[Any, Depends(_sessao_de_negocio, scope="function")]
@@ -175,14 +290,23 @@ class _Identificado(Protocol):
 
 
 def ator_da_requisicao(request: Request, usuario: _Identificado) -> Ator:
-    """Quem faz a requisição e de onde, para a auditoria (001/R5.1)."""
+    """Quem faz a requisição e de onde, para a auditoria (001/R5.1). A requisição autenticada é
+    sempre de um usuário, vinda da API (013/R1.1); tipo e origem não vêm do cliente."""
+    origem = origem_da_requisicao(request)
     return Ator(
+        tipo="usuario",
+        origem=ORIGEM_API,
         user_id=usuario.id,
         papeis=tuple(getattr(usuario, "papeis", ())),
         session_id=usuario.sessao_id,
-        ip=_ip(request),
-        request_id=getattr(request.state, "request_id", None),
+        ip=origem.ip,
+        user_agent=origem.user_agent,
+        request_id=origem.request_id,
     )
+
+
+ORIGEM_API = "api"
+"""Rótulo de origem dos eventos gravados pelas rotas da API (013/R1.1)."""
 
 
 async def _auditar_em_transacao_propria(
@@ -205,12 +329,3 @@ def _rota(request: Request) -> str:
     """Método e rota como declarada (ex.: `PATCH /api/v1/unidades/{id}`), sem valores."""
     caminho = getattr(request.scope.get("route"), "path", request.url.path)
     return f"{request.method} {caminho}"
-
-
-def _ip(request: Request) -> str | None:
-    """IP do cliente, se for um IP (um cliente de teste pode se apresentar com um nome)."""
-    host = request.client.host if request.client else None
-    try:
-        return str(ipaddress.ip_address(host)) if host else None
-    except ValueError:
-        return None
