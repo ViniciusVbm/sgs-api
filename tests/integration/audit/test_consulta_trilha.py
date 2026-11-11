@@ -283,3 +283,248 @@ async def test_trilha_geral_exige_escopo_global(
 
     assert eventos.status_code == 403
     assert log.status_code == 403
+
+
+# --- Spec 013, T12: origem só com `auditoria:read_acessos` e leitura auditada
+
+AGENTE_SENTINELA = "Sentinela-UA-013-T12"
+
+
+async def _evento_com_origem(
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes
+) -> tuple[int, Any]:
+    """Uma unidade criada com o User-Agent sentinela; devolve o id do evento e a sessão do autor."""
+    autor = await logado(sessoes, ("GESTOR_DADOS", GLOBAL))
+    corpo = {
+        "nome": "CAPS Origem",
+        "tipo_unidade_id": await id_pelo_codigo(sessoes, "tipo_unidade", "CAPS_II"),
+        "distrito_id": await id_pelo_codigo(sessoes, "distrito", "DS-I"),
+        "cep": "50010100",
+        "endereco": "Rua B, 2",
+        "status": "ativa",
+    }
+    await cliente.post(
+        "/api/v1/unidades",
+        json=corpo,
+        headers=bearer(app, autor) | {"User-Agent": AGENTE_SENTINELA},
+    )
+    async with sessoes() as sessao:
+        evento = await sessao.scalar(
+            text("SELECT id FROM audit_log WHERE user_agent = :ua"), {"ua": AGENTE_SENTINELA}
+        )
+    return int(evento), autor.id
+
+
+async def test_detalhe_esconde_origem_sem_read_acessos(
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes
+) -> None:
+    """013/R8.2: o Gestor de Dados (sem `read_acessos`) vê o evento, o hash e o request id, mas
+    IP, User-Agent e sessão vêm nulos, com `origem_restrita`."""
+    evento, _ = await _evento_com_origem(app, cliente, sessoes)
+    gestor = bearer(app, await logado(sessoes, ("GESTOR_DADOS", GLOBAL)))
+
+    resposta = await cliente.get(f"/api/v1/auditoria/eventos/{evento}", headers=gestor)
+
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert (corpo["ip"], corpo["user_agent"], corpo["sessao_id"]) == (None, None, None)
+    assert corpo["origem_restrita"] is True
+    assert len(corpo["hash"]) == 64
+    assert (corpo["autor"]["tipo"], corpo["origem"], corpo["resultado"]) == (
+        "usuario",
+        "api",
+        "success",
+    )
+    assert AGENTE_SENTINELA not in resposta.text
+
+
+async def test_detalhe_mostra_origem_ao_auditor(
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes
+) -> None:
+    """013/R8.2: o Auditor (com `read_acessos`) vê IP, User-Agent e sessão."""
+    evento, sessao_do_autor = await _evento_com_origem(app, cliente, sessoes)
+    auditor = bearer(app, await logado(sessoes, ("AUDITOR", GLOBAL)))
+
+    corpo = (await cliente.get(f"/api/v1/auditoria/eventos/{evento}", headers=auditor)).json()
+
+    assert (corpo["ip"], corpo["user_agent"]) == ("127.0.0.1", AGENTE_SENTINELA)
+    assert corpo["sessao_id"] == str(sessao_do_autor)
+    assert corpo["origem_restrita"] is False
+
+
+async def test_detalhe_grava_evento_consultado(
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes
+) -> None:
+    """013/R7.4: cada detalhe visto grava `auditoria.evento_consultado` com o id do evento e
+    nada mais; um evento inexistente (404) não grava."""
+    evento, _ = await _evento_com_origem(app, cliente, sessoes)
+    auditor_sessao = await logado(sessoes, ("AUDITOR", GLOBAL))
+    auditor = bearer(app, auditor_sessao)
+
+    await cliente.get(f"/api/v1/auditoria/eventos/{evento}", headers=auditor)
+    inexistente = await cliente.get("/api/v1/auditoria/eventos/999999", headers=auditor)
+
+    assert inexistente.status_code == 404
+    async with sessoes() as sessao:
+        linhas = (
+            await sessao.execute(
+                text(
+                    "SELECT entity_type, entity_id, metadata, changes, actor_user_id, result"
+                    " FROM audit_log WHERE action = 'auditoria.evento_consultado'"
+                )
+            )
+        ).all()
+    assert [tuple(linha) for linha in linhas] == [
+        ("evento_auditoria", str(evento), {}, [], auditor_sessao.user_id, "success")
+    ]
+
+
+async def test_gestor_nao_ve_evento_consultado(
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes
+) -> None:
+    """013/R7.4: `auditoria.evento_consultado` é evento de acesso: o Gestor de Dados não o vê na
+    lista nem no detalhe (404); o Auditor vê."""
+    evento, _ = await _evento_com_origem(app, cliente, sessoes)
+    auditor = bearer(app, await logado(sessoes, ("AUDITOR", GLOBAL)))
+    gestor = bearer(app, await logado(sessoes, ("GESTOR_DADOS", GLOBAL)))
+    await cliente.get(f"/api/v1/auditoria/eventos/{evento}", headers=auditor)
+    async with sessoes() as sessao:
+        consulta = await sessao.scalar(
+            text("SELECT id FROM audit_log WHERE action = 'auditoria.evento_consultado'")
+        )
+
+    do_gestor = await cliente.get(
+        "/api/v1/auditoria/eventos", params={"acao": "auditoria."}, headers=gestor
+    )
+    detalhe = await cliente.get(f"/api/v1/auditoria/eventos/{consulta}", headers=gestor)
+    do_auditor = await cliente.get(
+        "/api/v1/auditoria/eventos", params={"acao": "auditoria.evento"}, headers=auditor
+    )
+
+    assert do_gestor.json()["itens"] == []
+    assert detalhe.status_code == 404
+    assert [e["acao"] for e in do_auditor.json()["itens"]] == ["auditoria.evento_consultado"]
+
+
+async def test_evento_antigo_vem_com_campos_novos_nulos(banco_vazio: BancoDeTeste) -> None:
+    """013/R1.5: um evento gravado antes da 013 sai na lista e no detalhe com tipo, origem,
+    resultado e User-Agent nulos, sem erro."""
+    from pydantic import SecretStr
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+
+    from src.main import create_app
+    from tests.factories import make_settings
+    from tests.integration.audit.test_audit_chain import _migrar, _registrar_como_antes_da_013
+
+    await _migrar(banco_vazio.url_dono, "0011_09")
+    engine = motor(banco_vazio.url_api)
+    sessoes_antigas = async_sessionmaker(engine, expire_on_commit=False)
+    await _registrar_como_antes_da_013(sessoes_antigas, "unidade.criada")
+    await _migrar(banco_vazio.url_dono, "head")
+    aplicacao = create_app(make_settings(database_url=SecretStr(banco_vazio.url_api)))
+    auditor = bearer(aplicacao, await logado(sessoes_antigas, ("AUDITOR", GLOBAL)))
+    transporte = httpx.ASGITransport(app=aplicacao)
+    async with httpx.AsyncClient(transport=transporte, base_url="https://teste") as http:
+        lista = await http.get(
+            "/api/v1/auditoria/eventos", params={"acao": "unidade."}, headers=auditor
+        )
+        [antigo] = lista.json()["itens"]
+        detalhe = await http.get(f"/api/v1/auditoria/eventos/{antigo['id']}", headers=auditor)
+    await aplicacao.state.engine.dispose()
+    await engine.dispose()
+
+    assert (antigo["autor"]["tipo"], antigo["origem"], antigo["resultado"]) == (None, None, None)
+    assert detalhe.status_code == 200
+    assert (detalhe.json()["user_agent"], detalhe.json()["resultado_categoria"]) == (None, None)
+
+
+async def test_sem_auditoria_read_e_403(
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes
+) -> None:
+    """013/R8.5: sem `auditoria:read`, nem lista nem detalhe (Diretoria; Administrador de TI, que
+    tem `read_acessos` mas não `auditoria:read`)."""
+    evento, _ = await _evento_com_origem(app, cliente, sessoes)
+    for papel in ("DIRETORIA", "ADMIN_TI"):
+        cabecalho = bearer(app, await logado(sessoes, (papel, GLOBAL)))
+        lista = await cliente.get("/api/v1/auditoria/eventos", headers=cabecalho)
+        detalhe = await cliente.get(f"/api/v1/auditoria/eventos/{evento}", headers=cabecalho)
+        assert (lista.status_code, detalhe.status_code) == (403, 403), papel
+
+
+# --- Spec 013, T13: histórico de negócio da unidade (vw_unit_history, migração 0013_04)
+
+
+async def _historico(cliente: httpx.AsyncClient, unidade: str, cabecalho: dict[str, str]) -> Any:
+    resposta = await cliente.get(f"/api/v1/unidades/{unidade}/historico", headers=cabecalho)
+    assert resposta.status_code == 200, resposta.text
+    return resposta.json()["itens"]
+
+
+async def test_historico_da_unidade_mostra_falha_da_unidade(
+    cliente: httpx.AsyncClient, cenario: dict[str, Any]
+) -> None:
+    """013/R8.7: o `operacao.falhou` com a unidade na entidade aparece, com o resultado e a
+    categoria e sem dado de origem."""
+    url = f"/api/v1/unidades/{cenario['unidade']}"
+    await cliente.patch(url, json={"bairro": "Derby"}, headers=cenario["gestor"])  # 428
+
+    [falha, *_] = await _historico(cliente, cenario["unidade"], cenario["gestor"])
+
+    assert falha["acao"] == "operacao.falhou"
+    assert (falha["resultado"], falha["resultado_categoria"]) == ("failure", "precondicao")
+    assert {"ip", "user_agent", "sessao_id"}.isdisjoint(falha)
+
+
+async def test_historico_da_unidade_nao_mostra_acesso_negado_nem_auditoria(
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes, cenario: dict[str, Any]
+) -> None:
+    """013/R8.7: `acesso.negado`, `auth.*` e `auditoria.*`, mesmo com a unidade na entidade, são
+    da trilha geral e não do histórico de negócio."""
+    from src.modules.audit.application.registrar import Ator, Entidade, registrar
+    from src.modules.audit.infrastructure.repository import SqlAuditStore
+
+    unidade = cenario["unidade"]
+    alheia = await logado(
+        sessoes, ("GESTOR_UNIDADE", ("unidade", "01928a3b-0000-7000-8000-0000000000ff"))
+    )
+    negado = await cliente.patch(
+        f"/api/v1/unidades/{unidade}",
+        json={"bairro": "Derby"},
+        headers=bearer(app, alheia) | {"If-Match": '"2"'},
+    )
+    for acao in ("auth.login", "auditoria.verificada"):
+        async with sessoes() as sessao, sessao.begin():
+            await registrar(
+                SqlAuditStore(sessao),
+                acao=acao,
+                ator=Ator(tipo="sistema", origem="teste"),
+                entidade=Entidade(tipo="unidade", id=unidade),
+            )
+    async with sessoes() as sessao:
+        na_trilha = set(
+            await sessao.scalars(
+                text("SELECT action FROM audit_log WHERE entity_id = :id"), {"id": unidade}
+            )
+        )
+
+    acoes = {e["acao"] for e in await _historico(cliente, unidade, cenario["gestor"])}
+
+    assert negado.status_code == 403
+    assert {"acesso.negado", "auth.login", "auditoria.verificada"} <= na_trilha
+    assert acoes == {"unidade.criada", "unidade.atualizada", "unidade.equipamento_adicionado"}
+
+
+async def test_historico_traz_resultado_e_origem(
+    cliente: httpx.AsyncClient, cenario: dict[str, Any]
+) -> None:
+    """013/R1.5, R8.4: cada evento do histórico traz tipo de ator, origem e resultado."""
+    itens = await _historico(cliente, cenario["unidade"], cenario["gestor"])
+
+    assert itens
+    for item in itens:
+        assert (item["autor"]["tipo"], item["origem"], item["resultado"]) == (
+            "usuario",
+            "api",
+            "success",
+        )
+        assert item["resultado_categoria"] is None

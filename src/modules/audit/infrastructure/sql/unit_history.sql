@@ -5,9 +5,10 @@
 --   é servida por ela (011/R4.5).
 --   - Filtros (008/R1.3): período, autor e campo alterado (`changes @> ...`, jsonb).
 --   - O escopo já foi conferido pela rota (`auditoria:read` no escopo da unidade).
+--   - 013: tipo de ator, origem e resultado, sem IP, User-Agent, sessão nem request id.
 -- Uso: GET /api/v1/unidades/{id}/historico (011/T14, 008/T2). Lê a trilha por
 --   `ix_audit_log_entity` (011/R1.1).
--- Requisitos: 008/R1.1, 008/R1.2, 008/R1.3, 011/R4.5
+-- Requisitos: 008/R1.1, 008/R1.2, 008/R1.3, 011/R4.5, 013/R8.4, 013/R8.7
 SELECT
     audit_id,
     occurred_at,
@@ -17,6 +18,10 @@ SELECT
     actor_user_id,
     actor_name,
     actor_roles,
+    actor_type,
+    origin,
+    result,
+    result_reason,
     count(*) OVER () AS total
 FROM vw_unit_history
 WHERE unit_id = :unit_id

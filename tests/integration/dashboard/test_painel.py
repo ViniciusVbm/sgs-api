@@ -189,3 +189,38 @@ async def test_auditor_sem_dashboard_read_recebe_403(
     resposta = await cliente.get(f"{PAINEL}/resumo", headers=auditor)
 
     assert resposta.status_code == 403
+
+
+async def test_alteracoes_nao_contam_falhas_nem_acessos(
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: Sessoes, rede: dict[str, Any]
+) -> None:
+    """013/R8.8: uma tentativa que falhou (`operacao.falhou`) e uma negação de acesso numa
+    unidade não mudam as contagens nem a lista de alterações do painel."""
+    cabecalho = rede["gestor"]
+
+    async def contagens() -> tuple[int, int, list[str]]:
+        periodo = await cliente.get(f"{PAINEL}/consultas/alteracoes-por-periodo", headers=cabecalho)
+        resumo = await cliente.get(f"{PAINEL}/resumo", headers=cabecalho)
+        recentes = await cliente.get(f"{PAINEL}/consultas/alteracoes-recentes", headers=cabecalho)
+        return (
+            sum(d["last_30_days"] for d in periodo.json()),
+            resumo.json()["alteracoes"]["ultimos_30_dias"],
+            [r["action"] for r in recentes.json()],
+        )
+
+    antes = await contagens()
+    falha = await cliente.patch(
+        f"/api/v1/unidades/{rede['c']}", json={"bairro": "Derby"}, headers=cabecalho
+    )  # 428 → operacao.falhou com a unidade na entidade
+    alheia = await logado(sessoes, ("GESTOR_UNIDADE", ("unidade", rede["a"])))
+    negado = await cliente.patch(
+        f"/api/v1/unidades/{rede['c']}",
+        json={"bairro": "Derby"},
+        headers=bearer(app, alheia) | {"If-Match": '"1"'},
+    )
+    depois = await contagens()
+
+    assert (falha.status_code, negado.status_code) == (428, 403)
+    assert depois == antes
+    assert "operacao.falhou" not in depois[2]
+    assert "acesso.negado" not in depois[2]

@@ -188,7 +188,7 @@ async def test_inventario_nao_expoe_dado_pessoal(banco: BancoDeTeste) -> None:
     )
 
 
-# Colunas do design da 011 § `vw_unit_history`, na ordem.
+# Colunas do design da 011 § `vw_unit_history`, na ordem, e as da 013 (design § `0013_04`).
 COLUNAS_DO_HISTORICO = (
     "audit_id",
     "occurred_at",
@@ -204,6 +204,11 @@ COLUNAS_DO_HISTORICO = (
     "district_name",
     "unit_type_name",
     "technical_area_id",
+    # 013/T13 (migração 0013_04), no fim: o CREATE OR REPLACE VIEW só acrescenta colunas assim.
+    "actor_type",
+    "origin",
+    "result",
+    "result_reason",
 )
 
 
@@ -251,7 +256,7 @@ async def test_historico_traz_eventos_da_unidade_de_equipamentos_e_servicos_com_
 
     api = motor(banco.url_api)
     sessoes = async_sessionmaker(api, expire_on_commit=False)
-    autora = Ator(user_id=gestora, papeis=("GESTOR_DADOS",))
+    autora = Ator(tipo="usuario", user_id=gestora, papeis=("GESTOR_DADOS",))
     no_caps = Entidade(tipo="unidade", id=str(caps))
     criada = await _registrar(
         sessoes, "unidade.criada", autora, no_caps, [Mudanca("nome", None, "CAPS Esperança")]
@@ -274,7 +279,7 @@ async def test_historico_traz_eventos_da_unidade_de_equipamentos_e_servicos_com_
     )
     # Sem autor (tarefa do sistema): o evento continua no histórico, com o autor nulo.
     pendencias = await _registrar(
-        sessoes, "unidade.atualizada", Ator(), no_caps, [Mudanca("pendencias", 0, 1)]
+        sessoes, "unidade.atualizada", Ator(tipo="sistema"), no_caps, [Mudanca("pendencias", 0, 1)]
     )
     # Fora do histórico do CAPS: evento de outra unidade e evento sem entidade.
     await _registrar(sessoes, "unidade.criada", autora, Entidade(tipo="unidade", id=str(usf)))
@@ -318,7 +323,16 @@ async def test_historico_traz_eventos_da_unidade_de_equipamentos_e_servicos_com_
         "actor_name": "Joana Gestora",
         "actor_roles": ["GESTOR_DADOS"],
     }
-    assert [{k: v for k, v in linha.items() if k != "audit_id"} for linha in do_caps] == [
+    novas = ("actor_type", "origin", "result", "result_reason")
+    assert [tuple(linha[c] for c in novas) for linha in do_caps] == [
+        ("usuario", None, "success", None),
+        ("usuario", None, "success", None),
+        ("usuario", None, "success", None),
+        ("sistema", None, "success", None),
+    ]
+    assert [
+        {k: v for k, v in linha.items() if k != "audit_id" and k not in novas} for linha in do_caps
+    ] == [
         {
             "occurred_at": criada.occurred_at,
             "action": "unidade.criada",
@@ -406,3 +420,51 @@ async def test_login_da_api_so_le_as_views(banco: BancoDeTeste, view: str) -> No
     await engine.dispose()
 
     assert (leitura, escrita) == (True, False)
+
+
+# --- Spec 013, T13: `vw_unit_history` recriada (migração 0013_04)
+
+
+async def test_vw_unit_history_nao_tem_colunas_de_origem(banco: BancoDeTeste) -> None:
+    """013/R8.6: a view tem tipo de ator, origem e resultado, e nenhum dado de origem nem da
+    cadeia (IP, User-Agent, sessão, request id, hash)."""
+    engine = motor(banco.url_dono)
+    async with engine.connect() as conexao:
+        colunas = tuple(
+            await conexao.scalars(
+                text(
+                    "SELECT column_name FROM information_schema.columns"
+                    " WHERE table_name = 'vw_unit_history' ORDER BY ordinal_position"
+                )
+            )
+        )
+    await engine.dispose()
+
+    assert colunas == COLUNAS_DO_HISTORICO
+    assert {"ip", "user_agent", "session_id", "request_id", "prev_hash", "hash"}.isdisjoint(colunas)
+
+
+async def test_vw_unit_history_continua_security_invoker_e_sem_dml_para_a_api(
+    banco: BancoDeTeste,
+) -> None:
+    """011/R4.6; 013/T13: o CREATE OR REPLACE manteve `security_invoker` e o REVOKE da 0011_04:
+    a aplicação só lê a view."""
+    engine = motor(banco.url_dono)
+    async with engine.connect() as conexao:
+        opcoes = await conexao.scalar(
+            text("SELECT reloptions FROM pg_class WHERE oid = 'vw_unit_history'::regclass")
+        )
+        privilegios = (
+            await conexao.execute(
+                text(
+                    "SELECT has_table_privilege('sgs_app', 'vw_unit_history', 'SELECT'),"
+                    " has_table_privilege('sgs_app', 'vw_unit_history', 'INSERT'),"
+                    " has_table_privilege('sgs_app', 'vw_unit_history', 'UPDATE'),"
+                    " has_table_privilege('sgs_app', 'vw_unit_history', 'DELETE')"
+                )
+            )
+        ).one()
+    await engine.dispose()
+
+    assert "security_invoker=true" in opcoes
+    assert tuple(privilegios) == (True, False, False, False)

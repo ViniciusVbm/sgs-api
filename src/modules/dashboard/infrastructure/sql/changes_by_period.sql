@@ -7,14 +7,17 @@
 --   - O filtro de tipo usa uma subconsulta (`IN`), porque a view não traz o id do tipo.
 -- Uso: GET /api/v1/dashboard/consultas/alteracoes-por-periodo (009/T4). A view lê a trilha por
 --   `ix_audit_log_entity`.
--- Requisitos: 009/R1.4, 009/R2.3, 009/R2.5
+-- Requisitos: 009/R1.4, 009/R2.3, 009/R2.5, 013/R8.8
 SELECT
     district_id,
     district_name,
     count(*) FILTER (WHERE occurred_at >= now() - interval '7 days') AS last_7_days,
     count(*) AS last_30_days
 FROM vw_unit_history
-WHERE (:scope_global OR technical_area_id = ANY(CAST(:scope_areas AS smallint[]))
+-- 013/R8.8: só alterações efetivas; uma falha (`operacao.falhou`) não é alteração. Os eventos
+-- anteriores à 013 têm `result` nulo e eram todos alterações.
+WHERE (result IS NULL OR result = 'success')
+  AND (:scope_global OR technical_area_id = ANY(CAST(:scope_areas AS smallint[]))
        OR district_id = ANY(CAST(:scope_districts AS smallint[]))
        OR unit_id = ANY(CAST(:scope_units AS uuid[])))
   AND (CAST(:district_id AS smallint) IS NULL OR district_id = CAST(:district_id AS smallint))
