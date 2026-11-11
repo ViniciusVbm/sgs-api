@@ -1,6 +1,6 @@
 # 012 · Frontend SGS Recife · Design
 
-- Status: **Aprovado (Vinicius, Igor Fugagnoli e Erick Sanches, 10/11/2026)**. G2 registrado pelo dono; ver § Registro de aprovação, inclusive sobre a forma da evidência. Revisão 4 (10/11/2026): P1 a P5 tratadas e pendências formais PF-01 a PF-07. Revisão 3 (10/11/2026): sincronização com a `novo/main` `9c37029`, responsáveis atualizados, decisões e premissas do Grupo 01, seções de histórico, exportação e perfis-alvo, matriz de integração.
+- Status: **Aprovado (Vinicius, Igor Fugagnoli e Erick Sanches, 10/11/2026)**. G2 registrado pelo dono; ver § Registro de aprovação, inclusive sobre a forma da evidência. Revisão 4 (10/11/2026): P1 a P5 tratadas e pendências formais PF-01 a PF-07. Revisão 3 (10/11/2026): sincronização com a `novo/main` `9c37029`, responsáveis atualizados, decisões e premissas do Grupo 01, seções de histórico, exportação e perfis-alvo, matriz de integração. **Revisão 5 (10/11/2026, emenda funcional 2, aprovada na sessão de trabalho de 10/11/2026 (registro do agente, por instrução expressa na sessão; a confirmação no PR fica com o dono, Vinicius)):** telas da entrega acadêmica de 13/11/2026 (§ Emenda funcional 2), novas linhas em Rotas consumidas, Perfis e Matriz de integração. Usa só rotas existentes.
 - Autor do design: Hélder (decisão do Grupo 01, 10/11/2026). Dono da spec: Vinicius (ViniciusVbm).
 - Revisão do G2: Igor Fugagnoli (principal) e Erick Sanches (suplente). Os dois aprovaram em 10/11/2026 (§ Registro de aprovação).
 - Requisitos: requirements.md (com a emenda documental 1, que aguarda o dono)
@@ -34,8 +34,9 @@ frontend/
       perms.js          # derivação de menu e botões a partir do /me
       router.js         # hash router (rotas do protótipo)
       html.js           # esc() e tag html`` com escape automático
-      ui/{modal,toast,format,form}.js
+      ui/{modal,toast,format,form,grafico}.js   # grafico.js: SVG gerado no front (emenda funcional 2)
       views/{login,inicio,unidades,unidade,nova,solicitacoes,qualidade,historico,importar,sem-acesso}.js
+      views/tabelas.js  # tabelas de referência (R16.1); o nome evita confusão com js/referencias.js (cache de leitura)
 tests/e2e_front/        # Playwright (ADR-0011), marcados slow
 ```
 
@@ -61,10 +62,14 @@ Todas já existem e estão documentadas em `docs/api/endpoints.md`. Nesta spec, 
 | Ficha | `GET /api/v1/unidades/{id}`, `/historico` | `unidade:read`, `auditoria:read` | R6.1, R6.2 |
 | Edição | `PATCH /api/v1/unidades/{id}` (If-Match) | `unidade:update` | R7.1, R7.2 |
 | Cadastro | `POST /api/v1/unidades` | `unidade:create` | R7.3 |
-| Serviços | `GET/POST/PATCH/DELETE /api/v1/unidades/{id}/servicos[/{sid}]` | `unidade:read` / `servico:write` | R8.1 |
-| Referências | `GET /api/v1/referencias/{tipo}` | `unidade:read` | R5.1, R8.1 |
-| Qualidade | `GET /api/v1/dashboard/consultas/*`, `/dashboard/inventario` | `dashboard:read` | R12.1 |
+| Serviços | `GET/POST/PATCH/DELETE /api/v1/unidades/{id}/servicos[/{sid}]` | `unidade:read` / `servico:write` | R8.1, R8.2 |
+| Desativação | `POST /api/v1/unidades/{id}/desativar` (`{motivo}`; procedimento `sp_deactivate_unit`) | `unidade:deactivate` | R7.7 |
+| Referências | `GET /api/v1/referencias/{tipo}` | `unidade:read` | R5.1, R8.1, R16.1 |
+| Tabelas de referência | `POST /api/v1/referencias/{tipo}`, `PATCH /api/v1/referencias/{tipo}/{id}` | `regra_validacao:manage` | R16.1 |
+| Cascata do código | `GET /api/v1/auditoria/eventos?entidade_tipo=referencia&entidade_id=tipos-equipamento:{id}` (`equipamentos_afetados`) | `auditoria:read` global | R16.1 |
+| Qualidade | `GET /api/v1/dashboard/consultas` (catálogo), `/dashboard/consultas/*`, `/dashboard/inventario` | `dashboard:read` | R12.1, R12.6 |
 | Histórico geral | `GET /api/v1/auditoria/eventos` | `auditoria:read` global | R12.2 |
+| Log do banco e partições | `GET /api/v1/auditoria/banco`, `/auditoria/banco/particoes` | `auditoria:read` global | R12.5 |
 | Verificação da cadeia | `POST /api/v1/auditoria/verificar` | `auditoria:read` global | R12.4 |
 | Papéis (Admin TI) | `GET /api/v1/admin/papeis`, `GET/POST/DELETE /api/v1/admin/atribuicoes` | `papel:assign` | R3.2 (DF8) |
 
@@ -133,12 +138,12 @@ Menu e botões derivados **só das permissões existentes** na matriz da spec 00
 
 | Papel | Permissões relevantes (matriz atual) | Início | Menu (escopo mínimo) | Ações [M] |
 |---|---|---|---|---|
-| GESTOR_DADOS (central) | `unidade:*` G, `servico:write` G, `auditoria:read` G, `dashboard:read` G | Início | Início, Unidades, Cadastrar unidade, Validações\*, Qualidade, Histórico, Importar\* | editar e cadastrar (R7.1, R7.3), serviços (R8.1) |
+| GESTOR_DADOS (central) | `unidade:*` G, `servico:write` G, `auditoria:read` G, `dashboard:read` G, `regra_validacao:manage` G | Início | Início, Unidades, Cadastrar unidade, Validações\*, Qualidade, Histórico, Importar\*, **Tabelas de referência** (R16.1) | editar e cadastrar (R7.1, R7.3), **desativar (R7.7)**, serviços (R8.1, R8.2), **referências (R16.1)** |
 | TECNICO_DISTRITAL (distrito) | `unidade:read` G, `unidade:update` D, `servico:write` D, `auditoria:read` D, `dashboard:read` D | Início | Início, Unidades (abre filtrada pelo DS, R3.5), Solicitar cadastro\*, Solicitações\*, Qualidade, Histórico\*\* | só leitura; propor\* (R7.4) |
 | GESTOR_UNIDADE (unidade) | `unidade:read` G, `unidade:update` U, `servico:write` U, `auditoria:read` U, `dashboard:read` U | Minha unidade | Minha unidade, Minhas solicitações\*, Histórico da unidade | só leitura; propor\* (R7.4) |
 | COORD_TECNICO | `unidade:read` G, `unidade:update`/`create` A, `auditoria:read` A, `dashboard:read` A | Início | Início, Unidades, Solicitações\*, Qualidade, Histórico\*\* | só leitura até DF14 (R7.4) |
 | DIRETORIA | `unidade:read` G, `dashboard:read` G | Início | Início, Unidades (só leitura), Qualidade | nenhuma; sem aba de histórico (R6.2) |
-| AUDITOR | `unidade:read` G, `auditoria:read` G, `auditoria:read_acessos` G | Histórico | Histórico geral, Verificação da cadeia, Unidades (só leitura) | `POST /auditoria/verificar` |
+| AUDITOR | `unidade:read` G, `auditoria:read` G, `auditoria:read_acessos` G | Histórico | Histórico geral (com log do banco e partições, R12.5), Verificação da cadeia, Unidades (só leitura) | `POST /auditoria/verificar` |
 | ADMIN_TI | `papel:assign` G, `usuario:manage` G, `auditoria:read_acessos` G | Papéis | Papéis e atribuições (`/admin/papeis`, `/admin/atribuicoes`), Usuários\* | atribuir e remover papéis |
 
 - \* Visível com a indicação "em desenvolvimento" (R13).
@@ -170,6 +175,97 @@ As premissas Grupo-DF2, Grupo-DF13 e Grupo-DF14 (requirements § Decisões do Gr
 - o "vínculo" não existe no modelo (P3, PF-04).
 
 Até a ratificação e o backend, vale o [M]: só o escopo global edita (R7.4).
+
+## Emenda funcional 2: telas da entrega acadêmica (13/11/2026)
+Princípio: **nenhuma rota, contrato, permissão ou migração nova**. Cada tela mostra o objeto de banco que está por trás dela e cita a origem: consulta, view, função, procedimento ou trigger. A banca vê na interface o que a auditoria comprovou no banco.
+
+### Qualidade (`#/qualidade`, `views/qualidade.js`; R12.1, R12.6)
+1. **Abertura:** `GET /dashboard/consultas` (catálogo). A tela usa `titulo`, `justificativa`, `tecnica_sql`, `parametros` e `colunas` como vêm, sem texto próprio sobre o SQL.
+2. **Filtros:** distrito, tipo de unidade e área técnica, com as opções de `GET /referencias/{tipo}` (cache de `referencias.js`). Ficam na URL (`#/qualidade?distrito=4&tipo=…`), como na lista (R5.1). Cada consulta recebe só os filtros listados em `parametros`. O 422 da API (filtro inexistente) aparece como erro da tela.
+3. **Indicadores no topo:**
+   - **percentual da rede sem CNES** (`network_percent_without_cnes`, da `distritos-sem-cnes-acima-da-rede`);
+   - **médias de equipamentos e de serviços por unidade.** O front percorre `GET /dashboard/inventario?tamanho=100&pagina=1..n` até `total`, soma `equipment_count` e `service_count` e divide pelo número de linhas. Mostra "média sobre N unidades";
+   - **tendência das alterações** (`alteracoes-por-periodo`): `last_7_days/7` comparado com `last_30_days/30` alterações por dia, por distrito e na rede (a soma das linhas), com o rótulo "acima", "abaixo" ou "igual" ao ritmo do mês.
+4. **Gráficos** (`ui/grafico.js`; § Gráficos):
+   - **rosca** da situação cadastral (`fn_registration_status`), contada sobre as mesmas linhas do inventário usadas nas médias;
+   - **linha das alterações no período**, só com `auditoria:read` global:
+     - seletor com 7 dias, 30 dias e "personalizado" (`de` e `ate`, no fuso de Recife, enviados em ISO 8601 com fuso);
+     - o front percorre `GET /auditoria/banco?de&ate&tamanho=100&pagina=1..n` até `total`;
+     - agrupa por hora quando `ate - de` é de até 2 dias, e por dia acima disso;
+     - todos os intervalos do período aparecem, com zero onde não há registro;
+     - com menos de 2 intervalos com registro, mostra o aviso "Ainda não há histórico suficiente para mostrar tendência neste período";
+   - barras horizontais com o % sem CNES por distrito acima da rede e uma linha vertical no % da rede;
+   - barras agrupadas de alterações em 7 e 30 dias por distrito;
+   - barras empilhadas de equipamentos por tipo (`equipment_type_name`) em cada distrito, com `equipment_count` (cadastros) e `total_quantity` (soma das quantidades) e legenda.
+5. **Consultas em seções recolhíveis**, uma por entrada do catálogo. As entradas cuja rota tem `{id}` (`historico-da-unidade`) aparecem como link para a ficha, e as de `/auditoria/*`, como link para o Histórico. A seção de consultas cobre:
+   - unidades sem serviço (anti join);
+   - conciliação unidade × equipamento (FULL OUTER JOIN, com a coluna `situation`);
+   - distritos acima da rede (subconsulta no HAVING);
+   - unidades com serviço fora do CNES (EXISTS correlacionado);
+   - as 4 da Etapa 3;
+   - o inventário da view `vw_unit_inventory`, com a coluna `registration_status`, que vem de `fn_registration_status`.
+
+   Cada seção tem a tabela paginada, o total e a técnica SQL. A seção do inventário filtra por `situacao`.
+6. **Escopo:** quem tem `dashboard:read` de escopo menor vê os números do próprio escopo, porque a API aplica o escopo. A tela não recorta nada por conta própria.
+7. **Fora do corte de 13/11:** as 8 verificações de R12.1, que reaproveitam o cálculo de R6.3 (T8 parte B).
+
+### Histórico geral (`#/historico` e `#/cadeia`, `views/historico.js`; R12.2, R12.4, R12.5)
+Abas, cada uma visível só com `auditoria:read` **global**. Com escopo menor, a tela mostra "em desenvolvimento" (R12.2).
+- **Trilha:** `GET /auditoria/eventos`, com filtros `de`, `ate`, `acao`, `entidade_tipo` e `autor`, paginação e as mudanças `{campo, de, para}` rotuladas.
+- **Log do banco:** `GET /auditoria/banco`.
+  - Colunas: quando, tabela, operação, linha, colunas alteradas, usuário do banco e origem (`pela_api`).
+  - Filtros: `tabela`, período e "só fora da API" (`fora_da_api=true`).
+  - Cabeçalho da aba: "Registrado pelo trigger `trg_registry_change_log` em toda escrita em unidades, equipamentos e serviços, inclusive fora da aplicação."
+- **Partições:** `GET /auditoria/banco/particoes`, em tabela com nome, limite e linhas.
+  - Cabeçalho: "Criadas pelo procedimento com cursor `sp_ensure_monthly_partitions` (`sgs-admin banco particoes`)."
+  - A interface não executa o procedimento.
+- **Cadeia** (`#/cadeia`, Auditor): `POST /auditoria/verificar` mostra `integra` ou o primeiro evento divergente (R12.4).
+
+### Tabelas de referência (`#/referencias`, `views/tabelas.js`; R16.1)
+- **Seletor da tabela:** tipos de unidade, tipos de equipamento e tipos de serviço, editáveis; distritos e áreas técnicas, só leitura.
+- **Lista:** `GET /referencias/{tipo}`, com código, nome, situação (Ativo/Inativo) e, nos tipos de unidade, a área técnica resolvida por `areas-tecnicas`.
+- **Incluir e alterar** em modal (`ui/modal.js` e `ui/form.js`):
+  - o `POST` leva `{codigo, nome}` e, no tipo de unidade, `area_tecnica_id`;
+  - o `PATCH` leva só os campos alterados;
+  - 409 aparece no campo `codigo`, e 422, nos campos de `errors`.
+- **Desativar e reativar:** botão por linha que envia `PATCH {ativo}`, com confirmação.
+- **Cascata:** depois de um `PATCH` que muda o `codigo` de um tipo de equipamento, a tela chama `GET /auditoria/eventos?entidade_tipo=referencia&entidade_id=tipos-equipamento:{id}&tamanho=1`. O toast diz "Código alterado; N equipamentos receberam o novo código (ON UPDATE CASCADE)", com o N de `equipamentos_afetados`. Sem `auditoria:read` global, o toast não mostra o número.
+- **Cache:** depois de qualquer escrita, `limparReferencias()`, para a lista e a ficha não mostrarem nomes antigos.
+
+### Ficha mínima e desativação (`#/unidade/:id`, `views/unidade.js`; R6.1, R6.2, R7.7, R8.1, R8.2)
+- **Parte A (13/11):**
+  - aba **Dados**: `GET /unidades/{id}`, guardando o `ETag`. Mostra "Versão N" (`versao`) e "Atualizado em" (`atualizado_em`), ambos mantidos pelo `trg_health_units_version`, que atualiza a versão e o `updated_at` de `health_units`. O `trg_set_updated_at` vale para 7 tabelas: `services`, `equipments` e as 5 de referência (`districts`, `technical_areas`, `unit_types`, `equipment_types`, `service_types`);
+  - aba **Serviços** (T10);
+  - aba **Histórico** (`GET /unidades/{id}/historico`, R6.2);
+  - aba **Equipamentos** "em desenvolvimento" (R9.1).
+- **Parte B (21/11):** as 8 verificações (R6.3).
+- **Desativar** (R7.7):
+  - o botão aparece com `unidade:deactivate` global e status diferente de `inativa`;
+  - o modal pede o motivo (3 a 500 caracteres) e confirma, e o front envia `POST /unidades/{id}/desativar {motivo}`;
+  - a ficha é atualizada com a resposta e o novo `ETag`.
+
+  O texto de ajuda do modal diz que a operação usa o procedimento `sp_deactivate_unit` e que a unidade nunca é apagada.
+- **Serviços:**
+  - inclusão (`POST`), alteração (`PATCH`, R8.2) e remoção (`DELETE`), só com `servico:write` global;
+  - a lista mostra "Atualizado em" de cada serviço, que `trg_set_updated_at` mantém;
+  - o tipo de serviço vem da lista ativa de `tipos-servico`;
+  - a remoção pede confirmação.
+
+### Gráficos (`ui/grafico.js`)
+- **Geração:** funções puras que devolvem SVG pela tag `html` (escape automático, R15.1): `barras(itens, opcoes)`, `barrasAgrupadas(series, opcoes)`, `barrasEmpilhadas(series, opcoes)`.
+- **Proibições:** nada de `innerHTML` fora de `montar()`, `eval`, biblioteca ou recurso externo. Isso já é vigiado por `tests/architecture/test_frontend_estatico.py`.
+- **Cores:** só tokens do `app.css` (`--brand`, `--ok`, `--warn`, `--wait`, `--err`, `--ink-*`, `--line*`), válidos nos temas claro e escuro.
+- **Acessibilidade:**
+  - `role="img"` com `aria-label` que resume o gráfico;
+  - uma `<table>` com os mesmos dados, aberta por "Ver dados";
+  - valores escritos nas barras, sem depender só da cor.
+- **Responsividade:** o `viewBox` é escalável, e os rótulos longos quebram, sem rolagem horizontal nas 3 larguras (R1.4).
+
+### Dados nos E2E da emenda
+Os testes escrevem no banco do projeto compose de teste (`sgs-api-e2e-front-ui`, descartado no fim) e **nunca** num ambiente local existente. Como o banco é compartilhado pela sessão de testes:
+- cada teste que escreve **cria a própria entidade**: um tipo de serviço novo, uma unidade nova para desativar, um serviço novo;
+- mudanças em dados do seed são **revertidas no próprio teste**. Exemplo: o código do tipo de equipamento é trocado e depois restaurado, o que também passa pela cascata;
+- as asserções numéricas comparam a tela com a resposta da API no mesmo instante, nunca com números fixos.
 
 **Pendências e efeito na interface** (requirements § Pendências formais):
 - **PF-01:** aplicar na hora ou propor. A interface não tem "aprovar" nem "devolver" para alterações comuns, porque a API aplica na hora e não tem fluxo de aprovação. Se a decisão for "na hora", o status precisa virar estrutural no backend (emenda da 006) **antes** de liberar a edição D/U. Esconder o campo na tela não basta.
@@ -217,6 +313,10 @@ Até a ratificação e o backend, vale o [M]: só o escopo global edita (R7.4).
 - **XSS:** dados com payloads gravados pela API; nenhum `dialog` dispara e o console não registra violação de CSP.
 - **Estático** (pytest, sem dependência nova): os arquivos `js/` não têm `eval` nem `new Function`, nem senhas ou códigos de demonstração. Toda interpolação de template HTML passa por `html\`\`` ou `esc()` (lista de exceções revisadas).
 - **Caddy:** teste e2e de `/`, `/api/v1/*` e do cabeçalho CSP.
+- **Emenda funcional 2:**
+  - `test_qualidade_historico.py`, `test_referencias.py`, `test_ficha.py`, `test_servicos.py` e `test_desativar.py`, com os dados isolados do § Dados nos E2E da emenda;
+  - `test_perfis.py` atualizado com o item "Tabelas de referência" do Gestor de Dados;
+  - `test_frontend_estatico.py` cobre `ui/grafico.js` e as views novas sem mudança no teste.
 
 ## Matriz de integração (conferida em `9c37029`, 10/11/2026)
 **Classificação:**
@@ -257,14 +357,17 @@ Até a ratificação e o backend, vale o [M]: só o escopo global edita (R7.4).
 | Cadastro central | R7.3 | `POST /unidades` | existe | protótipo | G2/G3 | API |
 | Edição e proposta pelo distrito e pela unidade | R7.4, R7.5, R10.2; Grupo-DF13/DF14 | — (o `PATCH` existe, mas as premissas pedem solicitação para os sensíveis) | sem rotas de solicitação | protótipo | ratificação; P1 a P4; spec de solicitações; emenda da 003 | Decisão/gate + Backend |
 | Observação no modal | R7.6 | — | o `PATCH` recusa campos extras | protótipo | emenda da 006 | Backend |
-| Serviços | R8.1 | `GET/POST/DELETE /unidades/{id}/servicos[/{id}]`, `GET /referencias/tipos-servico` | existe | protótipo | G2/G3; catálogo (DF5) | API |
+| Serviços | R8.1, R8.2 | `GET/POST/PATCH/DELETE /unidades/{id}/servicos[/{id}]`, `GET /referencias/tipos-servico` | existe | protótipo | G2/G3; catálogo (DF5) | API |
+| Desativação pela ficha (procedimento) | R7.7 | `POST /unidades/{id}/desativar` (`sp_deactivate_unit`) | existe (`unidade:deactivate` só G) | protótipo não tem; emenda funcional 2 | aprovação da emenda | API |
 | Equipamentos (aparelhos) | R9.1, R9.2 | — (`/unidades/{id}/equipamentos` é equipamento de saúde, outro conceito) | sem entidade de infraestrutura | protótipo | DF1; spec de infraestrutura | API (aba visível, R9.1) / Backend + Decisão (R9.2) |
 | Solicitações e validações (menu) | R10.1 | — | — | **implementado (T5)**: itens e telas "em desenvolvimento", sem chamar a API | spec de solicitações | API (só "em desenvolvimento") |
 | Notificações | R11.1, R11.2 | — | não existe | **R11.1 implementado (T5)**: sino sem contagem, "em desenvolvimento" | spec de notificações | API (R11.1) / Backend (R11.2) |
-| Painel de qualidade | R12.1 | `GET /dashboard/consultas/*`, `/dashboard/inventario` | existe | protótipo | G2/G3 | API |
+| Painel de qualidade | R12.1, R12.6 | `GET /dashboard/consultas` (catálogo com `tecnica_sql`), `/dashboard/consultas/*`, `/dashboard/inventario` | existe | protótipo; gráficos SVG, médias e tendência da emenda funcional 2 | aprovação da emenda; as 8 verificações dependem de R6.3 | API |
 | Histórico geral (central) | R12.2, Grupo-DF9 | `GET /auditoria/eventos` | existe (a Grupo-DF9 cita `/historico`, que não existe) | protótipo | G2/G3; rota `/historico`: emenda da 008 | Parcial (o nome da rota diverge) |
 | Histórico geral no escopo do distrito | R12.3 | — | a trilha geral exige escopo global | protótipo | emenda da 008; DF9 | Backend + Decisão |
 | Verificação da cadeia | R12.4 | `POST /auditoria/verificar` | existe (`auditoria:read` global) | não existe no protótipo | G2/G3 | API |
+| Log do banco e partições | R12.5 | `GET /auditoria/banco`, `/auditoria/banco/particoes` | existe (`auditoria:read` global) | não existe no protótipo; emenda funcional 2 | aprovação da emenda | API |
+| Tabelas de referência e cascata | R16.1 | `GET/POST/PATCH /referencias/{tipo}[/{id}]`, `GET /auditoria/eventos?entidade_tipo=referencia` | existe (`regra_validacao:manage` só G; `equipamentos_afetados` no evento) | não existe no protótipo; emenda funcional 2 | aprovação da emenda | API |
 | Papéis e atribuições (Admin TI) | R3.2 (DF8) | `GET /admin/papeis`, `GET/POST/DELETE /admin/atribuicoes` | existe | não existe no protótipo | G2/G3 | API |
 | Importar planilha | R14.1, R14.2 | — | não existe | **R14.1 implementado (T5)**: "em desenvolvimento" só para o escopo global de `unidade:create` | spec de importação | API (R14.1, visível) / Backend (R14.2) |
 | Segurança da interface | R15.1 a R15.4 | — | — | 12 grupos de inserção sem escape no protótipo (plano § 5.3) | G2/G3 | API |
@@ -282,6 +385,17 @@ Até a ratificação e o backend, vale o [M]: só o escopo global edita (R7.4).
 9. T13 e T14: XSS, responsividade, E2E e documentação.
 
 Equipamentos (aparelhos), exportação e o fluxo de aprovação ficam no escopo completo (T15, T16 e T21), bloqueados pelas dependências da tabela.
+
+**Ordem do corte acadêmico (emenda funcional 2), depois da aprovação do texto:**
+1. **T11 parte A:** qualidade e histórico, com R12.5 e R12.6. Não depende de nenhuma tarefa pendente.
+2. **T24:** tabelas de referência. Cria o `ui/form.js`, que a T10, a T25 e a T9 reaproveitam.
+3. **T8 parte A:** ficha mínima. É a base da T10, da T25 e da T9.
+4. **T10:** serviços (R8.1 e R8.2).
+5. **T25:** desativação. O critério confere a linha UPDATE no log do banco, que já é visível pela T11.
+6. **T9 (nível B):** cadastro e edição.
+7. **T26:** evidências da entrega acadêmica.
+
+As dependências conferem com a ordem pedida, e nenhuma troca é necessária.
 
 ## Roteiro para a revisão do G2
 Material para o revisor (Igor Fugagnoli, ou Erick Sanches como suplente). O revisor confere:
