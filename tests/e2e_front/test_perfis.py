@@ -16,6 +16,7 @@ MENUS = {
         "Validações",
         "Qualidade dos dados",
         "Histórico de alterações",
+        "Tabelas de referência",  # R16.1 (emenda funcional 2): regra_validacao:manage global
         "Importar planilha",
     ],
     "TECNICO_DISTRITAL": [
