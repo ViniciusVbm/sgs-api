@@ -64,6 +64,13 @@ class LoginStateRepository(Protocol):
         ...
 
 
+class PapeisDoUsuario(Protocol):
+    """Papéis efetivos de um usuário agora, para o `auth.login` (spec 013, R1.4). A raiz de
+    composição liga ao resolvedor de permissões do módulo access; o identity não o importa."""
+
+    async def de(self, usuario_id: UUID) -> tuple[str, ...]: ...
+
+
 class SessionRevoker(Protocol):
     async def revogar(self, session_id: UUID, agora: datetime) -> None:
         """Revoga a sessão e os refresh tokens dela (R3.5, R3.7)."""
