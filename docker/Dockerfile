@@ -31,9 +31,10 @@ ENV PATH="/app/.venv/bin:$PATH" \
 USER sgs
 EXPOSE 8000
 
-# A porta 8000 só é alcançada pelo proxy na rede do compose, por isso os cabeçalhos
-# X-Forwarded-* são aceitos de qualquer endereço (o IP real do cliente vai para a auditoria).
+# X-Forwarded-* só valem vindos dos endereços de FORWARDED_ALLOW_IPS, que o uvicorn lê do
+# ambiente: no compose, o IP fixo do proxy (/32; spec 013, T4). Sem a variável, o uvicorn confia
+# só em 127.0.0.1. Nunca use "*": qualquer contêiner da rede escolheria o IP da auditoria.
 CMD ["uvicorn", "--factory", "src.main:create_app", \
      "--host", "0.0.0.0", "--port", "8000", \
-     "--proxy-headers", "--forwarded-allow-ips", "*", \
+     "--proxy-headers", \
      "--no-access-log", "--no-server-header"]

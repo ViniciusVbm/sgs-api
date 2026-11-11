@@ -64,6 +64,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality
     timeout-minutes: 20
+    env:
+      # Rede de borda e IP fixo do proxy, exigidos pelo compose em todos os passos (spec 013, T4).
+      SGS_BORDA_SUBNET: 10.231.1.0/28
+      SGS_BORDA_PROXY_IP: 10.231.1.14
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.2.0

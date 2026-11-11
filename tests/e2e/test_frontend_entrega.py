@@ -21,6 +21,7 @@ from pathlib import Path
 import pytest
 
 from src.tools import crypto_keys, jwt_keys
+from tests.e2e.redes import Borda, SubnetOcupadaError, borda_da_suite
 
 pytestmark = pytest.mark.slow
 
@@ -52,9 +53,17 @@ class Resposta:
     corpo: str
 
 
+_BORDA: list[Borda] = []
+"""Subnet de borda da suíte (spec 013, T4), escolhida antes do `up`."""
+
+
 def _compose(*args: str, check: bool = True, timeout: int = 120) -> Resultado:
     assert DOCKER is not None
-    ambiente = os.environ | {"SGS_HTTP_PORT": PORTA_HTTP, "SGS_HTTPS_PORT": PORTA_HTTPS}
+    ambiente = (
+        os.environ
+        | {"SGS_HTTP_PORT": PORTA_HTTP, "SGS_HTTPS_PORT": PORTA_HTTPS}
+        | _BORDA[0].ambiente()
+    )
     comando = [DOCKER, "compose", "-f", str(COMPOSE), "-f", str(COMPOSE_TESTE), "-p", PROJETO]
     # Comandos fixos deste arquivo, sem entrada externa.
     return subprocess.run(  # noqa: S603
@@ -72,6 +81,10 @@ def _compose(*args: str, check: bool = True, timeout: int = 120) -> Resultado:
 def contexto_tls(tmp_path_factory: pytest.TempPathFactory) -> Iterator[ssl.SSLContext]:
     if DOCKER is None:
         pytest.skip("Docker não encontrado")
+    try:
+        _BORDA[:] = [borda_da_suite("FRONT", DOCKER, projeto=PROJETO)]
+    except SubnetOcupadaError as erro:
+        pytest.skip(str(erro))
     # A API não sobe sem as chaves (spec 002); se elas não existem, o teste cria e apaga no fim.
     criou_pasta = not CHAVES_JWT.parent.exists()
     criou_chave = not CHAVES_JWT.exists()

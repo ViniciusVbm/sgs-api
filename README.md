@@ -26,6 +26,7 @@ Pré-requisito: Docker 26 ou mais novo, com Compose v2 (o compose monta partes d
 mkdir -p secrets
 uv run python -m src.tools.jwt_keys --output secrets/jwt-keys.json   # uma vez: chave JWT de dev
 uv run python -m src.tools.crypto_keys --output secrets/crypto-keys.json   # uma vez: chave de cifra
+printf 'SGS_BORDA_SUBNET=10.231.1.0/28\nSGS_BORDA_PROXY_IP=10.231.1.14\n' > docker/.env  # uma vez
 docker compose -f docker/compose.yml up -d --build --wait
 curl -k https://localhost/health/ready      # {"status":"ok"}
 ```
