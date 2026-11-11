@@ -27,8 +27,9 @@ async def _inserir_registro(engine: AsyncEngine) -> None:
     async with engine.begin() as conexao:
         await conexao.execute(
             text(
-                "INSERT INTO audit_log (occurred_at, action, prev_hash, hash)"
-                " VALUES (now(), 'teste.criado', :anterior, :atual)"
+                # Tipo e resultado: obrigatórios nos eventos novos (013/R1.6, migração 0013_02).
+                "INSERT INTO audit_log (occurred_at, action, prev_hash, hash, actor_type, result)"
+                " VALUES (now(), 'teste.criado', :anterior, :atual, 'sistema', 'success')"
             ),
             {"anterior": "0" * 64, "atual": "a" * 64},
         )
