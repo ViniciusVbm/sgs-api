@@ -22,6 +22,7 @@ Hierarquia `AppError(status, type, title)` → `NotFound`, `Forbidden`, `Conflic
 
 ## Auditoria (`modules/audit`)
 - `domain/entry.py`: `AuditEntry` (com `Ator`, `Entidade` e `Mudanca`) e o hash canônico: `hash = SHA-256(prev_hash || JSON)`, com o JSON de chaves ordenadas, sem espaços, em UTF-8, data em UTC com microssegundos e IP normalizado. `domain/ports.py`: porta `AuditStore`.
+  - *Referência (11/11/2026):* a spec 013, ainda em Rascunho, propõe uma emenda a esta canonicalização: as chaves `actor_type`, `origin`, `user_agent`, `result` e `result_reason` só entram no JSON quando não são nulas, e os eventos anteriores mantêm o hash. A emenda está em `specs/013-trilha-auditoria-reforco/design.md` § Emenda à spec 001 e só vale depois que a 013 for aprovada. Esta nota não muda o status nem o texto normativo desta spec.
 - `application/registrar.py`: `registrar(store, acao, ator, entidade, mudancas, metadados)` trava a linha de controle `audit_chain_head` (pela porta `AuditStore`, cujo repositório faz `SELECT ... FOR UPDATE`) para serializar o encadeamento, monta o registro e grava na transação de quem chamou. Os outros módulos importam tudo daqui (os tipos do domain são reexportados).
 - `infrastructure/`: tabelas (SQLAlchemy Core) e `SqlAuditStore`. `prev_hash` é único no banco, então a cadeia não bifurca.
 
