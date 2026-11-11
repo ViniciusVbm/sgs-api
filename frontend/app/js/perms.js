@@ -15,7 +15,12 @@ export function criarPerfil(me) {
   // Perfil de unidade: toda permissão de negócio do usuário tem, no máximo, escopo de unidade.
   const negocio = ['unidade:update', 'auditoria:read', 'dashboard:read', 'alteracao:propor'].filter(tem);
   const deUnidade = negocio.length > 0 && negocio.every((c) => maisAmplo(c) === AMPLITUDE.unidade);
-  return { me, tem, global, escopos, maisAmplo, recorte, deUnidade };
+  // R6.2: algum escopo da permissão cobre a unidade (global, área do tipo, distrito ou ela mesma)?
+  const cobreUnidade = (codigo, { unidadeId, distritoId, areaId }) => escopos(codigo).some((e) => e.tipo === 'global'
+    || (e.tipo === 'area' && String(e.id) === String(areaId))
+    || (e.tipo === 'distrito' && String(e.id) === String(distritoId))
+    || (e.tipo === 'unidade' && String(e.id) === String(unidadeId)));
+  return { me, tem, global, escopos, maisAmplo, recorte, deUnidade, cobreUnidade };
 }
 
 // Itens do menu: [hash, ícone, rótulo, chave, emDesenvolvimento].
@@ -41,6 +46,8 @@ export function itensDoMenu(p) {
     blocoDeGestao.push(['#/historico', 'history', auditor ? 'Histórico geral' : 'Histórico de alterações', 'historico', !p.global('auditoria:read')]);
     if (auditor) blocoDeGestao.push(['#/cadeia', 'shield', 'Verificação da cadeia', 'cadeia']);
   }
+  // R16.1: catálogos de tipos, só com regra_validacao:manage global (hoje, o Gestor de Dados).
+  if (p.global('regra_validacao:manage')) blocoDeGestao.push(['#/referencias', 'edit', 'Tabelas de referência', 'referencias']);
   if (p.global('unidade:create')) blocoDeGestao.push(['#/importar', 'upload', 'Importar planilha', 'importar', true]);
   if (p.tem('papel:assign')) blocoDeGestao.push(['#/papeis', 'user', 'Papéis e atribuições', 'papeis']);
   if (p.tem('usuario:manage')) blocoDeGestao.push(['#/usuarios', 'user', 'Usuários', 'usuarios', true]);

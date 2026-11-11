@@ -433,3 +433,95 @@ textarea.csv{font-family:ui-monospace,Consolas,monospace;font-size:13px;min-heig
   .fig .v{font-size:28px}
   .dist a{grid-template-columns:96px 1fr 30px}
 }
+
+/* Gráficos do painel de qualidade (spec 012, R12.6; design § Gráficos), sem biblioteca externa.
+   Paleta categórica e de situação validada contra --surface nos dois temas
+   (validate_palette.js: faixa de luminosidade, croma, separação para daltonismo e contraste).
+   No tema claro, --viz-3, --viz-4 e --viz-5 ficam abaixo de 3:1: os valores vêm escritos
+   ao lado das marcas e há a tabela "Ver dados". --viz-neutro é cinza de propósito (inativa, outros). */
+:root{
+  --viz-1:#2a78d6; --viz-2:#eb6834; --viz-3:#1baf7a; --viz-4:#eda100; --viz-5:#e87ba4;
+  --viz-ok:#1F8A47; --viz-espera:#6B4BB8; --viz-alerta:#E94E1B; --viz-neutro:#737D95;
+}
+:root[data-theme="dark"]{
+  --viz-1:#3987e5; --viz-2:#d95926; --viz-3:#199e70; --viz-4:#c98500; --viz-5:#d55181;
+  --viz-ok:#3DAE68; --viz-espera:#9085e9; --viz-alerta:#d95926; --viz-neutro:#7A849D;
+}
+.viz-grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:20px}
+.viz{margin:0;padding:16px 18px;border:1px solid var(--line-soft);border-radius:var(--r-m);background:var(--surface);min-width:0}
+.viz figcaption{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.viz figcaption b{font-size:15px}
+.viz figcaption span{font-size:12.5px;color:var(--ink-3)}
+.viz-svg{display:block;overflow:visible}
+.viz-rot{font-size:12.5px;fill:var(--ink-2)}
+.viz-val{font-size:12px;font-weight:700;fill:var(--ink);font-variant-numeric:tabular-nums}
+.viz-eixo{font-size:11.5px;fill:var(--ink-3);font-variant-numeric:tabular-nums}
+.viz-trilho{fill:var(--surface-3)}
+.viz-trilho-rosca{stroke:var(--surface-3)}
+.viz-seg{stroke:var(--surface);stroke-width:2px}
+.viz-ref{stroke:var(--ink);stroke-width:2px;stroke-dasharray:4 3}
+.viz-guia{stroke:var(--line-soft);stroke-width:1px}
+.viz-traco{stroke:var(--viz-1);stroke-width:2px;stroke-linecap:round}
+.viz-ponto{fill:var(--viz-1);stroke:var(--surface);stroke-width:2px}
+.viz-alvo{fill:transparent}
+.viz-centro{font-size:8px;font-weight:700;fill:var(--ink);text-anchor:middle}
+.viz-centro-sub{font-size:3.4px;fill:var(--ink-3);text-anchor:middle}
+.viz-rosca{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.viz-rosca svg{transform:none;flex:none}
+.viz-leg{display:flex;flex-wrap:wrap;gap:6px 16px;list-style:none;margin:0 0 10px;padding:0;font-size:12.5px;color:var(--ink-2)}
+.viz-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.viz-leg-col{flex-direction:column;margin:0;flex:1;min-width:170px}
+.viz-leg-col li{display:grid;grid-template-columns:auto 1fr auto 52px;gap:8px;align-items:center}
+.viz-leg-col i{margin:0}
+.viz-leg-col b{color:var(--ink);font-variant-numeric:tabular-nums}
+.viz-leg-col span{text-align:right;font-variant-numeric:tabular-nums}
+.viz-nota{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);margin:6px 0 0}
+.viz-tracejado{display:inline-block;width:18px;border-top:2px dashed var(--ink)}
+.viz-dados{margin-top:10px;font-size:13px}
+.viz-dados summary{cursor:pointer;color:var(--brand);font-weight:700}
+.viz-dados table{margin-top:8px;font-size:13px}
+#q-periodo .viz-grade{margin-top:0}
+.consultas{display:flex;flex-direction:column}
+.consulta{border-bottom:1px solid var(--line-soft)}
+.consulta:last-child{border-bottom:none}
+.consulta summary{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;cursor:pointer}
+.consulta summary .chip{white-space:normal;text-align:left}
+.consulta-b{padding:0 20px 18px}
+.consulta-b>p{margin:0 0 10px;font-size:13.5px}
+.consulta-meta{padding:8px 0;border-bottom:none}
+.consulta-filtro{max-width:260px;margin-bottom:10px}
+@media (max-width:1080px){
+  .viz-grade{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .viz{padding:14px 12px}
+  .consulta summary,.consulta-b{padding-left:14px;padding-right:14px}
+}
+
+/* Tabelas de referência (spec 012, R16.1). */
+.tabelas-sel{display:flex;flex-wrap:wrap}
+td.acoes,th.acoes{white-space:nowrap;text-align:right}
+td.acoes .btn + .btn{margin-left:6px}
+
+/* Ficha da unidade (spec 012, T8 parte A: R6.1, R6.2). */
+.unit-head .versao{display:flex;flex-direction:column;gap:4px;font-size:14px;text-align:right}
+.filtros-ficha{padding:0 0 14px;border-bottom:none}
+@media (max-width:560px){
+  .unit-head .versao{text-align:left}
+}
+
+/* Desativação da unidade (spec 012, T25: R7.7). */
+.unit-head .versao .btn{margin-top:6px}
+.timeline .motivo{margin:4px 0 0;font-size:13.5px;color:var(--ink-2)}
+
+/* Cadastro e edição da unidade (spec 012, T9: R7.1 a R7.4). */
+.unit-head .acoes-ficha{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:6px}
+.unit-head .acoes-ficha .btn{margin-top:0}
+#fe-diff table{font-size:14px}
+/* Modal cujo conteúdo é um <form> (formulários longos, como o da unidade): o form também é
+   coluna flexível, para só o corpo rolar e o rodapé com os botões continuar visível. */
+.modal>form{display:flex;flex-direction:column;min-height:0}
+.modal>form>.modal-b{min-height:0}
+@media (max-width:560px){
+  .unit-head .acoes-ficha{justify-content:flex-start}
+}
