@@ -105,16 +105,49 @@ class Evento:
     request_id: str | None = None
     prev_hash: str | None = None
     hash: str | None = None
+    # Spec 013: nulos nos eventos anteriores a ela (R1.5). `user_agent` só sai no detalhe.
+    actor_type: str | None = None
+    origin: str | None = None
+    user_agent: str | None = None
+    result: str | None = None
+    result_reason: str | None = None
+    origem_restrita: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class ResultadoDaVerificacao:
-    """008/R3.1: `integra`, quantos eventos foram conferidos e, se quebrou, onde."""
+    """008/R3.1: `integra`, quantos eventos foram conferidos e, se quebrou, onde. 013/R5.5: o
+    último evento conferido, o hash dele e se o fim da cadeia bate com `audit_chain_head`
+    (`None` quando a verificação é de um período, que não chega ao fim da cadeia)."""
 
     integra: bool
     verificados: int
     primeiro_evento_divergente: int | None = None
     motivo: str | None = None
+    ultimo_id: int | None = None
+    hash_final: str | None = None
+    cabeca_confere: bool | None = None
+    cadeia_confere: bool | None = None
+    ancora_confere: bool | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Ancora:
+    """013/R5.3: a referência guardada fora do banco: a cadeia (hash do primeiro evento) e um
+    evento dela com o hash que ele tinha."""
+
+    cadeia_id: str
+    id: int
+    hash: str
+
+
+@dataclass(frozen=True, slots=True)
+class IdentidadeDaCadeia:
+    """013/R5.4: hash do primeiro evento (`None` se a cadeia está vazia), total e nome do banco."""
+
+    cadeia_id: str | None
+    total: int
+    banco: str
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

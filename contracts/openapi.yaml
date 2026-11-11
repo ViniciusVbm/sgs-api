@@ -82,33 +82,15 @@
         "summary": "Login com usuário e senha",
         "description": "R1: responde o desafio do 2FA (`mfa_required` ou `mfa_enrollment_required`).",
         "operationId": "entrar_api_v1_auth_login_post",
-        "parameters": [
-          {
-            "name": "user-agent",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "User-Agent"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/LoginIn"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -202,33 +184,15 @@
         "summary": "Confirmar o 2FA e entrar",
         "description": "R2.2: ativa o 2FA e emite access token e refresh (cookie).",
         "operationId": "confirmar_api_v1_auth_mfa_confirm_post",
-        "parameters": [
-          {
-            "name": "user-agent",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "User-Agent"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CodigoIn"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -268,33 +232,15 @@
         "summary": "Verificar o código do 2FA e entrar",
         "description": "R2.3 a R2.6.",
         "operationId": "verificar_api_v1_auth_mfa_verify_post",
-        "parameters": [
-          {
-            "name": "user-agent",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "User-Agent"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CodigoIn"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -368,22 +314,6 @@
             }
           },
           {
-            "name": "user-agent",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "User-Agent"
-            }
-          },
-          {
             "name": "sgs_refresh",
             "in": "cookie",
             "required": false,
@@ -444,29 +374,6 @@
         "summary": "Sair (revoga a sessão)",
         "description": "R3.7: revoga a sessão e apaga o cookie.",
         "operationId": "sair_api_v1_auth_logout_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "user-agent",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "User-Agent"
-            }
-          }
-        ],
         "responses": {
           "204": {
             "description": "Successful Response"
@@ -476,18 +383,13 @@
             "content": {
               "application/problem+json": {}
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/me": {
@@ -4143,7 +4045,7 @@
           "auditoria"
         ],
         "summary": "Evento da trilha com hash",
-        "description": "008/R3.2.",
+        "description": "008/R3.2; 013/R7.4, R8.2: IP, User-Agent e sessão só com `auditoria:read_acessos`; a\nconsulta grava `auditoria.evento_consultado`, na mesma transação.",
         "operationId": "evento_api_v1_auditoria_eventos__id___get",
         "security": [
           {
@@ -4210,7 +4112,7 @@
           "auditoria"
         ],
         "summary": "Verificar a integridade da cadeia de hash",
-        "description": "008/R3.1: recalcula a cadeia (só leitura) e responde `integra` ou o primeiro evento que\nquebra.",
+        "description": "008/R3.1; 013/R5.1, R5.5, R5.11, R7.3: recalcula a cadeia numa transação REPEATABLE READ,\nREAD ONLY, compara o fim com a cabeça e responde `integra` ou o primeiro evento que quebra. O\n`auditoria.verificada` vai numa sessão e transação próprias, fora da de leitura.",
         "operationId": "verificar_api_v1_auditoria_verificar_post",
         "requestBody": {
           "content": {
@@ -4559,6 +4461,37 @@
         ],
         "title": "AlteracoesResumoOut"
       },
+      "AncoraIn": {
+        "properties": {
+          "cadeia_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Cadeia Id",
+            "description": "Hash do primeiro evento da cadeia."
+          },
+          "id": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Id",
+            "description": "Evento ancorado."
+          },
+          "hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Hash",
+            "description": "Hash que o evento ancorado tinha."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "cadeia_id",
+          "id",
+          "hash"
+        ],
+        "title": "AncoraIn",
+        "description": "013/R5.3: a âncora guardada fora do banco (gerada por `sgs-admin auditoria ancorar`)."
+      },
       "AtribuicaoIn": {
         "properties": {
           "usuario_id": {
@@ -4707,13 +4640,26 @@
             },
             "type": "array",
             "title": "Papeis"
+          },
+          "tipo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo",
+            "description": "usuario, anonimo, sistema, servico, seed ou cli_admin; null antes da 013."
           }
         },
         "type": "object",
         "required": [
           "id",
           "nome",
-          "papeis"
+          "papeis",
+          "tipo"
         ],
         "title": "AutorOut"
       },
@@ -5304,6 +5250,41 @@
             "type": "object",
             "title": "Metadados"
           },
+          "origem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origem",
+            "description": "Rótulo de origem (api, seed...); null antes da 013."
+          },
+          "resultado": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resultado",
+            "description": "success, failure ou denied; null antes da 013."
+          },
+          "resultado_categoria": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resultado Categoria"
+          },
           "sessao_id": {
             "anyOf": [
               {
@@ -5326,6 +5307,21 @@
               }
             ],
             "title": "Ip"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          },
+          "origem_restrita": {
+            "type": "boolean",
+            "title": "Origem Restrita"
           },
           "request_id": {
             "anyOf": [
@@ -5371,14 +5367,19 @@
           "entidade_id",
           "mudancas",
           "metadados",
+          "origem",
+          "resultado",
+          "resultado_categoria",
           "sessao_id",
           "ip",
+          "user_agent",
+          "origem_restrita",
           "request_id",
           "prev_hash",
           "hash"
         ],
         "title": "EventoDetalheOut",
-        "description": "008/R3.2: com a cadeia de hash e a origem."
+        "description": "008/R3.2: com a cadeia de hash e a origem. 013/R8.2: IP, User-Agent e sessão só com\n`auditoria:read_acessos`; sem ela vêm nulos e `origem_restrita` é verdadeiro."
       },
       "EventoOut": {
         "properties": {
@@ -5431,6 +5432,41 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Metadados"
+          },
+          "origem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origem",
+            "description": "Rótulo de origem (api, seed...); null antes da 013."
+          },
+          "resultado": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resultado",
+            "description": "success, failure ou denied; null antes da 013."
+          },
+          "resultado_categoria": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resultado Categoria"
           }
         },
         "type": "object",
@@ -5442,7 +5478,10 @@
           "entidade_tipo",
           "entidade_id",
           "mudancas",
-          "metadados"
+          "metadados",
+          "origem",
+          "resultado",
+          "resultado_categoria"
         ],
         "title": "EventoOut",
         "description": "Um evento da trilha (008/R1.2, R2.1)."
@@ -7471,6 +7510,17 @@
             ],
             "title": "Ate",
             "description": "Fim do período (exclusivo)."
+          },
+          "ancora": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AncoraIn"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Âncora externa (013/R5.3)."
           }
         },
         "additionalProperties": false,
@@ -7508,6 +7558,66 @@
               }
             ],
             "title": "Motivo"
+          },
+          "ultimo_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ultimo Id",
+            "description": "Último evento conferido (013/R5.5)."
+          },
+          "hash_final": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hash Final",
+            "description": "Hash do último evento conferido (013/R5.5)."
+          },
+          "cabeca_confere": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cabeca Confere",
+            "description": "Se o fim da cadeia bate com `audit_chain_head`; `null` com período (013/R5.1)."
+          },
+          "cadeia_confere": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cadeia Confere",
+            "description": "Se a cadeia é a da âncora; `null` sem âncora (013/R5.3)."
+          },
+          "ancora_confere": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ancora Confere",
+            "description": "Se o evento ancorado ainda tem o hash da âncora; `null` sem âncora (013/R5.3)."
           }
         },
         "type": "object",
@@ -7515,7 +7625,12 @@
           "integra",
           "verificados",
           "primeiro_evento_divergente",
-          "motivo"
+          "motivo",
+          "ultimo_id",
+          "hash_final",
+          "cabeca_confere",
+          "cadeia_confere",
+          "ancora_confere"
         ],
         "title": "VerificacaoOut"
       }
