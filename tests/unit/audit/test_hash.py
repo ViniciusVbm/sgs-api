@@ -149,3 +149,96 @@ def test_ip_do_ator_e_validado_e_normalizado() -> None:
     with pytest.raises(DomainValidationError):
         Ator(ip="999.1.1.1")
     assert Ator(ip="2001:DB8:0:0:0:0:0:1").ip == "2001:db8::1"
+
+
+# --- Spec 013, T1: campos novos e emenda à canonicalização da 001 (013 design § Emenda à spec 001)
+
+# Registro "v1" (anterior à 013) e o hash que o código de `main` @ 4efd36c calculava para ele,
+# capturado antes de qualquer mudança da T1. Se este teste quebrar, todo o histórico quebrou.
+HASH_V1 = "c5c274090b522020041a0fb6fae42fe969c880a7d10a014d37c212fdc670754f"
+
+
+def _registro_v1(**alteracoes: Any) -> AuditEntry:
+    campos: dict[str, Any] = {
+        "prev_hash": GENESIS_HASH,
+        "occurred_at": datetime(2026, 11, 11, 12, 30, 45, 123456, tzinfo=UTC),
+        "action": "unidade.atualizada",
+        "actor": Ator(
+            user_id=UUID("11111111-1111-1111-1111-111111111111"),
+            papeis=("GESTOR_DADOS",),
+            session_id=UUID("22222222-2222-2222-2222-222222222222"),
+            ip="10.0.0.7",
+            request_id="req-1",
+        ),
+        "entity": Entidade(tipo="unidade", id="33333333-3333-3333-3333-333333333333"),
+        "changes": (Mudanca(campo="phone", de="8130000000", para="8131111111"),),
+        "metadata": {"motivo": "teste"},
+    }
+    return AuditEntry.create(**(campos | alteracoes))
+
+
+def test_hash_de_registro_v1_nao_muda() -> None:
+    """013/R1.5: sem os campos novos, o conteúdo canônico e o hash são os de antes da 013."""
+    registro = _registro_v1()
+
+    assert registro.hash == HASH_V1
+    for chave in ("actor_type", "origin", "user_agent", "result", "result_reason"):
+        assert f'"{chave}"'.encode() not in registro.canonical_content()
+
+
+CAMPOS_NOVOS: dict[str, tuple[dict[str, Any], str]] = {
+    "actor_type": ({"actor": Ator(user_id=USUARIO, tipo="usuario")}, '"actor_type":"usuario"'),
+    "origin": ({"actor": Ator(user_id=USUARIO, origem="api")}, '"origin":"api"'),
+    "user_agent": (
+        {"actor": Ator(user_id=USUARIO, user_agent="Mozilla/5.0")},
+        '"user_agent":"Mozilla/5.0"',
+    ),
+    "result": ({"result": "success"}, '"result":"success"'),
+    "result_reason": (
+        {"result": "failure", "result_reason": "conflito"},
+        '"result_reason":"conflito"',
+    ),
+}
+
+
+@pytest.mark.parametrize("campo", CAMPOS_NOVOS.keys())
+def test_campo_novo_entra_no_hash(campo: str) -> None:
+    """013/R1.1, R4.1, R5.2: preenchido, o campo entra no conteúdo canônico e muda o hash;
+    anulado depois (adulteração), o hash gravado deixa de conferir."""
+    alteracao, trecho = CAMPOS_NOVOS[campo]
+    base = _registro(actor=Ator(user_id=USUARIO))
+    com_campo = _registro(**alteracao)
+
+    assert trecho.encode() in com_campo.canonical_content()
+    assert com_campo.hash != base.hash
+    if campo in {"result", "result_reason"}:
+        anulado = replace(com_campo, result=None, result_reason=None)
+    else:
+        anulado = replace(com_campo, actor=Ator(user_id=USUARIO))
+    assert anulado.recompute_hash() != com_campo.hash
+
+
+def test_usuario_sem_id_e_rejeitado() -> None:
+    """013/R1.1, R1.2: tipo `usuario` exige `actor_user_id`; tipo fora do domínio é recusado;
+    os automáticos não ganham usuário."""
+    with pytest.raises(DomainValidationError):
+        Ator(tipo="usuario")
+    with pytest.raises(DomainValidationError):
+        Ator(tipo="robo")
+    assert Ator(tipo="seed", origem="sgs-admin seed demo").user_id is None
+
+
+@pytest.mark.parametrize(
+    "invalido",
+    [
+        {"result": "talvez"},
+        {"result": "failure"},  # falha sem categoria
+        {"result": "success", "result_reason": "conflito"},  # sucesso não tem categoria
+        {"result": "denied", "result_reason": "outra"},
+    ],
+    ids=["resultado", "falha_sem_categoria", "sucesso_com_categoria", "categoria"],
+)
+def test_valores_novos_fora_do_dominio_sao_recusados(invalido: dict[str, Any]) -> None:
+    """013/R1.1, R4.1 (os mesmos domínios dos CHECKs da migração 0013_01)"""
+    with pytest.raises(DomainValidationError):
+        _registro(**invalido)
