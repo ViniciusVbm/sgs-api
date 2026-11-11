@@ -331,6 +331,27 @@ async def test_sem_a_permissao_responde_403_e_audita_acesso_negado(
     ]
 
 
+async def test_negacao_tem_resultado_denied(
+    app: FastAPI, cliente: httpx.AsyncClient, sessoes: async_sessionmaker[AsyncSession]
+) -> None:
+    """013/R4.1, R4.2: `acesso.negado` é `denied`/`autorizacao`."""
+    diretoria = await _logado(sessoes, ("DIRETORIA", GLOBAL))
+
+    resposta = await cliente.get(PROTEGIDA, headers=_bearer(app, diretoria))
+
+    assert resposta.status_code == 403
+    async with sessoes() as sessao:
+        linhas = (
+            await sessao.execute(
+                text(
+                    "SELECT result, result_reason FROM audit_log"
+                    " WHERE action = 'acesso.negado' ORDER BY id"
+                )
+            )
+        ).all()
+    assert [tuple(linha) for linha in linhas] == [("denied", "autorizacao")]
+
+
 @pytest.mark.parametrize(
     ("papel", "escopo", "recurso", "status"),
     [
